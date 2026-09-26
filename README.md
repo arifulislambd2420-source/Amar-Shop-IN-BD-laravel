@@ -34,7 +34,7 @@ php artisan serve
 - [ ] Phase 2 — setup + migration + model
 - [ ] Phase 3 — Auth (admin + customer)
 - [ ] Phase 4 — Filament admin
-- [ ] Phase 5 — Storefront
-- [ ] Phase 6 — Integration
-- [ ] Phase 7 — Hostinger deploy
-- [ ] Phase 8 — Cutover
+- [x] Phase 5 — Storefront
+- [x] Phase 6 — Integration
+- [x] Phase 7 — Hostinger deploy guide ([DEPLOY.md](DEPLOY.md))
+- [ ] Phase 8 — Cutover (ডোমেইন সরানো — Hostinger-এ deploy ও live-test সফল হওয়ার পর)
