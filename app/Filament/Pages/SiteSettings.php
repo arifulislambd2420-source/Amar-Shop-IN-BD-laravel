@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Support\CloudinaryUpload;
 use App\Models\SiteSetting;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
@@ -63,12 +64,11 @@ class SiteSettings extends Page implements HasSchemas
                         TextInput::make('site_name')
                             ->label('Site name')
                             ->placeholder('আমারশপ'),
-                        TextInput::make('site_logo')
-                            ->label('Site logo URL')
-                            ->helperText('Image URL (Cloudinary upload comes in a later phase).'),
-                        TextInput::make('site_favicon')
-                            ->label('Favicon URL')
-                            ->helperText('Falls back to the logo when empty.'),
+                        CloudinaryUpload::make('site_logo')
+                            ->label('Site logo'),
+                        CloudinaryUpload::make('site_favicon')
+                            ->label('Favicon')
+                            ->helperText('Falls back to the logo when empty. Uploads to Cloudinary (folder: amarshopbd).'),
                     ]),
             ]);
     }

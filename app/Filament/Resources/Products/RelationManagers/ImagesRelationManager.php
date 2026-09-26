@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Filament\Support\CloudinaryUpload;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -24,11 +25,9 @@ class ImagesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('url')
-                    ->label('Image URL')
-                    ->required()
-                    ->maxLength(2048)
-                    ->helperText('Image URL (Cloudinary upload comes in a later phase).'),
+                CloudinaryUpload::make('url')
+                    ->label('Image')
+                    ->required(),
                 TextInput::make('alt')
                     ->label('Alt text')
                     ->maxLength(255),

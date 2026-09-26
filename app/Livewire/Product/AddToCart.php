@@ -42,7 +42,32 @@ class AddToCart extends Component
     {
         app(CartService::class)->add($this->productId, max(1, $this->quantity), $this->variantId);
         $this->dispatch('cart-updated');
+        $this->dispatch('gtm:add_to_cart', ecommerce: $this->addToCartPayload());
         $this->message = 'কার্টে যোগ করা হয়েছে!';
+    }
+
+    /**
+     * GTM add_to_cart ecommerce payload — same shape as the old app's
+     * AddToCartButton.tsx: currency BDT, value = price * quantity, one
+     * items[] entry with item_id/item_name/price/quantity.
+     */
+    protected function addToCartPayload(): array
+    {
+        $product = Product::with('variants')->find($this->productId);
+        $variant = $this->variantId ? $product?->variants->firstWhere('id', $this->variantId) : null;
+        $quantity = max(1, $this->quantity);
+        $price = $variant ? (float) $variant->price : (float) ($product?->sale_price ?? $product?->price ?? 0);
+
+        return [
+            'currency' => 'BDT',
+            'value' => $price * $quantity,
+            'items' => [[
+                'item_id' => $this->productId,
+                'item_name' => $product?->name,
+                'price' => $price,
+                'quantity' => $quantity,
+            ]],
+        ];
     }
 
     public function buyNow()

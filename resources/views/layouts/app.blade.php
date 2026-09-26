@@ -7,8 +7,10 @@
     <meta name="description" content="@yield('description', 'খাঁটি ও প্রাকৃতিক পণ্যের অনলাইন দোকান — মধু, সরিষার তেল, ঘি, খেজুর।')">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    <x-gtm-script />
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased pb-16 md:pb-0">
+    <x-gtm-noscript />
 
     @include('partials.header')
 

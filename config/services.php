@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    // Cloudinary — admin image uploads (Product/Banner/Site Setting), folder
+    // "amarshopbd" to match the old Next.js app. CLOUDINARY_URL is an
+    // alternative single-string form some hosts prefer; when set, the
+    // cloud_name/api_key/api_secret below are still read individually by
+    // App\Services\CloudinaryService, so keep all four in sync if used.
+    // GTM kill switch — same behavior as the old app's `ENABLE_GTM=false`
+    // (never the string "false", so it defaults on everywhere except where
+    // explicitly disabled).
+    'gtm' => [
+        'enabled' => env('ENABLE_GTM', true),
+    ],
+
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key' => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        'url' => env('CLOUDINARY_URL'),
+    ],
+
 ];

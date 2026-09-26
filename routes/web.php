@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
+use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
@@ -15,6 +16,11 @@ use App\Http\Controllers\TrackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Public product feed (Google Merchant / Meta compatible), matching the old
+// Next.js app's exact path so any already-configured Facebook/Google feed
+// subscription keeps working unchanged. No auth — it's a public feed.
+Route::get('/api/feed/facebook', [FeedController::class, 'facebook'])->name('feed.facebook');
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/offers', [ShopController::class, 'offers'])->name('offers');

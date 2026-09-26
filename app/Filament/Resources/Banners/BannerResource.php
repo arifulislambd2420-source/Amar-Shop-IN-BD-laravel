@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Banners;
 
 use App\Filament\Resources\Banners\Pages\ManageBanners;
+use App\Filament\Support\CloudinaryUpload;
 use App\Models\Banner;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -37,11 +38,9 @@ class BannerResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('image')
-                    ->label('Image URL')
-                    ->required()
-                    ->maxLength(2048)
-                    ->helperText('Image URL (Cloudinary upload comes in a later phase).'),
+                CloudinaryUpload::make('image')
+                    ->label('Image')
+                    ->required(),
                 TextInput::make('link')
                     ->label('Link URL')
                     ->maxLength(2048),

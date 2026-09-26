@@ -4,11 +4,16 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
+use App\Services\Courier\PathaoCourierService;
+use App\Services\Courier\RedxCourierService;
+use App\Services\Courier\SteadfastCourierService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Icons\Heroicon;
+use RuntimeException;
+use Throwable;
 
 class EditOrder extends EditRecord
 {
@@ -28,18 +33,24 @@ class EditOrder extends EditRecord
                     ->info()
                     ->send()),
 
-            // Courier dispatch — simple stubs for now; the live courier APIs
-            // (Steadfast / Pathao / RedX) are integrated in a later phase.
+            // Courier dispatch — Steadfast makes a real API call; Pathao and
+            // RedX are mocked, exactly matching the old Next.js app. Every
+            // action requires being inside the admin Filament panel (the
+            // `admin` guard), and each service's own guard blocks
+            // double-dispatch once a consignment_id is already set.
             ActionGroup::make([
                 Action::make('steadfast')
                     ->label('Send to Steadfast')
-                    ->action(fn (Order $record) => $this->courierStub('Steadfast')),
+                    ->requiresConfirmation()
+                    ->action(fn (Order $record) => $this->sendToCourier($record, app(SteadfastCourierService::class), 'Steadfast')),
                 Action::make('pathao')
-                    ->label('Send to Pathao')
-                    ->action(fn (Order $record) => $this->courierStub('Pathao')),
+                    ->label('Send to Pathao (mock)')
+                    ->requiresConfirmation()
+                    ->action(fn (Order $record) => $this->sendToCourier($record, app(PathaoCourierService::class), 'Pathao')),
                 Action::make('redx')
-                    ->label('Send to RedX')
-                    ->action(fn (Order $record) => $this->courierStub('RedX')),
+                    ->label('Send to RedX (mock)')
+                    ->requiresConfirmation()
+                    ->action(fn (Order $record) => $this->sendToCourier($record, app(RedxCourierService::class), 'RedX')),
             ])
                 ->label('Send to Courier')
                 ->icon(Heroicon::OutlinedTruck)
@@ -47,11 +58,30 @@ class EditOrder extends EditRecord
         ];
     }
 
-    protected function courierStub(string $courier): void
+    protected function sendToCourier(Order $record, SteadfastCourierService|PathaoCourierService|RedxCourierService $service, string $courier): void
     {
-        Notification::make()
-            ->title("{$courier} dispatch is integrated in a later phase.")
-            ->info()
-            ->send();
+        try {
+            $updated = $service->dispatch($record);
+
+            Notification::make()
+                ->title("Order sent to {$courier}")
+                ->body("Consignment ID: {$updated->consignment_id}")
+                ->success()
+                ->send();
+
+            $this->fillForm();
+        } catch (RuntimeException $e) {
+            Notification::make()
+                ->title("Could not send to {$courier}")
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title("Could not send to {$courier}")
+                ->body('Unexpected error: '.$e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 }

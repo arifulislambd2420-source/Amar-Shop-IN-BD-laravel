@@ -8,6 +8,24 @@
     $onSale = $product->hasDiscount();
     $price = $product->displayPrice();
 @endphp
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.pushToDataLayer) {
+            window.pushToDataLayer('view_item', {
+                ecommerce: {
+                    currency: 'BDT',
+                    value: {{ (float) $price }},
+                    items: [{
+                        item_id: {{ $product->id }},
+                        item_name: @json($product->name),
+                        price: {{ (float) $price }},
+                        quantity: 1,
+                    }],
+                },
+            });
+        }
+    });
+</script>
 <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="grid md:grid-cols-2 gap-8">
         <div class="relative aspect-square bg-gray-50 rounded-xl overflow-hidden">

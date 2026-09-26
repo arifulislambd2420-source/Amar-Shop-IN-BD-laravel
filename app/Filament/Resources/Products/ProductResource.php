@@ -7,6 +7,7 @@ use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\RelationManagers\ImagesRelationManager;
 use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
+use App\Filament\Support\CloudinaryUpload;
 use App\Models\Product;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -126,11 +127,9 @@ class ProductResource extends Resource
                             ->relationship('brand', 'name')
                             ->searchable()
                             ->preload(),
-                        TextInput::make('image')
-                            ->label('Main image URL')
-                            ->maxLength(2048)
-                            ->columnSpanFull()
-                            ->helperText('Image URL (Cloudinary upload comes in a later phase).'),
+                        CloudinaryUpload::make('image')
+                            ->label('Main image')
+                            ->columnSpanFull(),
                         TextInput::make('tags')
                             ->maxLength(255)
                             ->columnSpanFull()

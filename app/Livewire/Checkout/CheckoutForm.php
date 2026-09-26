@@ -34,6 +34,22 @@ class CheckoutForm extends Component
             $this->customer_name = Auth::guard('web')->user()->name;
             $this->phone = Auth::guard('web')->user()->phone;
         }
+
+        // GTM begin_checkout — fired once when the checkout page loads with
+        // items in the cart, matching the old app's checkout page effect.
+        $lines = app(CartService::class)->lines();
+        if (! empty($lines)) {
+            $this->dispatch('gtm:begin_checkout', ecommerce: [
+                'currency' => 'BDT',
+                'value' => app(CartService::class)->subtotal(),
+                'items' => array_map(fn ($l) => [
+                    'item_id' => $l['product']->id,
+                    'item_name' => $l['name'],
+                    'price' => $l['price'],
+                    'quantity' => $l['quantity'],
+                ], $lines),
+            ]);
+        }
     }
 
     protected function rules(): array
@@ -132,6 +148,25 @@ class CheckoutForm extends Component
 
             return null;
         }
+
+        // GTM purchase — flashed to session and fired once from the order
+        // confirmation page (order.show), rather than from here: a Livewire
+        // action that both dispatches a browser event AND redirects on the
+        // same response can lose the event to the navigation, so the
+        // confirmation page is the reliable place to fire it exactly once.
+        session()->flash('gtm_purchase', [
+            'transaction_id' => $order->order_token,
+            'value' => (float) $order->total,
+            'currency' => 'BDT',
+            'shipping' => (float) $order->shipping_fee,
+            'coupon' => $this->appliedCoupon['code'] ?? null,
+            'items' => $order->items->map(fn ($item) => [
+                'item_id' => $item->product_id,
+                'item_name' => $item->product_name,
+                'price' => (float) $item->unit_price,
+                'quantity' => $item->quantity,
+            ])->all(),
+        ]);
 
         $cart->clear();
 

@@ -3,6 +3,15 @@
 @section('title', 'অর্ডার নিশ্চিতকরণ — '.config('site.name'))
 
 @section('content')
+@if(session('gtm_purchase'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.pushToDataLayer) {
+            window.pushToDataLayer('purchase', { ecommerce: @json(session('gtm_purchase')) });
+        }
+    });
+</script>
+@endif
 <div class="max-w-2xl mx-auto px-4 py-12">
     <div class="text-center mb-8">
         <div class="h-16 w-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4 text-3xl">✓</div>
