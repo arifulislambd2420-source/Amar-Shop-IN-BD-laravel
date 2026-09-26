@@ -27,7 +27,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->authGuard('admin')
+            ->brandName('আমারশপ Admin')
+            ->login(\App\Filament\Auth\Login::class)
             ->colors([
                 'primary' => Color::Amber,
             ])

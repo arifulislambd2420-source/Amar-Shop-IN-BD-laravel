@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
- * Admin user (separate from customer `users`). Filament admin-guard wiring
- * happens in a later phase; for now this is just the table + model.
+ * Admin user (separate from customer `users`). Backs the dedicated `admin`
+ * auth guard used by the Filament admin panel. Admins log in with `username`.
+ *
+ * Every admin_users row is an admin (the `role` column exists for future,
+ * finer-grained permissions), so canAccessPanel() always returns true.
  */
-class AdminUser extends Authenticatable
+class AdminUser extends Authenticatable implements FilamentUser
 {
     protected $table = 'admin_users';
 
@@ -29,5 +34,21 @@ class AdminUser extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Admins authenticate by their username, not an email address.
+     */
+    public function getAuthIdentifierName(): string
+    {
+        return 'username';
+    }
+
+    /**
+     * All seeded admin_users may access the Filament panel.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
     }
 }
