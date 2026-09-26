@@ -31,10 +31,10 @@ php artisan serve
 ## Progress (দেখো MIGRATION_PLAN.md)
 
 - [x] Phase 1 — অডিট ও পরিকল্পনা
-- [ ] Phase 2 — setup + migration + model
-- [ ] Phase 3 — Auth (admin + customer)
-- [ ] Phase 4 — Filament admin
+- [x] Phase 2 — setup + migration + model
+- [x] Phase 3 — Auth (admin + customer)
+- [x] Phase 4 — Filament admin
 - [x] Phase 5 — Storefront
 - [x] Phase 6 — Integration
 - [x] Phase 7 — Hostinger deploy guide ([DEPLOY.md](DEPLOY.md))
-- [ ] Phase 8 — Cutover (ডোমেইন সরানো — Hostinger-এ deploy ও live-test সফল হওয়ার পর)
+- [ ] Phase 8 — Cutover ([CUTOVER.md](CUTOVER.md) প্ল্যান তৈরি; বাস্তবায়ন বাকি — লাগবে আপনার GitHub push + Hostinger deploy + live-test)
