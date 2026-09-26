@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Customers table. This site logs customers in by PHONE (no email),
+        // matching the old Next.js `users` table (id, name, phone, password, created_at).
+        // `password` uses Laravel's bcrypt Hash — old bcrypt hashes are compatible
+        // and can be copied over in a later data-migration phase.
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('phone', 32)->unique();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
