@@ -207,9 +207,10 @@ class OrderService
             return 'শুধু Phone দিয়ে খুঁজতে হলে পুরো নম্বর দিন (অন্তত ৭ ডিজিট)।';
         }
 
+        // Exact phone match only — a LIKE/suffix match here could return a
+        // different customer's order if two numbers happen to share a tail.
         $order = Order::with('items')
             ->where('phone', $normalizedPhone)
-            ->orWhere('phone', 'like', '%'.$normalizedPhone)
             ->orderByDesc('created_at')
             ->first();
 
