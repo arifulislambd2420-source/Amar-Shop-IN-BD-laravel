@@ -1,58 +1,40 @@
 # আমারশপ — Laravel সংস্করণ (amarshop-laravel)
 
-এটা **আমারশপ** ই-কমার্স সাইটের নতুন সংস্করণ, **Laravel** দিয়ে নতুন করে বানানো হচ্ছে।
+**আমারশপ** ই-কমার্স সাইটের নতুন সংস্করণ, **Laravel** দিয়ে নতুন করে বানানো হচ্ছে — উদ্দেশ্য: Hostinger shared hosting-এ Node.js ছাড়াই native চালানো।
 
-## এটা কী
+## উৎস
 
-আগের সাইটটা ছিল **Next.js + TypeScript** দিয়ে বানানো (রিপো: `arifulislambd2420-source/Amar-Shop-IN-BD`)। সেটা এখনো লাইভ ও ব্যাকআপ হিসেবে অপরিবর্তিত আছে। এই নতুন রিপোতে একই সাইট **PHP/Laravel** দিয়ে আবার বানানো হচ্ছে, যাতে Hostinger-এর সাধারণ (shared) হোস্টিং-এ কোনো Node.js ঝামেলা ছাড়াই native ভাবে চলে।
+- পুরনো সাইট (Next.js + TypeScript): `arifulislambd2420-source/Amar-Shop-IN-BD` — এটা লাইভ ও ব্যাকআপ হিসেবে অপরিবর্তিত।
+- পূর্ণ feature/DB/API তালিকা ও পরিকল্পনা: [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md)।
 
 ## Stack
 
-- **Laravel** (latest stable) — মূল framework
-- **Blade + Livewire** — storefront (দোকানের সামনের অংশ)
-- **Filament** — admin panel
-- **MySQL** — ডাটাবেজ (আগের সাইটের একই schema reuse করা হচ্ছে)
-- **Node** শুধু লোকালে CSS/JS build (Vite) এর জন্য; **সার্ভারে Node লাগবে না**
+- **Laravel 12** + **Blade + Livewire** (storefront)
+- **Filament** (admin panel)
+- **DB:** লোকালে **SQLite** (install লাগে না), production-এ **MySQL** (Hostinger)। Migration দুটোতেই চলে।
+- **Node** শুধু লোকালে asset build (Vite); সার্ভারে লাগবে না।
 
-## কোথা থেকে এসেছে
-
-- উৎস রিপো (পুরনো Next.js): `arifulislambd2420-source/Amar-Shop-IN-BD`
-- পুরো feature/DB/API তালিকা ও রূপান্তর পরিকল্পনা: [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md)
-
-## কীভাবে চালাবে (লোকালে)
-
-> প্রথমবার লাগবে: **PHP 8.2+**, **Composer**, এবং একটা **MySQL** ডাটাবেজ।
+## চালানো (লোকালে)
 
 ```bash
-# ১. dependency ইনস্টল
 composer install
 npm install
-
-# ২. এনভায়রনমেন্ট ফাইল তৈরি ও app key
-cp .env.example .env
+cp .env.example .env          # প্রথমবার
 php artisan key:generate
-
-# ৩. .env এ DB তথ্য বসাও (DB_DATABASE, DB_USERNAME, DB_PASSWORD)
-
-# ৪. টেবিল তৈরি + স্যাম্পল ডাটা
-php artisan migrate --seed
-
-# ৫. asset build + সার্ভার চালু
-npm run dev        # আলাদা টার্মিনালে
+php artisan migrate --seed     # SQLite ডিফল্ট
+npm run dev                    # আলাদা টার্মিনাল
 php artisan serve
 ```
 
-তারপর ব্রাউজারে `http://localhost:8000` খোলো। Admin panel: `http://localhost:8000/admin`।
+সাইট: `http://localhost:8000` · Admin: `http://localhost:8000/admin`
 
-## অবস্থা (Progress)
+## Progress (দেখো MIGRATION_PLAN.md)
 
-রূপান্তর ধাপে ধাপে হচ্ছে (দেখো `MIGRATION_PLAN.md`):
-
-- [x] Phase 1 — feature/DB/API অডিট ও পরিকল্পনা
-- [ ] Phase 2 — Laravel setup + migration + model
+- [x] Phase 1 — অডিট ও পরিকল্পনা
+- [ ] Phase 2 — setup + migration + model
 - [ ] Phase 3 — Auth (admin + customer)
 - [ ] Phase 4 — Filament admin
 - [ ] Phase 5 — Storefront
-- [ ] Phase 6 — Integration (Cloudinary, GTM/Pixel, courier, XML feed)
+- [ ] Phase 6 — Integration
 - [ ] Phase 7 — Hostinger deploy
-- [ ] Phase 8 — Cutover (ডোমেইন সরানো)
+- [ ] Phase 8 — Cutover
