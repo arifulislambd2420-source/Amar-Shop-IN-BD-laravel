@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -64,5 +65,65 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /** Only products that should ever be visible on the storefront. */
+    public function scopeStorefront(Builder $query): Builder
+    {
+        return $query->where('is_active', true)->where('status', 'published');
+    }
+
+    /** Discounted products only (sale_price set and lower than price). */
+    public function scopeOnSale(Builder $query): Builder
+    {
+        return $query->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
+    }
+
+    /**
+     * Shared shop-grid query: category/brand/search/sort, used by /shop and
+     * /offers so both pages behave identically.
+     */
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        if (! empty($filters['category'])) {
+            $query->whereHas('category', fn ($q) => $q->where('slug', $filters['category']));
+        }
+
+        if (! empty($filters['brand'])) {
+            $query->where('brand_id', (int) $filters['brand']);
+        }
+
+        if (! empty($filters['q'])) {
+            $term = '%'.$filters['q'].'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)->orWhere('tags', 'like', $term);
+            });
+        }
+
+        return match ($filters['sort'] ?? '') {
+            'price_asc' => $query->orderByRaw('COALESCE(sale_price, price) asc'),
+            'price_desc' => $query->orderByRaw('COALESCE(sale_price, price) desc'),
+            'newest' => $query->orderByDesc('created_at'),
+            default => $query->orderByDesc('created_at'),
+        };
+    }
+
+    public function displayPrice(): float
+    {
+        return (float) ($this->sale_price ?? $this->price);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->sale_price !== null && (float) $this->sale_price < (float) $this->price;
+    }
+
+    public function discountPercent(): int
+    {
+        if (! $this->hasDiscount() || (float) $this->price <= 0) {
+            return 0;
+        }
+
+        return (int) round((((float) $this->price - (float) $this->sale_price) / (float) $this->price) * 100);
     }
 }
