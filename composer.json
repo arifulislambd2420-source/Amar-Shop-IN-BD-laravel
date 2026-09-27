@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.3",
         "cloudinary/cloudinary_php": "^1.20",
         "filament/filament": "^5.8",
         "laravel/framework": "^13.17",
@@ -84,7 +84,7 @@
             "php-http/discovery": true
         },
         "platform": {
-            "php": "8.4.0",
+            "php": "8.3.33",
             "ext-intl": "1.0"
         }
     },
