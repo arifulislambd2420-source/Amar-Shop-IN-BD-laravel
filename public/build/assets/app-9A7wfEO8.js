@@ -1,0 +1,1 @@
+function e(e,t){window.dataLayer=window.dataLayer||[],window.dataLayer.push({event:e,...t})}window.pushToDataLayer=e,document.addEventListener(`livewire:init`,()=>{window.Livewire&&(window.Livewire.on(`gtm:add_to_cart`,t=>e(`add_to_cart`,t)),window.Livewire.on(`gtm:begin_checkout`,t=>e(`begin_checkout`,t)),window.Livewire.on(`gtm:purchase`,t=>e(`purchase`,t)))});
