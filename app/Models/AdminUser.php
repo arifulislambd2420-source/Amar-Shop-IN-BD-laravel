@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -13,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * Every admin_users row is an admin (the `role` column exists for future,
  * finer-grained permissions), so canAccessPanel() always returns true.
  */
-class AdminUser extends Authenticatable implements FilamentUser
+class AdminUser extends Authenticatable implements FilamentUser, HasName
 {
     protected $table = 'admin_users';
 
@@ -42,5 +43,17 @@ class AdminUser extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
+    }
+
+    /**
+     * admin_users has no `name` column (only `username`), so Filament's
+     * default FilamentManager::getUserName() fallback to $user->name
+     * returns null and throws a TypeError when rendering the panel's
+     * avatar/user menu. Implementing HasName tells Filament to use this
+     * instead.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->username;
     }
 }
