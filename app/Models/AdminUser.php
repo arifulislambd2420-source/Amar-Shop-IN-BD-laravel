@@ -37,14 +37,6 @@ class AdminUser extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Admins authenticate by their username, not an email address.
-     */
-    public function getAuthIdentifierName(): string
-    {
-        return 'username';
-    }
-
-    /**
      * All seeded admin_users may access the Filament panel.
      */
     public function canAccessPanel(Panel $panel): bool
