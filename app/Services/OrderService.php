@@ -26,16 +26,20 @@ class OrderService
     public const SHIPPING_FEE = 70;
 
     /**
-     * @param  array<int, array{product_id:int, variant_id:?int, quantity:int}>  $cartLines
+     * @param  array<int, array{product_id:int, variant_id:?int, quantity:int, unit_price_override?:?float}>  $cartLines
+     *         unit_price_override is for server-side callers only (e.g. a
+     *         landing page's admin-set price_override) — it is never taken
+     *         from client/request input directly, only from trusted DB data
+     *         looked up beforehand by the caller.
      * @param  array  $customer  keys: customer_name, phone, email, district, thana, postcode, address, notes, payment_method
      */
-    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null): Order
+    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null): Order
     {
         if (empty($cartLines)) {
             throw new RuntimeException('Cart is empty');
         }
 
-        return DB::transaction(function () use ($cartLines, $customer, $couponCode) {
+        return DB::transaction(function () use ($cartLines, $customer, $couponCode, $landingPageId) {
             $lineItems = [];
 
             foreach ($cartLines as $line) {
@@ -70,6 +74,12 @@ class OrderService
                     $variantId = $variant->id;
                 } elseif ($product->stock < $quantity) {
                     throw new RuntimeException("\"{$product->name}\" এর জন্য পর্যাপ্ত স্টক নেই (আছে: {$product->stock})");
+                }
+
+                // Stock is always checked against the real product/variant
+                // above regardless of this — only the charged price changes.
+                if (isset($line['unit_price_override']) && $line['unit_price_override'] !== null) {
+                    $unitPrice = (float) $line['unit_price_override'];
                 }
 
                 $lineItems[] = [
@@ -110,6 +120,7 @@ class OrderService
             $total = $subtotal + $shippingFee - $discount;
 
             $order = Order::create([
+                'landing_page_id' => $landingPageId,
                 'order_token' => Str::random(40),
                 'invoice_no' => 'INV-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_name' => $customer['customer_name'],

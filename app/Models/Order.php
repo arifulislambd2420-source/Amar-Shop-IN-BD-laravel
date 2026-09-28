@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
@@ -11,6 +12,7 @@ class Order extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
+        'landing_page_id',
         'order_token',
         'invoice_no',
         'customer_name',
@@ -49,5 +51,10 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function landingPage(): BelongsTo
+    {
+        return $this->belongsTo(LandingPage::class);
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
@@ -29,6 +30,10 @@ Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product
 Route::post('/product/{slug}/reviews', [ProductController::class, 'storeReview'])->name('product.reviews.store');
 
 Route::get('/brands', [BrandController::class, 'index'])->name('brands');
+
+// Campaign landing pages — standalone single-product funnel pages, no site
+// header/footer/cart. Only ever serves is_active=true pages (404 otherwise).
+Route::get('/lp/{slug}', [LandingPageController::class, 'show'])->name('landing.show');
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
