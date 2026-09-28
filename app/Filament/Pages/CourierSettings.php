@@ -12,10 +12,17 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Crypt;
 use UnitEnum;
 
 /**
  * Courier settings — Steadfast API credentials stored in site_settings.
+ *
+ * steadfast_secret_key is stored Crypt::encryptString()'d (see save()).
+ * SteadfastCourierService decrypts it when actually calling the API; this
+ * page itself never reads the stored secret back into the form (see
+ * mount()) — leaving the field blank on save always keeps the current
+ * value, typing a new value is the only way to change it.
  */
 class CourierSettings extends Page implements HasSchemas
 {
@@ -46,7 +53,10 @@ class CourierSettings extends Page implements HasSchemas
 
         $this->form->fill([
             'steadfast_api_key' => $values['steadfast_api_key'] ?? '',
-            'steadfast_secret_key' => $values['steadfast_secret_key'] ?? '',
+            // Never prefill the real secret — the field always starts
+            // blank. Leaving it blank on save keeps the stored value
+            // unchanged (see save()); typing something new replaces it.
+            'steadfast_secret_key' => '',
         ]);
     }
 
@@ -75,8 +85,13 @@ class CourierSettings extends Page implements HasSchemas
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
-            if ($key === 'steadfast_secret_key' && blank($value)) {
-                continue;
+            if ($key === 'steadfast_secret_key') {
+                if (blank($value)) {
+                    // Blank means "keep the current value" — skip writing.
+                    continue;
+                }
+
+                $value = Crypt::encryptString($value);
             }
 
             SiteSetting::updateOrCreate(

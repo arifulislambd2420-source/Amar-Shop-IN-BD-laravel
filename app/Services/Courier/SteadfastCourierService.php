@@ -4,7 +4,9 @@ namespace App\Services\Courier;
 
 use App\Models\Order;
 use App\Models\SiteSetting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -36,6 +38,16 @@ class SteadfastCourierService
 
         if (blank($apiKey) || blank($secretKey)) {
             throw new RuntimeException('Steadfast Courier API keys are not configured in settings.');
+        }
+
+        // CourierSettings::save() encrypts this value. Fall back to the raw
+        // stored value if decryption fails, so a secret saved before this
+        // change (still plaintext) keeps working — it will be re-encrypted
+        // next time it's saved from the admin panel.
+        try {
+            $secretKey = Crypt::decryptString($secretKey);
+        } catch (DecryptException) {
+            // Pre-existing plaintext value — use as-is.
         }
 
         $payload = [
