@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use App\Support\Money;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // @taka(1234) — storefront money formatting, ported from the old
         // app's formatTaka() helper (see App\Support\Money).
+        // Customer SMS on order confirmed / shipped / delivered.
+        Order::observe(OrderObserver::class);
+
         Blade::directive('taka', fn ($amount) => "<?php echo \App\Support\Money::taka({$amount}); ?>");
     }
 }
