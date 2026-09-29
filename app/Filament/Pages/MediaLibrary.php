@@ -11,6 +11,7 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -119,8 +120,51 @@ class MediaLibrary extends Page implements HasSchemas
             return;
         }
 
+        if ($usedBy = $this->findReferences($basename)) {
+            Notification::make()
+                ->title('Not deleted — this image is still in use')
+                ->body('Used by: '.implode(', ', $usedBy).'. Replace it there first, otherwise it will show as a broken image.')
+                ->danger()
+                ->persistent()
+                ->send();
+
+            return;
+        }
+
         $disk->delete($path);
 
         Notification::make()->title('Image deleted.')->success()->send();
+    }
+
+    /**
+     * Every column that can hold an uploaded image URL. Deleting a file
+     * that one of these still points to leaves a broken image on the live
+     * site (this happened to a product image) — so deleteFile() refuses.
+     *
+     * @return list<string> human-readable "where it's used" labels
+     */
+    protected function findReferences(string $basename): array
+    {
+        $needle = '%'.$basename.'%';
+
+        $checks = [
+            'Product' => fn () => DB::table('products')->where('image', 'like', $needle)->pluck('name'),
+            'Product gallery' => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
+            'Banner' => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
+            'Brand' => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
+            'Category' => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
+            'Blog' => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
+            'Landing page' => fn () => DB::table('landing_pages')->where(fn ($q) => $q->where('hero_image', 'like', $needle)->orWhere('gallery', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('title'),
+            'Site setting' => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
+        ];
+
+        $found = [];
+        foreach ($checks as $label => $query) {
+            foreach ($query() as $name) {
+                $found[] = "{$label} \"{$name}\"";
+            }
+        }
+
+        return $found;
     }
 }
