@@ -69,7 +69,11 @@
         <p>{{ $order->address }}, {{ $order->thana }}, {{ $order->district }} {{ $order->postcode }}</p>
     </div>
 
-    <div class="text-center mt-8">
+    <div class="text-center mt-8 flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a href="{{ route('order.invoice', $order->order_token) }}" target="_blank"
+           class="inline-block bg-brand-navy text-white font-semibold px-5 py-2.5 rounded-lg">
+            🧾 ইনভয়েস ডাউনলোড
+        </a>
         <a href="{{ route('shop') }}" class="text-orange-500 font-semibold">শপিং চালিয়ে যান →</a>
     </div>
 </div>

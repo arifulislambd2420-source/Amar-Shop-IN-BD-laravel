@@ -22,16 +22,13 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            // Invoice print — simple stub for now; the printable invoice view
-            // is wired up in a later phase.
+            // Opens the printable/downloadable invoice (token-gated route) in
+            // a new tab; admin reaches it via the order's own token.
             Action::make('invoice')
-                ->label('Print Invoice')
+                ->label('Download Invoice')
                 ->icon(Heroicon::OutlinedPrinter)
                 ->color('gray')
-                ->action(fn () => Notification::make()
-                    ->title('Invoice printing is wired up in a later phase.')
-                    ->info()
-                    ->send()),
+                ->url(fn (Order $record): string => route('order.invoice', $record->order_token), shouldOpenInNewTab: true),
 
             // Courier dispatch — Steadfast makes a real API call; Pathao and
             // RedX are mocked, exactly matching the old Next.js app. Every

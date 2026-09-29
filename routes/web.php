@@ -8,6 +8,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MediaFileController;
 use App\Http\Controllers\OrderController;
@@ -65,6 +66,10 @@ Route::get('/payment/bkash/callback', [BkashCallbackController::class, 'callback
 // Invariant #2: order confirmation is looked up ONLY by the random
 // order_token, never the sequential numeric id.
 Route::get('/order/{token}', [OrderController::class, 'show'])->name('order.show');
+
+// Printable invoice — token-gated, so only the order's customer (who has the
+// token) or an admin (who links here from the panel) can reach it.
+Route::get('/order/{token}/invoice', [InvoiceController::class, 'show'])->name('order.invoice');
 
 // Invariant #1: tracking always requires a phone number — enforced inside
 // App\Livewire\Track\TrackForm / App\Services\OrderService::track().

@@ -84,6 +84,11 @@
                 <span>মোট</span>
                 <span class="text-orange-500">@taka($result->total)</span>
             </div>
+
+            <a href="{{ route('order.invoice', $result->order_token) }}" target="_blank"
+               class="mt-4 inline-block bg-brand-navy text-white font-semibold px-5 py-2.5 rounded-lg text-sm">
+                🧾 ইনভয়েস ডাউনলোড
+            </a>
         </div>
     @elseif($searched && ! $error)
         <p class="text-center text-gray-400">কোনো ফলাফল পাওয়া যায়নি।</p>
