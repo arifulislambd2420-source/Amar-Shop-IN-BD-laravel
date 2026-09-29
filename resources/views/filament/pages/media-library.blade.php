@@ -50,12 +50,24 @@
                             >
 
                             <div style="display: flex; gap: 0.375rem;">
+                                {{--
+                                    Plain '{{ $value }}' interpolation, not @js() — a
+                                    <x-component> tag's plain (non ":"-prefixed) attributes
+                                    are compiled as literal strings, so a custom @directive
+                                    call inside one is never expanded; it would ship to the
+                                    browser as the literal text "@js(...)" (confirmed via
+                                    Blade::compileString() while debugging this exact bug).
+                                    {{ }} echoes DO get compiled correctly in this position.
+                                    Safe without Js::from()'s extra quoting here because both
+                                    values are server-generated (a UUID-based filename, its
+                                    derived public URL) and can never contain a quote char.
+                                --}}
                                 <x-filament::button
                                     type="button"
                                     color="gray"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    onclick="navigator.clipboard.writeText(@js($file['url'])); new FilamentNotification().title('Copied!').success().send();"
+                                    onclick="navigator.clipboard.writeText('{{ $file['url'] }}'); new FilamentNotification().title('Copied!').success().send();"
                                 >
                                     Copy
                                 </x-filament::button>
@@ -65,7 +77,7 @@
                                     color="danger"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    wire:click="deleteFile(@js($file['basename']))"
+                                    wire:click="deleteFile('{{ $file['basename'] }}')"
                                     wire:confirm="Delete this image permanently? This cannot be undone."
                                 >
                                     Delete
