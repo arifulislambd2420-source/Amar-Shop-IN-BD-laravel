@@ -200,9 +200,16 @@ class BkashService
      * SteadfastCourierService), then config('services.bkash.*') as the
      * .env-backed default.
      */
+    /** All bkash_* rows, loaded once per instance instead of one query per credential read. */
+    private ?array $settings = null;
+
     private function credential(string $settingKey): ?string
     {
-        $value = SiteSetting::where('setting_key', $settingKey)->value('setting_value');
+        $this->settings ??= SiteSetting::whereIn('setting_key', ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password', 'bkash_base_url'])
+            ->pluck('setting_value', 'setting_key')
+            ->all();
+
+        $value = $this->settings[$settingKey] ?? null;
 
         if (in_array($settingKey, ['bkash_app_secret', 'bkash_password'], true) && filled($value)) {
             try {

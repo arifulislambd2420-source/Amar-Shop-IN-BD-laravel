@@ -70,7 +70,10 @@ class LandingOrderForm extends Component
             return null;
         }
 
-        if (! $landingPage->product_id) {
+        // ->product (not just product_id): the relation excludes a
+        // soft-deleted product, which used to surface to the customer as
+        // OrderService's raw English "Product N not found".
+        if (! $landingPage->product) {
             $this->error = 'এই মুহূর্তে অর্ডার করা যাচ্ছে না — পণ্য যুক্ত করা নেই।';
 
             return null;

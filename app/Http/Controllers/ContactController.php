@@ -22,6 +22,11 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
+        // Email is optional on the form, but contact_messages.email is NOT
+        // NULL (schema inherited from the old app) — a blank email used to
+        // 500. Store an empty string instead of null.
+        $data['email'] ??= '';
+
         ContactMessage::create($data);
 
         return redirect()->route('contact')->with('status', 'আপনার বার্তা পাঠানো হয়েছে। আমরা শীঘ্রই যোগাযোগ করব।');

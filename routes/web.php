@@ -9,6 +9,7 @@ use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\MediaFileController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Payment\BkashCallbackController;
@@ -18,6 +19,19 @@ use App\Http\Controllers\TrackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Fallback for uploaded images when the public/storage symlink is missing
+// (storage:link fails on this host) — never reached when the symlink
+// exists. No session/cookie middleware: an image shouldn't start a session.
+Route::get('/storage/media/{file}', [MediaFileController::class, 'show'])
+    ->name('media.file')
+    ->withoutMiddleware([
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+    ]);
 
 // Public product feed (Google Merchant / Meta compatible), matching the old
 // Next.js app's exact path so any already-configured Facebook/Google feed

@@ -66,6 +66,10 @@
     @endif
 
     <section class="px-4 py-10 border-t border-gray-100">
-        @livewire('landing.landing-order-form', ['landingPage' => $landingPage])
+        @if ($landingPage->product)
+            @livewire('landing.landing-order-form', ['landingPage' => $landingPage])
+        @else
+            <p class="text-center text-gray-500">এই পণ্যটি এই মুহূর্তে পাওয়া যাচ্ছে না।</p>
+        @endif
     </section>
 @endsection

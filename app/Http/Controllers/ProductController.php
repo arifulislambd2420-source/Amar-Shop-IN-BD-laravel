@@ -19,6 +19,7 @@ class ProductController extends Controller
         $similarProducts = Product::storefront()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
+            ->with('variants')
             ->take(4)
             ->get();
 

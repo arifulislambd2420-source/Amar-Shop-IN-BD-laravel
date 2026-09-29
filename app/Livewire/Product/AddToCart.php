@@ -26,13 +26,27 @@ class AddToCart extends Component
 
     public string $message = '';
 
-    public function mount(int $productId, string $mode = 'card', bool $iconOnly = false): void
+    /**
+     * The already-loaded product from the parent (e.g. a product card in a
+     * grid), reused for the first render so each card doesn't re-query its
+     * product + variants — that was 4 queries per card (28 on the
+     * homepage). Protected, so Livewire doesn't persist it: later requests
+     * (add/buyNow) just fall back to a fresh query.
+     */
+    protected ?Product $preloaded = null;
+
+    public function mount(int $productId, string $mode = 'card', bool $iconOnly = false, ?Product $product = null): void
     {
         $this->productId = $productId;
         $this->mode = $mode;
         $this->iconOnly = $iconOnly;
 
-        $product = Product::with('variants')->find($productId);
+        $product = $product && $product->id === $productId
+            ? $product->loadMissing('variants')
+            : Product::with('variants')->find($productId);
+
+        $this->preloaded = $product;
+
         if ($product && $product->variants->isNotEmpty()) {
             $this->variantId = $product->variants->first()->id;
         }
@@ -80,7 +94,7 @@ class AddToCart extends Component
 
     public function render()
     {
-        $product = Product::with('variants')->find($this->productId);
+        $product = $this->preloaded ?? Product::with('variants')->find($this->productId);
 
         return view('livewire.product.add-to-cart', [
             'product' => $product,

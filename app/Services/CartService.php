@@ -16,6 +16,14 @@ class CartService
 {
     protected const SESSION_KEY = 'cart';
 
+    /**
+     * lines() memoized for the rest of this request (the service is bound
+     * scoped in AppServiceProvider): the cart page, drawer, badge and
+     * checkout each call lines()/subtotal(), which used to re-query the same
+     * products up to 7 times per request. Every mutator below resets it.
+     */
+    protected ?array $lines = null;
+
     protected function key(int $productId, ?int $variantId): string
     {
         return $productId.':'.($variantId ?? 0);
@@ -42,6 +50,7 @@ class CartService
         }
 
         Session::put(self::SESSION_KEY, $cart);
+        $this->lines = null;
     }
 
     public function updateQuantity(int $productId, ?int $variantId, int $quantity): void
@@ -60,6 +69,7 @@ class CartService
         }
 
         Session::put(self::SESSION_KEY, $cart);
+        $this->lines = null;
     }
 
     public function remove(int $productId, ?int $variantId = null): void
@@ -67,11 +77,13 @@ class CartService
         $cart = $this->all();
         unset($cart[$this->key($productId, $variantId)]);
         Session::put(self::SESSION_KEY, $cart);
+        $this->lines = null;
     }
 
     public function clear(): void
     {
         Session::forget(self::SESSION_KEY);
+        $this->lines = null;
     }
 
     public function count(): int
@@ -86,13 +98,21 @@ class CartService
      */
     public function lines(): array
     {
+        return $this->lines ??= $this->buildLines();
+    }
+
+    protected function buildLines(): array
+    {
         $cart = $this->all();
         if (empty($cart)) {
             return [];
         }
 
         $productIds = array_unique(array_column($cart, 'product_id'));
-        $products = Product::whereIn('id', $productIds)->with('variants')->get()->keyBy('id');
+        // storefront(): a product hidden/drafted/archived by an admin after
+        // a customer carted it drops out of the cart, instead of staying
+        // purchasable at checkout.
+        $products = Product::storefront()->whereIn('id', $productIds)->with('variants')->get()->keyBy('id');
 
         $lines = [];
         foreach ($cart as $key => $row) {

@@ -26,7 +26,7 @@
             @endif
         </div>
         <div class="mt-auto">
-            @livewire('product.add-to-cart', ['productId' => $product->id, 'mode' => 'card'], key('add-to-cart-card-'.$product->id))
+            @livewire('product.add-to-cart', ['productId' => $product->id, 'mode' => 'card', 'product' => $product], key('add-to-cart-card-'.$product->id))
         </div>
     </div>
 </div>

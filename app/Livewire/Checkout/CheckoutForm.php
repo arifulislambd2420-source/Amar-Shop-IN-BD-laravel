@@ -123,10 +123,17 @@ class CheckoutForm extends Component
         }
 
         $cart = app(CartService::class);
-        $lines = $cart->lines();
+
+        // CartService clamps a line's quantity to current stock, so an
+        // out-of-stock line comes back with quantity 0. Those must not reach
+        // OrderService — an all-out-of-stock cart used to produce an order
+        // of zero-quantity items charged only the delivery fee.
+        $lines = array_values(array_filter($cart->lines(), fn ($l) => $l['quantity'] >= 1));
 
         if (empty($lines)) {
-            $this->error = 'আপনার কার্টটি খালি।';
+            $this->error = $cart->lines() === []
+                ? 'আপনার কার্টটি খালি।'
+                : 'আপনার কার্টের পণ্যগুলো এই মুহূর্তে স্টকে নেই।';
 
             return null;
         }

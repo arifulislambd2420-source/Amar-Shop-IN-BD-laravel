@@ -46,7 +46,7 @@
                 স্টক: {{ $product->stock > 0 ? "{$product->stock} টি আছে" : 'স্টক নেই' }}
             </p>
             <div class="max-w-xs">
-                @livewire('product.add-to-cart', ['productId' => $product->id, 'mode' => 'detail'])
+                @livewire('product.add-to-cart', ['productId' => $product->id, 'mode' => 'detail', 'product' => $product])
             </div>
         </div>
     </div>

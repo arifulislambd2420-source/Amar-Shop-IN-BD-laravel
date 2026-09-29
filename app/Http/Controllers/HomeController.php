@@ -23,11 +23,13 @@ class HomeController extends Controller
         $sideBanners = Banner::where('position', 'side')->where('active', true)->orderBy('sort_order')->get();
         $promoBanners = Banner::where('position', 'promo')->where('active', true)->orderBy('sort_order')->get();
 
-        $discounted = Product::storefront()->onSale()->latest()->take(8)->get();
+        // ->with('variants'): every product card's AddToCart reads the
+        // product's variants; eager-loading here avoids a query per card.
+        $discounted = Product::storefront()->onSale()->with('variants')->latest()->take(8)->get();
 
-        $products = Product::storefront()->latest()->take(8)->get();
+        $products = Product::storefront()->with('variants')->latest()->take(8)->get();
 
-        $brands = Brand::has('products')->get();
+        $brands = Brand::whereHas('products', fn ($q) => $q->storefront())->get();
 
         $blogs = Blog::whereNotNull('published_at')
             ->where('published_at', '<=', now())
@@ -35,10 +37,18 @@ class HomeController extends Controller
             ->take(5)
             ->get();
 
-        $activeFlashSale = FlashSale::with('items.product')
+        // Only storefront-visible products: a hidden/draft/inactive (or
+        // soft-deleted) product in a flash sale used to still show here,
+        // linking to a product page that 404s.
+        $activeFlashSale = FlashSale::with(['items.product' => fn ($q) => $q->storefront()->with('variants')])
             ->where('is_active', true)
             ->where('end_time', '>', now())
             ->first();
+
+        $activeFlashSale?->setRelation(
+            'items',
+            $activeFlashSale->items->filter(fn ($item) => $item->product !== null)->values(),
+        );
 
         $sectionCategories = Category::whereIn('slug', self::SECTION_CATEGORIES)->get()->keyBy('slug');
         $sectionProducts = collect(self::SECTION_CATEGORIES)
@@ -47,7 +57,7 @@ class HomeController extends Controller
                     return [$slug => collect()];
                 }
 
-                return [$slug => Product::storefront()->where('category_id', $sectionCategories[$slug]->id)->take(8)->get()];
+                return [$slug => Product::storefront()->with('variants')->where('category_id', $sectionCategories[$slug]->id)->take(8)->get()];
             });
 
         return view('home.index', compact(

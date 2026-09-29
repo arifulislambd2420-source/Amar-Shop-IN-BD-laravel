@@ -13,7 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One CartService per request, so its memoized lines() is shared by
+        // the cart page, drawer, badge and checkout within that request.
+        $this->app->scoped(\App\Services\CartService::class);
     }
 
     /**

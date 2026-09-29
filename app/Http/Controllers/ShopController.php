@@ -13,6 +13,7 @@ class ShopController extends Controller
     {
         $products = Product::storefront()
             ->filter($request->only(['category', 'brand', 'q', 'sort']))
+            ->with('variants') // read by every product card's AddToCart
             ->paginate(12)
             ->withQueryString();
 
@@ -32,6 +33,7 @@ class ShopController extends Controller
         $products = Product::storefront()
             ->onSale()
             ->filter($request->only(['category', 'brand', 'q', 'sort']))
+            ->with('variants') // read by every product card's AddToCart
             ->paginate(12)
             ->withQueryString();
 

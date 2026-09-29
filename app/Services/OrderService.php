@@ -56,6 +56,10 @@ class OrderService
                 }
 
                 $quantity = (int) $line['quantity'];
+                if ($quantity < 1) {
+                    throw new RuntimeException("\"{$product->name}\" এর পরিমাণ সঠিক নয়");
+                }
+
                 $unitPrice = (float) ($product->sale_price ?? $product->price);
                 $productName = $product->name;
                 $variantId = null;
