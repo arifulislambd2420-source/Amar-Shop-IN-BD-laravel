@@ -23,13 +23,27 @@ class OrderObserver
     {
         // COD is confirmed the moment it's placed. A bKash order is not
         // confirmed until it's paid — see updated().
-        if ($order->payment_method === 'cod') {
+        //
+        // Flagged (suspected duplicate/fake) orders get no confirmation
+        // yet: texting a possibly-fake number costs money and bothers
+        // whoever owns it. It is sent if an admin clears the flag — below.
+        if ($order->payment_method === 'cod' && ! $order->is_flagged) {
             $this->send($order, SmsService::EVENT_CONFIRMED);
         }
     }
 
     public function updated(Order $order): void
     {
+        // Admin reviewed a flagged COD order and cleared the flag: it's now
+        // a normal confirmed order. (SmsService dedupes, so this can never
+        // double-send.)
+        if ($order->wasChanged('is_flagged')
+            && ! $order->is_flagged
+            && $order->payment_method === 'cod'
+            && $order->status !== 'cancelled') {
+            $this->send($order, SmsService::EVENT_CONFIRMED);
+        }
+
         // bKash payment just succeeded. Not for on_hold: money arrived but
         // stock ran out, so "confirmed" would be a promise we can't keep.
         if ($order->wasChanged('payment_status')

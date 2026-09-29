@@ -13,6 +13,9 @@ class Order extends Model
 
     protected $fillable = [
         'landing_page_id',
+        'is_flagged',
+        'flag_reason',
+        'ip_address',
         'order_token',
         'invoice_no',
         'customer_name',
@@ -45,8 +48,20 @@ class Order extends Model
             'shipping_fee' => 'decimal:2',
             'discount' => 'decimal:2',
             'total' => 'decimal:2',
+            'is_flagged' => 'boolean',
             'created_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Orders that count as a real purchase attempt for fraud rules: not
+     * cancelled, and not a bKash order that never got paid (an abandoned or
+     * failed bKash attempt followed by a retry is normal, not a duplicate).
+     */
+    public function scopeCounted($query)
+    {
+        return $query->where('status', '!=', 'cancelled')
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'bkash')->orWhereNotIn('payment_status', ['unpaid', 'failed']));
     }
 
     public function items(): HasMany

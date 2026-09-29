@@ -8,8 +8,10 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 /**
  * Order creation — mirrors the old Next.js app's createOrder() in
@@ -31,7 +33,8 @@ class OrderService
      *         landing page's admin-set price_override) — it is never taken
      *         from client/request input directly, only from trusted DB data
      *         looked up beforehand by the caller.
-     * @param  array  $customer  keys: customer_name, phone, email, district, thana, postcode, address, notes, payment_method
+     * @param  array  $customer  keys: customer_name, phone, email, district, thana, postcode, address, notes, payment_method,
+     *         ip_address (optional; enables the per-IP fraud rule)
      * @param  bool  $reserveStock  Decrement stock now (the default — correct
      *         for COD, where the order itself is the commitment). Pass false
      *         for a gateway payment (bKash): stock is only ever decremented
@@ -128,12 +131,20 @@ class OrderService
 
             $total = $subtotal + $shippingFee - $discount;
 
+            $phone = $this->normalizePhone($customer['phone']);
+            $ip = $customer['ip_address'] ?? null;
+            $flagReasons = $this->flagReasons($phone, array_map(fn ($li) => $li['product']->id, $lineItems), $ip);
+
             $order = Order::create([
                 'landing_page_id' => $landingPageId,
+                'is_flagged' => $flagReasons !== [],
+                'flag_reason' => $flagReasons ? implode("
+", $flagReasons) : null,
+                'ip_address' => $ip,
                 'order_token' => Str::random(40),
                 'invoice_no' => 'INV-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_name' => $customer['customer_name'],
-                'phone' => $this->normalizePhone($customer['phone']),
+                'phone' => $phone,
                 'email' => $customer['email'] ?? null,
                 'district' => $customer['district'],
                 'thana' => $customer['thana'],
@@ -171,6 +182,25 @@ class OrderService
 
             return $order;
         });
+    }
+
+    /**
+     * Reasons this order looks duplicate/fake (empty = normal). Flag-only:
+     * the order is created either way, and a bug in the check must never
+     * cost a real sale, so any failure just means "not flagged".
+     *
+     * @param  list<int>  $productIds
+     * @return list<string>
+     */
+    protected function flagReasons(string $phone, array $productIds, ?string $ip): array
+    {
+        try {
+            return app(OrderRiskService::class)->evaluate($phone, $productIds, $ip);
+        } catch (Throwable $e) {
+            Log::warning('Order risk check failed', ['error' => $e->getMessage()]);
+
+            return [];
+        }
     }
 
     protected function normalizePhone(string $raw): string

@@ -103,6 +103,7 @@ class LandingOrderForm extends Component
                 'postcode' => null,
                 'address' => $this->address,
                 'notes' => 'Landing page: '.$landingPage->title,
+                'ip_address' => request()->ip(),
                 'payment_method' => 'cod',
             ], null, $landingPage->id);
         } catch (RuntimeException $e) {

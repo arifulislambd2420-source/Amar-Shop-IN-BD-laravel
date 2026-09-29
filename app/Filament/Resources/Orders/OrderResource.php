@@ -8,19 +8,23 @@ use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Models\Order;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
@@ -74,6 +78,24 @@ class OrderResource extends Resource
         'cancelled' => 'danger',
         'on_hold' => 'danger',
     ];
+
+    /** Orders still waiting for an admin to review a fraud flag. */
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Order::where('is_flagged', true)->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'danger';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Flagged orders to review';
+    }
 
     public static function canCreate(): bool
     {
@@ -139,6 +161,22 @@ class OrderResource extends Resource
                             ->disabled()
                             ->columnSpanFull(),
                     ]),
+                Section::make('Fraud review')
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('is_flagged')
+                            ->label('Flagged for review')
+                            ->helperText('Turn off once you have checked this order (a COD order then gets its confirmation SMS).')
+                            ->columnSpanFull(),
+                        Textarea::make('flag_reason')
+                            ->label('Why it was flagged')
+                            ->disabled()
+                            ->rows(3)
+                            ->columnSpanFull(),
+                        TextInput::make('ip_address')
+                            ->label('Customer IP')
+                            ->disabled(),
+                    ]),
                 Section::make('Totals')
                     ->columns(4)
                     ->schema([
@@ -185,7 +223,18 @@ class OrderResource extends Resource
                     ->label('Invoice')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (Order $record): string => '#' . $record->id),
+                    ->description(fn (Order $record): string => '#' . $record->id)
+                    ->color(fn (Order $record): ?string => $record->is_flagged ? 'danger' : null)
+                    ->weight(fn (Order $record): ?FontWeight => $record->is_flagged ? FontWeight::Bold : null),
+                TextColumn::make('is_flagged')
+                    ->label('Review')
+                    ->badge()
+                    ->state(fn (Order $record): ?string => $record->is_flagged ? 'Flagged' : null)
+                    ->color('danger')
+                    ->icon(Heroicon::OutlinedFlag)
+                    ->tooltip(fn (Order $record): ?string => $record->is_flagged ? $record->flag_reason : null)
+                    ->wrap()
+                    ->sortable(),
                 TextColumn::make('customer_name')
                     ->searchable()
                     ->sortable(),
@@ -218,6 +267,11 @@ class OrderResource extends Resource
                     ->options(self::STATUS_OPTIONS),
                 SelectFilter::make('payment_status')
                     ->options(self::PAYMENT_STATUS_OPTIONS),
+                TernaryFilter::make('is_flagged')
+                    ->label('Fraud review')
+                    ->placeholder('All orders')
+                    ->trueLabel('Flagged only')
+                    ->falseLabel('Not flagged'),
                 Filter::make('created_at')
                     ->schema([
                         DatePicker::make('from')->label('From'),
@@ -230,6 +284,14 @@ class OrderResource extends Resource
                     }),
             ])
             ->recordActions([
+                Action::make('clearFlag')
+                    ->label('Mark reviewed')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('success')
+                    ->visible(fn (Order $record): bool => $record->is_flagged)
+                    ->modalDescription(fn (Order $record): string => (string) $record->flag_reason)
+                    ->requiresConfirmation()
+                    ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
                 ViewAction::make(),
                 EditAction::make(),
             ]);

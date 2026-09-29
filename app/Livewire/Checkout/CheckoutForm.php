@@ -154,6 +154,7 @@ class CheckoutForm extends Component
                 'postcode' => $this->postcode ?: null,
                 'address' => $this->address,
                 'notes' => $this->notes,
+                'ip_address' => request()->ip(),
                 // COD or bKash (validated in rules()). SSLCommerz is still
                 // shown in the UI as disabled/"coming soon" only.
                 'payment_method' => $this->payment_method,
