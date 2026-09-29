@@ -54,4 +54,17 @@ return [
         'url' => env('CLOUDINARY_URL'),
     ],
 
+    // bKash Tokenized Checkout — these .env values are only fallback
+    // defaults. The admin-editable, encrypted values in site_settings (see
+    // App\Filament\Pages\PaymentSettings, same pattern as Courier) always
+    // take precedence when set; App\Services\Payment\BkashService reads
+    // from site_settings first and falls back to these.
+    'bkash' => [
+        'app_key' => env('BKASH_APP_KEY'),
+        'app_secret' => env('BKASH_APP_SECRET'),
+        'username' => env('BKASH_USERNAME'),
+        'password' => env('BKASH_PASSWORD'),
+        'base_url' => env('BKASH_BASE_URL', 'https://tokenized.sandbox.bka.sh/v1.2.0-beta'),
+    ],
+
 ];

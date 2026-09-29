@@ -32,14 +32,19 @@ class OrderService
      *         from client/request input directly, only from trusted DB data
      *         looked up beforehand by the caller.
      * @param  array  $customer  keys: customer_name, phone, email, district, thana, postcode, address, notes, payment_method
+     * @param  bool  $reserveStock  Decrement stock now (the default — correct
+     *         for COD, where the order itself is the commitment). Pass false
+     *         for a gateway payment (bKash): stock is only ever decremented
+     *         once payment is confirmed, by finalizeBkashPayment() below, so
+     *         an abandoned/failed payment never holds stock hostage.
      */
-    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null): Order
+    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null, bool $reserveStock = true): Order
     {
         if (empty($cartLines)) {
             throw new RuntimeException('Cart is empty');
         }
 
-        return DB::transaction(function () use ($cartLines, $customer, $couponCode, $landingPageId) {
+        return DB::transaction(function () use ($cartLines, $customer, $couponCode, $landingPageId, $reserveStock) {
             $lineItems = [];
 
             foreach ($cartLines as $line) {
@@ -151,10 +156,12 @@ class OrderService
                     'line_total' => $li['line_total'],
                 ]);
 
-                if ($li['variant_id']) {
-                    ProductVariant::where('id', $li['variant_id'])->decrement('stock', $li['quantity']);
-                } else {
-                    Product::where('id', $li['product']->id)->decrement('stock', $li['quantity']);
+                if ($reserveStock) {
+                    if ($li['variant_id']) {
+                        ProductVariant::where('id', $li['variant_id'])->decrement('stock', $li['quantity']);
+                    } else {
+                        Product::where('id', $li['product']->id)->decrement('stock', $li['quantity']);
+                    }
                 }
             }
 
@@ -174,6 +181,115 @@ class OrderService
     public function findByToken(string $token): ?Order
     {
         return Order::with('items')->where('order_token', $token)->first();
+    }
+
+    /**
+     * Looked up by BkashCallbackController — a bKash paymentID, stored on
+     * the order at createPayment() time. Restricting to payment_method
+     * ='bkash' AND payment_status='unpaid' means a callback hit with a
+     * paymentID that isn't a real, still-pending order of ours (a guess, or
+     * one already finalized) simply finds nothing rather than letting an
+     * attacker confirm an arbitrary order by paymentID alone.
+     */
+    public function findPendingBkashOrder(string $paymentId): ?Order
+    {
+        return Order::with('items')
+            ->where('transaction_id', $paymentId)
+            ->where('payment_method', 'bkash')
+            ->where('payment_status', 'unpaid')
+            ->first();
+    }
+
+    /**
+     * Any bKash order by transaction_id regardless of payment_status — used
+     * only for an idempotent re-visit of the callback URL (the customer's
+     * back/forward button, a double-submitted redirect) after
+     * findPendingBkashOrder() already found nothing because it was already
+     * finalized. Never used to decide whether to confirm a payment.
+     */
+    public function findByTransactionId(string $transactionId): ?Order
+    {
+        return Order::with('items')
+            ->where('transaction_id', $transactionId)
+            ->where('payment_method', 'bkash')
+            ->first();
+    }
+
+    /**
+     * Confirms a bKash payment: re-validates stock fresh (row-locked) and
+     * decrements it now — this is the only point a bKash order's stock is
+     * ever touched — then marks the order paid. $trxId is bKash's final
+     * settlement transaction id (overwrites the paymentID that was stored
+     * in transaction_id at createPayment() time; paymentID is no longer
+     * needed once execute() has succeeded).
+     *
+     * If stock ran out between checkout and payment (rare, since the
+     * customer already paid bKash), the order is NOT silently marked as a
+     * normal paid order: it's flagged on_hold with a note, for an admin to
+     * resolve by hand (restock/refund) — money already moved, so this can
+     * never fail loudly back to the customer.
+     */
+    public function finalizeBkashPayment(Order $order, string $trxId): void
+    {
+        DB::transaction(function () use ($order, $trxId) {
+            $order = Order::with('items')->lockForUpdate()->find($order->id);
+
+            $stockConflict = null;
+
+            foreach ($order->items as $item) {
+                if ($item->product_id === null) {
+                    continue;
+                }
+
+                // The order stores only product_id, not which variant was
+                // ordered — this mirrors OrderItem's own schema. Falling
+                // back to the base product's stock is the same trade-off
+                // OrderService already made at order-creation time.
+                $product = Product::where('id', $item->product_id)->lockForUpdate()->first();
+
+                if (! $product || $product->stock < $item->quantity) {
+                    $stockConflict = $item->product_name;
+
+                    break;
+                }
+            }
+
+            if ($stockConflict) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'transaction_id' => $trxId,
+                    'status' => 'on_hold',
+                    'notes' => trim($order->notes."\n[bKash paid, but \"{$stockConflict}\" is now out of stock — needs manual review.]"),
+                ]);
+
+                return;
+            }
+
+            foreach ($order->items as $item) {
+                if ($item->product_id !== null) {
+                    Product::where('id', $item->product_id)->decrement('stock', $item->quantity);
+                }
+            }
+
+            $order->update([
+                'payment_status' => 'paid',
+                'transaction_id' => $trxId,
+                'status' => 'processing',
+            ]);
+        });
+    }
+
+    /**
+     * A bKash payment that failed, was cancelled, or couldn't be confirmed.
+     * Stock was never reserved for this order (createOrder was called with
+     * $reserveStock: false), so there's nothing to release.
+     */
+    public function markBkashFailed(Order $order, string $reason): void
+    {
+        $order->update([
+            'payment_status' => 'failed',
+            'notes' => trim($order->notes."\n[bKash payment failed: {$reason}]"),
+        ]);
     }
 
     /**

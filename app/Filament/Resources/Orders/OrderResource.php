@@ -45,6 +45,9 @@ class OrderResource extends Resource
         'delivered' => 'Delivered',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
+        // Set by OrderService::finalizeBkashPayment when bKash payment
+        // succeeded but stock ran out in the meantime — needs manual review.
+        'on_hold' => 'On hold (needs review)',
     ];
 
     public const PAYMENT_METHOD_OPTIONS = [
@@ -58,6 +61,7 @@ class OrderResource extends Resource
         'unpaid' => 'Unpaid',
         'advance_paid' => 'Advance Paid',
         'paid' => 'Paid (Full)',
+        'failed' => 'Failed',
     ];
 
     public const STATUS_COLORS = [
@@ -68,6 +72,7 @@ class OrderResource extends Resource
         'delivered' => 'success',
         'completed' => 'success',
         'cancelled' => 'danger',
+        'on_hold' => 'danger',
     ];
 
     public static function canCreate(): bool
@@ -129,6 +134,10 @@ class OrderResource extends Resource
                             ->numeric()
                             ->prefix('৳')
                             ->default(0),
+                        TextInput::make('transaction_id')
+                            ->label('Transaction ID (bKash)')
+                            ->disabled()
+                            ->columnSpanFull(),
                     ]),
                 Section::make('Totals')
                     ->columns(4)

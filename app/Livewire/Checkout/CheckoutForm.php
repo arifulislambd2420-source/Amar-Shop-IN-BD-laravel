@@ -5,6 +5,7 @@ namespace App\Livewire\Checkout;
 use App\Models\Coupon;
 use App\Services\CartService;
 use App\Services\OrderService;
+use App\Services\Payment\BkashService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use RuntimeException;
@@ -63,6 +64,7 @@ class CheckoutForm extends Component
             'postcode' => ['nullable', 'string'],
             'address' => ['required', 'string'],
             'notes' => ['nullable', 'string'],
+            'payment_method' => ['required', 'in:cod,bkash'],
         ];
     }
 
@@ -107,10 +109,18 @@ class CheckoutForm extends Component
         $this->couponError = '';
     }
 
-    public function placeOrder(OrderService $orderService)
+    public function placeOrder(OrderService $orderService, BkashService $bkash)
     {
         $this->error = '';
         $this->validate();
+
+        $isBkash = $this->payment_method === 'bkash';
+
+        if ($isBkash && ! $bkash->configured()) {
+            $this->error = 'বিকাশ পেমেন্ট এই মুহূর্তে চালু নেই। অনুগ্রহ করে ক্যাশ অন ডেলিভারি বেছে নিন।';
+
+            return null;
+        }
 
         $cart = app(CartService::class);
         $lines = $cart->lines();
@@ -137,16 +147,35 @@ class CheckoutForm extends Component
                 'postcode' => $this->postcode ?: null,
                 'address' => $this->address,
                 'notes' => $this->notes,
-                // Only COD is a real, working payment method right now — the
-                // others are shown in the UI as disabled/cosmetic, mirroring
-                // the old app's mock bkash/sslcommerz/advance flows which
-                // never actually charged anyone (Phase 6: real gateways).
-                'payment_method' => 'cod',
-            ], $this->appliedCoupon['code'] ?? null);
+                // COD or bKash (validated in rules()). SSLCommerz is still
+                // shown in the UI as disabled/"coming soon" only.
+                'payment_method' => $this->payment_method,
+                // bKash: don't touch stock until payment is confirmed
+                // (OrderService::finalizeBkashPayment), so an abandoned or
+                // failed payment never holds stock.
+            ], $this->appliedCoupon['code'] ?? null, null, reserveStock: ! $isBkash);
         } catch (RuntimeException $e) {
             $this->error = $e->getMessage();
 
             return null;
+        }
+
+        if ($isBkash) {
+            try {
+                // Amount sent to bKash is $order->total, computed server-side
+                // by OrderService from DB prices — never client input.
+                $payment = $bkash->createPayment($order);
+            } catch (RuntimeException $e) {
+                $orderService->markBkashFailed($order, $e->getMessage());
+                $this->error = 'বিকাশ পেমেন্ট শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন অথবা ক্যাশ অন ডেলিভারি বেছে নিন।';
+
+                return null;
+            }
+
+            // Cart is intentionally NOT cleared here — if the customer
+            // cancels or the payment fails, they come back to a full cart.
+            // BkashCallbackController clears it only on confirmed success.
+            return redirect()->away($payment['bkashURL']);
         }
 
         // GTM purchase — flashed to session and fired once from the order
@@ -173,13 +202,14 @@ class CheckoutForm extends Component
         return redirect()->route('order.show', $order->order_token);
     }
 
-    public function render(CartService $cart)
+    public function render(CartService $cart, BkashService $bkash)
     {
         return view('livewire.checkout.checkout-form', [
             'lines' => $cart->lines(),
             'subtotal' => $cart->subtotal(),
             'shippingFee' => OrderService::SHIPPING_FEE,
             'districts' => config('districts'),
+            'bkashAvailable' => $bkash->configured(),
         ]);
     }
 }

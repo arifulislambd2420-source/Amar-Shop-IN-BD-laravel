@@ -24,6 +24,7 @@ class Order extends Model
         'address',
         'payment_method',
         'payment_status',
+        'transaction_id',
         'advance_amount',
         'status',
         'subtotal',

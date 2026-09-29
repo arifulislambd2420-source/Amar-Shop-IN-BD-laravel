@@ -49,20 +49,31 @@
         <div class="border border-gray-200 rounded-lg p-4">
             <div class="font-medium mb-3">পেমেন্ট পদ্ধতি</div>
             <div class="flex flex-col gap-3">
-                <label class="flex items-start gap-3 p-3 rounded border cursor-pointer border-orange-500 bg-orange-50">
-                    <input type="radio" checked disabled class="mt-1">
+                <label class="flex items-start gap-3 p-3 rounded border cursor-pointer {{ $payment_method === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200' }}">
+                    <input type="radio" wire:model.live="payment_method" value="cod" class="mt-1">
                     <div>
                         <div class="font-medium">ক্যাশ অন ডেলিভারি (Cash on Delivery)</div>
                         <div class="text-xs text-gray-500">পণ্য হাতে পেয়ে ডেলিভারি ম্যানকে পেমেন্ট করুন</div>
                     </div>
                 </label>
-                <label class="flex items-start gap-3 p-3 rounded border border-gray-200 opacity-50 cursor-not-allowed">
-                    <input type="radio" disabled class="mt-1">
-                    <div>
-                        <div class="font-medium">বিকাশ / নগদ (bKash / Nagad)</div>
-                        <div class="text-xs text-gray-500">শীঘ্রই আসছে</div>
-                    </div>
-                </label>
+                @if ($bkashAvailable)
+                    <label class="flex items-start gap-3 p-3 rounded border cursor-pointer {{ $payment_method === 'bkash' ? 'border-orange-500 bg-orange-50' : 'border-gray-200' }}">
+                        <input type="radio" wire:model.live="payment_method" value="bkash" class="mt-1">
+                        <div>
+                            <div class="font-medium">বিকাশ (bKash)</div>
+                            <div class="text-xs text-gray-500">অর্ডার করলে বিকাশের পেমেন্ট পেজে নিয়ে যাওয়া হবে, সেখানে পেমেন্ট সম্পন্ন করুন</div>
+                        </div>
+                    </label>
+                @else
+                    <label class="flex items-start gap-3 p-3 rounded border border-gray-200 opacity-50 cursor-not-allowed">
+                        <input type="radio" disabled class="mt-1">
+                        <div>
+                            <div class="font-medium">বিকাশ (bKash)</div>
+                            <div class="text-xs text-gray-500">শীঘ্রই আসছে</div>
+                        </div>
+                    </label>
+                @endif
+                @error('payment_method') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 <label class="flex items-start gap-3 p-3 rounded border border-gray-200 opacity-50 cursor-not-allowed">
                     <input type="radio" disabled class="mt-1">
                     <div>

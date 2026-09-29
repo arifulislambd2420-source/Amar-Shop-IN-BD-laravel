@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Payment\BkashCallbackController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\TrackController;
@@ -41,6 +42,11 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 
 Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
+
+// bKash redirects the customer's browser here after the hosted payment
+// page — see App\Http\Controllers\Payment\BkashCallbackController for why
+// the query string alone is never trusted to confirm anything.
+Route::get('/payment/bkash/callback', [BkashCallbackController::class, 'callback'])->name('payment.bkash.callback');
 
 // Invariant #2: order confirmation is looked up ONLY by the random
 // order_token, never the sequential numeric id.

@@ -43,6 +43,27 @@
     </div>
 
     <div class="border border-gray-200 rounded-xl p-5 mt-4 text-sm space-y-1">
+        <div class="font-semibold mb-2">পেমেন্ট</div>
+        @if ($order->payment_method === 'bkash')
+            <p>বিকাশ —
+                @if ($order->payment_status === 'paid')
+                    <span class="text-green-600 font-semibold">পরিশোধিত</span>
+                @else
+                    <span class="text-red-600 font-semibold">অপরিশোধিত</span>
+                @endif
+            </p>
+            @if ($order->payment_status === 'paid' && $order->transaction_id)
+                <p class="text-gray-500">Transaction ID: {{ $order->transaction_id }}</p>
+            @endif
+            @if ($order->status === 'on_hold')
+                <p class="text-orange-600">আপনার পেমেন্ট পেয়েছি, তবে একটি পণ্যের স্টক নিয়ে সমস্যা হয়েছে — আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।</p>
+            @endif
+        @else
+            <p>ক্যাশ অন ডেলিভারি</p>
+        @endif
+    </div>
+
+    <div class="border border-gray-200 rounded-xl p-5 mt-4 text-sm space-y-1">
         <div class="font-semibold mb-2">ডেলিভারি ঠিকানা</div>
         <p>{{ $order->customer_name }} — {{ $order->phone }}</p>
         <p>{{ $order->address }}, {{ $order->thana }}, {{ $order->district }} {{ $order->postcode }}</p>
