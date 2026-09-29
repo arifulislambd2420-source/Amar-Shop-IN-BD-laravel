@@ -2,34 +2,50 @@
 
 namespace App\Filament\Support;
 
-use App\Services\CloudinaryService;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * A FileUpload field, preconfigured so the uploaded image is sent to
- * Cloudinary (folder: amarshopbd, matching the old app) and the field's
- * stored state is the resulting secure_url string — the same plain
- * varchar URL the existing image/logo/icon columns already expect, so no
- * DB schema change is needed.
+ * A FileUpload field that stores images on the local `public` disk
+ * (storage/app/public/media, requires the public/storage symlink — see
+ * `php artisan storage:link`) instead of a remote service. Despite the
+ * class name — kept as-is so every call site (ProductResource,
+ * BannerResource, SiteSettings, LandingPageResource,
+ * ImagesRelationManager) needs zero changes — this no longer talks to
+ * Cloudinary at all.
  *
- * If Cloudinary credentials are not set (e.g. local dev), the field still
- * renders normally; only the actual upload action fails, with a Filament
- * notification instead of a crash.
+ * The field's stored state is still a full absolute URL string (e.g.
+ * https://amarshopinbd.com/storage/media/<uuid>.webp), the exact same shape
+ * Cloudinary's secure_url was, so every existing image/logo/icon column and
+ * every blade view doing <img src="{{ $model->image }}"> keeps working
+ * unchanged. Rows saved before this change still hold
+ * https://res.cloudinary.com/... URLs — those images are untouched and
+ * keep loading from Cloudinary; only new uploads go to the local disk.
+ *
+ * App\Services\CloudinaryService is intentionally left in place and
+ * untouched (nothing here calls it anymore) — removing it/the Cloudinary
+ * package/config is a separate, later cleanup.
  */
 class CloudinaryUpload
 {
+    /** Relative to the `public` disk root (storage/app/public/). */
+    public const DIRECTORY = 'media';
+
     public static function make(string $name): FileUpload
     {
         return FileUpload::make($name)
             ->image()
             ->imageEditor()
-            ->maxSize(5120)
-            // The field's state is a full Cloudinary secure_url, not a path
-            // on any Laravel-managed disk, so skip Filament's default
-            // disk-exists/size/mime lookups (they'd fail against a remote
-            // URL) and tell it how to preview an already-stored URL.
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->maxSize(5120) // 5 MB
+            // The field's state is a full URL, not a bare disk-relative
+            // path, so skip Filament's default disk-exists/size/mime
+            // lookups (they'd try to match the URL string itself against a
+            // file on disk and fail) and tell it how to preview an
+            // already-stored URL instead.
             ->fetchFileInformation(false)
             ->getUploadedFileUsing(fn (?string $file): ?array => filled($file) ? [
                 'name' => basename(parse_url($file, PHP_URL_PATH) ?: $file),
@@ -39,10 +55,19 @@ class CloudinaryUpload
             ] : null)
             ->saveUploadedFileUsing(function ($file) {
                 try {
-                    return app(CloudinaryService::class)->upload($file);
+                    // Random/unique filename — never trust or reuse the
+                    // client's original name (collisions, overwrites, path
+                    // tricks). Extension is safe to keep: Filament/->image()
+                    // and acceptedFileTypes() above already validated the
+                    // file before this callback ever runs.
+                    $filename = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
+
+                    $path = $file->storeAs(self::DIRECTORY, $filename, 'public');
+
+                    return Storage::disk('public')->url($path);
                 } catch (Throwable $e) {
                     Notification::make()
-                        ->title('Cloudinary upload failed')
+                        ->title('Image upload failed')
                         ->body($e->getMessage())
                         ->danger()
                         ->send();
@@ -50,6 +75,6 @@ class CloudinaryUpload
                     return null;
                 }
             })
-            ->helperText('Uploads to Cloudinary (folder: amarshopbd). Without CLOUDINARY_* env vars set, uploads will fail — expected in local dev.');
+            ->helperText('Saved on the server (storage/app/public/media). JPG, PNG or WEBP, max 5 MB.');
     }
 }
