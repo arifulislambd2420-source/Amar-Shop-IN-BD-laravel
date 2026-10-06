@@ -6,7 +6,7 @@
     $tel = $phone !== '' ? preg_replace('/[^0-9+]/', '', $phone) : '';
 @endphp
 <section id="order-form" class="px-4 py-8 md:py-12">
-    <div class="max-w-4xl mx-auto space-y-5">
+    <div class="max-w-5xl mx-auto space-y-5">
         <div class="rounded-2xl border-2 border-dashed border-secondary/50 bg-secondary/10 px-5 py-7 text-center">
             @if (! empty($d['pill']))
                 <span class="mb-2 inline-block rounded-full bg-white px-3 py-1 text-xs font-semibold text-secondary ring-1 ring-secondary/30">{{ $d['pill'] }}</span>
@@ -40,7 +40,7 @@
                     'landingPage' => $landingPage,
                     'heading' => '',
                     'rootId' => 'lp-order-form',
-                    'buttonText' => $d['button_text'] ?? null,
+                    'buttonText' => $d['button_text'] ?? '',
                     'note' => $d['note'] ?? '',
                 ], key('lp-order-'.$landingPage->id))
             @else

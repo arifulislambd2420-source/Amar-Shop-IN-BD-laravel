@@ -232,6 +232,7 @@ class LandingPageResource extends Resource
         return [
             self::block('hero', 'Hero', 'heroicon-o-star', [
                 TextInput::make('headline')->label('শিরোনাম')->required()->maxLength(255)->columnSpanFull(),
+                TextInput::make('highlight')->label('হাইলাইট লাইন (ঐচ্ছিক)')->placeholder('এই সুযোগ সীমিত সময়ের জন্য এবং স্টক থাকা পর্যন্ত')->maxLength(255)->columnSpanFull(),
                 Textarea::make('description')->label('বর্ণনা (ঐচ্ছিক)')->rows(3)->columnSpanFull(),
                 TextInput::make('offer_line')->label('দাম/অফার লাইন (বা রঙিন দ্বিতীয় শিরোনাম)')->placeholder('মূল্যঃ ১ পিস ৪৮০/- টাকা, ৩ পিস ১১৫০/- টাকা')->maxLength(255)->columnSpanFull(),
                 TextInput::make('button_text')->label('বাটনের লেখা')->default('অর্ডার করুন')->maxLength(100),
@@ -297,11 +298,13 @@ class LandingPageResource extends Resource
                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                     ->addActionLabel('কালার/ডিজাইন যোগ করুন')->defaultItems(0)->columnSpanFull(),
                 TextInput::make('button_text')->label('গ্রিডের বাটনের লেখা')->default('অর্ডার করুন')->maxLength(100),
+                Toggle::make('size_enabled')->label('অর্ডার ফর্মে সাইজের ঘর দেখাও')->default(true)->live()->columnSpanFull(),
                 TextInput::make('size_label')->label('সাইজের লেবেল')->default('সাইজ নির্বাচন করুন')->maxLength(100),
-                TagsInput::make('sizes')->label('সাইজ'),
+                TagsInput::make('sizes')->label('সাইজের অপশন (খালি = নিজে লিখবে)'),
                 Toggle::make('size_required')->label('সাইজ আবশ্যক')->default(true),
+                Toggle::make('color_enabled')->label('অর্ডার ফর্মে কালারের ঘর দেখাও')->default(true)->live()->columnSpanFull(),
                 TextInput::make('color_label')->label('কালারের লেবেল')->default('কালার নির্বাচন করুন')->maxLength(100),
-                TagsInput::make('colors')->label('কালার'),
+                TagsInput::make('colors')->label('কালারের অপশন (খালি = নিজে লিখবে; গ্রিডের নামও অপশন)'),
                 Toggle::make('color_required')->label('কালার আবশ্যক')->default(false),
             ]),
             self::block('cta', 'CTA / কল', 'heroicon-o-phone', [

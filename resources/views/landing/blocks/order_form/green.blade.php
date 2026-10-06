@@ -31,7 +31,7 @@
                     'landingPage' => $landingPage,
                     'heading' => '',
                     'rootId' => 'lp-order-form',
-                    'buttonText' => $d['button_text'] ?? null,
+                    'buttonText' => $d['button_text'] ?? '',
                     'note' => $d['note'] ?? '',
                 ], key('lp-order-'.$landingPage->id))
             @else

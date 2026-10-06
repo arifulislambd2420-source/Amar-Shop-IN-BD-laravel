@@ -46,7 +46,7 @@ class BkashCallbackController extends Controller
 
             return $order->payment_status === 'paid'
                 ? redirect()->route('order.show', $order->order_token)
-                : redirect()->route('checkout')->with('status', 'এই পেমেন্টটি আগেই ব্যর্থ হিসেবে চিহ্নিত হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+                : $this->retryRedirect($order)->with('status', 'এই পেমেন্টটি আগেই ব্যর্থ হিসেবে চিহ্নিত হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
         }
 
         try {
@@ -54,7 +54,7 @@ class BkashCallbackController extends Controller
         } catch (RuntimeException $e) {
             $orderService->markBkashFailed($order, $e->getMessage());
 
-            return redirect()->route('checkout')
+            return $this->retryRedirect($order)
                 ->with('status', 'বিকাশ পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।');
         }
 
@@ -73,7 +73,7 @@ class BkashCallbackController extends Controller
 
         $orderService->markBkashFailed($order, $result['statusMessage'] ?? $transactionStatus ?? 'unknown');
 
-        return redirect()->route('checkout')
+        return $this->retryRedirect($order)
             ->with('status', 'বিকাশ পেমেন্ট সম্পন্ন হয়নি (ব্যর্থ অথবা বাতিল করা হয়েছে)। অনুগ্রহ করে আবার চেষ্টা করুন।');
     }
 
@@ -95,5 +95,16 @@ class BkashCallbackController extends Controller
                 'quantity' => $item->quantity,
             ])->all(),
         ];
+    }
+
+    /**
+     * Where a customer goes after a failed/cancelled bKash payment: back to
+     * the landing page they ordered from, else the checkout.
+     */
+    private function retryRedirect(Order $order)
+    {
+        $slug = $order->landing_page_id ? \App\Models\LandingPage::whereKey($order->landing_page_id)->value('slug') : null;
+
+        return $slug ? redirect()->route('landing.show', $slug) : redirect()->route('checkout');
     }
 }
