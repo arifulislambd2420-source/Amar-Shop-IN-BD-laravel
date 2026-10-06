@@ -18,3 +18,46 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/*
+ * Theme colors. The :root values are the defaults (they match config/site.php
+ * 'colors'); the Site Setting "Colors" section overrides them per site via a
+ * <style> block rendered by partials/theme-vars.blade.php. Shades are derived
+ * from the base color so one picker drives the whole scale.
+ */
+:root {
+    --brand: #f97316;
+    --secondary: #111827;
+    --accent: #fbbf24;
+    --surface: #f9fafb;
+    --ink: #1f2937;
+    --success: #16a34a;
+    --error: #ef4444;
+}
+
+@theme inline {
+    --color-brand-50: color-mix(in srgb, var(--brand) 8%, white);
+    --color-brand-100: color-mix(in srgb, var(--brand) 16%, white);
+    --color-brand-200: color-mix(in srgb, var(--brand) 32%, white);
+    --color-brand-400: color-mix(in srgb, var(--brand) 85%, white);
+    --color-brand-500: var(--brand);
+    --color-brand-600: color-mix(in srgb, var(--brand) 88%, black);
+
+    --color-secondary: var(--secondary);
+    --color-accent: var(--accent);
+    --color-surface: var(--surface);
+    --color-ink: var(--ink);
+
+    --color-success-50: color-mix(in srgb, var(--success) 8%, white);
+    --color-success-100: color-mix(in srgb, var(--success) 16%, white);
+    --color-success-200: color-mix(in srgb, var(--success) 32%, white);
+    --color-success-500: color-mix(in srgb, var(--success) 85%, white);
+    --color-success-600: var(--success);
+    --color-success-700: color-mix(in srgb, var(--success) 85%, black);
+
+    --color-error-50: color-mix(in srgb, var(--error) 8%, white);
+    --color-error-200: color-mix(in srgb, var(--error) 32%, white);
+    --color-error-500: var(--error);
+    --color-error-600: color-mix(in srgb, var(--error) 88%, black);
+    --color-error-700: color-mix(in srgb, var(--error) 75%, black);
+}

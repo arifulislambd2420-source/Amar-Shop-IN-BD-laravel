@@ -34,7 +34,7 @@ class FeedController extends Controller
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
             .'<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">'."\n"
             .'  <channel>'."\n"
-            .'    <title>'.$this->escape(config('site.name').' Catalog').'</title>'."\n"
+            .'    <title>'.$this->escape(\App\Support\SiteSettingsHelper::siteName().' Catalog').'</title>'."\n"
             .'    <link>'.$this->escape($baseUrl).'</link>'."\n"
             .'    <description>Dynamic product feed for Facebook and Google</description>'."\n";
 
@@ -51,7 +51,7 @@ class FeedController extends Controller
 
             $title = $this->escape($product->name);
             $description = $this->escape($product->description ?: $product->name);
-            $brand = $this->escape($product->brand->name ?? config('site.name'));
+            $brand = $this->escape($product->brand->name ?? \App\Support\SiteSettingsHelper::siteName());
 
             $xml .= "\n    <item>\n"
                 ."      <g:id>{$product->id}</g:id>\n"

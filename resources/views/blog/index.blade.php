@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'ব্লগ — '.config('site.name'))
+@section('title', 'ব্লগ — '.\App\Support\SiteSettingsHelper::siteName())
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -19,7 +19,7 @@
                     </div>
                     <div class="p-4">
                         @if($b->category)
-                            <span class="text-xs text-orange-500 font-medium">{{ $b->category }}</span>
+                            <span class="text-xs text-brand-500 font-medium">{{ $b->category }}</span>
                         @endif
                         <h3 class="font-semibold mt-1 line-clamp-2">{{ $b->title }}</h3>
                         <p class="text-xs text-gray-400 mt-2">

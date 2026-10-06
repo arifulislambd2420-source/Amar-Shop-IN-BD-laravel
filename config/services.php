@@ -52,6 +52,7 @@ return [
         'api_key' => env('CLOUDINARY_API_KEY'),
         'api_secret' => env('CLOUDINARY_API_SECRET'),
         'url' => env('CLOUDINARY_URL'),
+        'folder' => env('CLOUDINARY_FOLDER', 'amarshopbd'),
     ],
 
     // bKash Tokenized Checkout — these .env values are only fallback

@@ -21,6 +21,28 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
+    /** Admin primary color = the site brand color (Site Setting → Colors). */
+    private function primaryColor(): string|array
+    {
+        try {
+            return \App\Support\SiteSettingsHelper::color('brand');
+        } catch (\Throwable) {
+            return Color::Amber;
+        }
+    }
+
+    /** Evaluated lazily at render time, so it never hits the DB during boot/migrate. */
+    private function brandName(): string
+    {
+        try {
+            $name = \App\Support\SiteSettingsHelper::get('site_name');
+        } catch (\Throwable) {
+            $name = null;
+        }
+
+        return ($name ?: 'আমারশপ').' Admin';
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -28,10 +50,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->authGuard('admin')
-            ->brandName('আমারশপ Admin')
+            ->brandName(fn () => $this->brandName())
             ->login(\App\Filament\Auth\Login::class)
-            ->colors([
-                'primary' => Color::Amber,
+            ->colors(fn () => [
+                'primary' => $this->primaryColor(),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

@@ -95,7 +95,7 @@ class SmsSettings extends Page implements HasSchemas
                         return;
                     }
 
-                    $result = $sms->send($number, config('site.legal_name').': test SMS - it works!');
+                    $result = $sms->send($number, \App\Support\SiteSettingsHelper::siteNameEn().': test SMS - it works!');
 
                     Notification::make()
                         ->title($result['ok'] ? 'Gateway accepted the test SMS' : 'Gateway did not accept the SMS')

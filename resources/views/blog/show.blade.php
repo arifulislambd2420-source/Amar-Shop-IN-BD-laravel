@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $blog->title.' — '.config('site.name'))
+@section('title', $blog->title.' — '.\App\Support\SiteSettingsHelper::siteName())
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 py-8">
@@ -10,7 +10,7 @@
         </div>
     @endif
     @if($blog->category)
-        <span class="text-xs text-orange-500 font-medium">{{ $blog->category }}</span>
+        <span class="text-xs text-brand-500 font-medium">{{ $blog->category }}</span>
     @endif
     <h1 class="text-2xl font-bold mt-1 mb-2">{{ $blog->title }}</h1>
     <p class="text-xs text-gray-400 mb-6">
@@ -24,7 +24,7 @@
             <h2 class="font-bold text-lg mb-4">আরও পড়ুন</h2>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 @foreach($recent as $r)
-                    <a href="{{ route('blog.show', $r->slug) }}" class="text-sm font-medium hover:text-orange-500 line-clamp-2">{{ $r->title }}</a>
+                    <a href="{{ route('blog.show', $r->slug) }}" class="text-sm font-medium hover:text-brand-500 line-clamp-2">{{ $r->title }}</a>
                 @endforeach
             </div>
         </div>

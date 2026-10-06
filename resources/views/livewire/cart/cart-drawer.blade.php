@@ -8,7 +8,7 @@
 
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 class="font-bold text-lg">আপনার কার্ট</h2>
-            <button type="button" @click="open = false" aria-label="বন্ধ করুন" class="text-gray-500 hover:text-gray-800">
+            <button type="button" @click="open = false" aria-label="বন্ধ করুন" class="text-gray-500 hover:text-ink">
                 <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -16,19 +16,19 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
             @forelse($lines as $line)
                 <div class="flex gap-3" wire:key="drawer-line-{{ $line['key'] }}">
-                    <div class="h-16 w-16 rounded-lg bg-gray-50 overflow-hidden shrink-0">
+                    <div class="h-16 w-16 rounded-lg bg-surface overflow-hidden shrink-0">
                         @if($line['image'])
                             <img src="{{ $line['image'] }}" alt="{{ $line['name'] }}" class="h-full w-full object-cover">
                         @endif
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium line-clamp-2">{{ $line['name'] }}</p>
-                        <p class="text-orange-500 text-sm font-semibold">@taka($line['price'])</p>
+                        <p class="text-brand-500 text-sm font-semibold">@taka($line['price'])</p>
                         <div class="flex items-center gap-2 mt-1">
                             <button type="button" class="h-6 w-6 rounded border border-gray-300 text-sm" wire:click="updateQuantity({{ $line['product']->id }}, {{ $line['variant']?->id ?? 'null' }}, {{ $line['quantity'] - 1 }})">−</button>
                             <span class="text-sm w-5 text-center">{{ $line['quantity'] }}</span>
                             <button type="button" class="h-6 w-6 rounded border border-gray-300 text-sm" wire:click="updateQuantity({{ $line['product']->id }}, {{ $line['variant']?->id ?? 'null' }}, {{ $line['quantity'] + 1 }})">+</button>
-                            <button type="button" class="ml-auto text-xs text-red-500" wire:click="remove({{ $line['product']->id }}, {{ $line['variant']?->id ?? 'null' }})">সরান</button>
+                            <button type="button" class="ml-auto text-xs text-error-500" wire:click="remove({{ $line['product']->id }}, {{ $line['variant']?->id ?? 'null' }})">সরান</button>
                         </div>
                     </div>
                 </div>
@@ -43,8 +43,8 @@
                     <span class="text-gray-600">সাবটোটাল</span>
                     <span class="font-semibold">@taka($subtotal)</span>
                 </div>
-                <a href="{{ route('checkout') }}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-lg">চেকআউট করুন</a>
-                <a href="{{ route('cart.index') }}" class="block text-center text-sm text-gray-600 hover:text-orange-500">কার্ট পেজ দেখুন</a>
+                <a href="{{ route('checkout') }}" class="block text-center bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg">চেকআউট করুন</a>
+                <a href="{{ route('cart.index') }}" class="block text-center text-sm text-gray-600 hover:text-brand-500">কার্ট পেজ দেখুন</a>
             </div>
         @endif
     </div>

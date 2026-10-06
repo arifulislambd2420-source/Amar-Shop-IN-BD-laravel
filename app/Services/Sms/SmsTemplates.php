@@ -40,7 +40,7 @@ class SmsTemplates
             : '';
 
         return strtr($template, [
-            '{site}' => $language === 'en' ? config('site.legal_name') : config('site.name'),
+            '{site}' => $language === 'en' ? \App\Support\SiteSettingsHelper::siteNameEn() : \App\Support\SiteSettingsHelper::siteName(),
             '{invoice}' => (string) $order->invoice_no,
             '{total}' => number_format((float) $order->total),
             '{tracking}' => $tracking,

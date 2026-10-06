@@ -2,13 +2,13 @@
 
 @section('content')
     {{-- Template 1 — Warm/classic: matches the main site's orange branding. --}}
-    <section class="bg-gradient-to-b from-orange-50 to-white px-4 pt-10 pb-8 text-center">
+    <section class="bg-gradient-to-b from-brand-50 to-white px-4 pt-10 pb-8 text-center">
         @if ($landingPage->hero_image)
             <img src="{{ $landingPage->hero_image }}" alt="{{ $landingPage->headline }}"
                  class="mx-auto mb-6 w-full max-w-sm rounded-2xl shadow-lg object-cover">
         @endif
 
-        <h1 class="text-2xl md:text-4xl font-extrabold text-gray-900 leading-snug">
+        <h1 class="text-2xl md:text-4xl font-extrabold text-ink leading-snug">
             {{ $landingPage->headline }}
         </h1>
 
@@ -19,13 +19,13 @@
         @endif
 
         @if ($landingPage->effectivePrice() > 0)
-            <div class="mt-5 text-3xl font-extrabold text-orange-600">
+            <div class="mt-5 text-3xl font-extrabold text-brand-600">
                 ৳{{ number_format($landingPage->effectivePrice()) }}
             </div>
         @endif
 
         <a href="#order-form"
-           class="inline-block mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full px-8 py-3 text-lg shadow-md transition">
+           class="inline-block mt-6 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full px-8 py-3 text-lg shadow-md transition">
             {{ $landingPage->button_text }}
         </a>
     </section>
@@ -48,13 +48,13 @@
     @endif
 
     @if (! empty($landingPage->features))
-        <section class="bg-orange-50 px-4 py-10">
+        <section class="bg-brand-50 px-4 py-10">
             <div class="max-w-2xl mx-auto grid gap-4">
                 @foreach ($landingPage->features as $feature)
                     <div class="flex gap-3 bg-white rounded-xl p-4 shadow-sm">
-                        <span class="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">✓</span>
+                        <span class="flex-shrink-0 w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold">✓</span>
                         <div>
-                            <div class="font-semibold text-gray-900">{{ $feature['title'] ?? '' }}</div>
+                            <div class="font-semibold text-ink">{{ $feature['title'] ?? '' }}</div>
                             @if (! empty($feature['description']))
                                 <div class="text-sm text-gray-600 mt-1">{{ $feature['description'] }}</div>
                             @endif

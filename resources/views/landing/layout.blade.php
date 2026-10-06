@@ -8,6 +8,7 @@
     {{-- Landing pages are a standalone conversion funnel: no site header,
          footer or cart — just this page's own content and order form. --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.theme-vars')
     @livewireStyles
 </head>
 <body class="antialiased">

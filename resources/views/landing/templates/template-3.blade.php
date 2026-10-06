@@ -3,7 +3,7 @@
 @section('content')
     {{-- Template 3 — Minimal/clean: lots of whitespace, single accent color. --}}
     <section class="px-4 pt-14 pb-10 text-center max-w-xl mx-auto">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-snug tracking-tight">
+        <h1 class="text-2xl md:text-3xl font-bold text-ink leading-snug tracking-tight">
             {{ $landingPage->headline }}
         </h1>
 
@@ -19,13 +19,13 @@
         @endif
 
         @if ($landingPage->effectivePrice() > 0)
-            <div class="mt-6 text-2xl font-bold text-gray-900">
+            <div class="mt-6 text-2xl font-bold text-ink">
                 ৳{{ number_format($landingPage->effectivePrice()) }}
             </div>
         @endif
 
         <a href="#order-form"
-           class="inline-block mt-6 bg-gray-900 hover:bg-gray-700 text-white font-semibold rounded-md px-8 py-3 transition">
+           class="inline-block mt-6 bg-secondary hover:bg-secondary/80 text-white font-semibold rounded-md px-8 py-3 transition">
             {{ $landingPage->button_text }}
         </a>
     </section>
@@ -52,9 +52,9 @@
             <div class="grid gap-5">
                 @foreach ($landingPage->features as $feature)
                     <div class="flex gap-3">
-                        <span class="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-gray-900"></span>
+                        <span class="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-secondary"></span>
                         <div>
-                            <div class="font-medium text-gray-900">{{ $feature['title'] ?? '' }}</div>
+                            <div class="font-medium text-ink">{{ $feature['title'] ?? '' }}</div>
                             @if (! empty($feature['description']))
                                 <div class="text-sm text-gray-500 mt-1">{{ $feature['description'] }}</div>
                             @endif

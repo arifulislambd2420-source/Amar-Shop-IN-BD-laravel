@@ -18,9 +18,6 @@ use RuntimeException;
  */
 class CloudinaryService
 {
-    /** Mirrors the old app's Cloudinary folder convention. */
-    public const FOLDER = 'amarshopbd';
-
     public function configured(): bool
     {
         return filled(config('services.cloudinary.cloud_name'))
@@ -42,7 +39,7 @@ class CloudinaryService
 
     /**
      * Upload a file (a Livewire/Filament temporary upload, or a plain path)
-     * to the `amarshopbd` Cloudinary folder and return its secure_url.
+     * to the configured Cloudinary folder (CLOUDINARY_FOLDER) and return its secure_url.
      */
     public function upload(UploadedFile|string $file): string
     {
@@ -56,7 +53,7 @@ class CloudinaryService
         $path = $file instanceof UploadedFile ? $file->getRealPath() : $file;
 
         $result = $this->client()->uploadApi()->upload($path, [
-            'folder' => self::FOLDER,
+            'folder' => config('services.cloudinary.folder'),
         ]);
 
         return (string) $result['secure_url'];

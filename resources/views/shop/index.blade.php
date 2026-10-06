@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $title.' — '.config('site.name'))
+@section('title', $title.' — '.\App\Support\SiteSettingsHelper::siteName())
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -16,9 +16,9 @@
                 <div>
                     <div class="font-semibold text-sm mb-2">ক্যাটাগরি</div>
                     <ul class="space-y-1 text-sm">
-                        <li><a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="{{ ! request('category') ? 'text-orange-500 font-medium' : 'text-gray-600' }}">সব</a></li>
+                        <li><a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="{{ ! request('category') ? 'text-brand-500 font-medium' : 'text-gray-600' }}">সব</a></li>
                         @foreach($categories as $c)
-                            <li><a href="{{ request()->fullUrlWithQuery(['category' => $c->slug]) }}" class="{{ request('category') === $c->slug ? 'text-orange-500 font-medium' : 'text-gray-600' }}">{{ $c->name }}</a></li>
+                            <li><a href="{{ request()->fullUrlWithQuery(['category' => $c->slug]) }}" class="{{ request('category') === $c->slug ? 'text-brand-500 font-medium' : 'text-gray-600' }}">{{ $c->name }}</a></li>
                         @endforeach
                     </ul>
                 </div>
@@ -26,9 +26,9 @@
                 <div>
                     <div class="font-semibold text-sm mb-2">ব্র্যান্ড</div>
                     <ul class="space-y-1 text-sm">
-                        <li><a href="{{ request()->fullUrlWithQuery(['brand' => null]) }}" class="{{ ! request('brand') ? 'text-orange-500 font-medium' : 'text-gray-600' }}">সব</a></li>
+                        <li><a href="{{ request()->fullUrlWithQuery(['brand' => null]) }}" class="{{ ! request('brand') ? 'text-brand-500 font-medium' : 'text-gray-600' }}">সব</a></li>
                         @foreach($brands as $b)
-                            <li><a href="{{ request()->fullUrlWithQuery(['brand' => $b->id]) }}" class="{{ (string) request('brand') === (string) $b->id ? 'text-orange-500 font-medium' : 'text-gray-600' }}">{{ $b->name }}</a></li>
+                            <li><a href="{{ request()->fullUrlWithQuery(['brand' => $b->id]) }}" class="{{ (string) request('brand') === (string) $b->id ? 'text-brand-500 font-medium' : 'text-gray-600' }}">{{ $b->name }}</a></li>
                         @endforeach
                     </ul>
                 </div>

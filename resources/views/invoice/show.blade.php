@@ -1,7 +1,7 @@
 @php
     use App\Support\SiteSettingsHelper;
     $logo = SiteSettingsHelper::get('site_logo');
-    $siteName = SiteSettingsHelper::get('site_name') ?: config('site.name');
+    $siteName = SiteSettingsHelper::get('site_name') ?: \App\Support\SiteSettingsHelper::siteName();
     $paymentLabels = ['cod' => 'ক্যাশ অন ডেলিভারি', 'bkash' => 'বিকাশ', 'advance' => 'অগ্রিম পেমেন্ট'];
     $statusLabels = [
         'pending' => 'পেন্ডিং', 'processing' => 'প্রসেসিং', 'shipped' => 'শিপড',
@@ -18,16 +18,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @include('partials.theme-vars')
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Hind Siliguri', Arial, sans-serif; color: #1f2937; background: #f3f4f6; font-size: 14px; }
         .sheet { width: 210mm; min-height: 297mm; margin: 16px auto; background: #fff; padding: 18mm; box-shadow: 0 1px 6px rgba(0,0,0,.12); }
         .toolbar { max-width: 210mm; margin: 16px auto 0; display: flex; gap: 10px; justify-content: flex-end; }
-        .btn { background: #ea580c; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn { background: var(--brand, #ea580c); color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
         .btn.secondary { background: #1e293b; }
-        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #ea580c; padding-bottom: 16px; margin-bottom: 20px; }
+        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--brand, #ea580c); padding-bottom: 16px; margin-bottom: 20px; }
         .brand img { max-height: 56px; max-width: 200px; object-fit: contain; }
-        .brand .name { font-size: 24px; font-weight: 700; color: #ea580c; }
+        .brand .name { font-size: 24px; font-weight: 700; color: var(--brand, #ea580c); }
         .brand .meta { color: #6b7280; font-size: 12px; margin-top: 4px; line-height: 1.5; }
         .inv-title { text-align: right; }
         .inv-title h1 { font-size: 26px; letter-spacing: 1px; color: #111827; }
@@ -44,7 +45,7 @@
         .totals { width: 300px; margin-left: auto; }
         .totals .line { display: flex; justify-content: space-between; padding: 6px 0; color: #4b5563; }
         .totals .grand { border-top: 2px solid #e5e7eb; margin-top: 6px; padding-top: 10px; font-size: 18px; font-weight: 700; color: #111827; }
-        .totals .grand span:last-child { color: #ea580c; }
+        .totals .grand span:last-child { color: var(--brand, #ea580c); }
         .badges { margin: 18px 0 0; display: flex; gap: 10px; flex-wrap: wrap; }
         .badge { border: 1px solid #e5e7eb; border-radius: 999px; padding: 5px 14px; font-size: 13px; }
         .foot { margin-top: 26px; border-top: 1px solid #e5e7eb; padding-top: 14px; color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.6; }
@@ -71,8 +72,8 @@
                     <div class="name">{{ $siteName }}</div>
                 @endif
                 <div class="meta">
-                    {{ config('site.address') }}<br>
-                    ফোন: {{ config('site.support_phone') }}@if(config('site.support_email')) · {{ config('site.support_email') }}@endif
+                    {{ SiteSettingsHelper::address() }}<br>
+                    ফোন: {{ SiteSettingsHelper::phone() }}@if(SiteSettingsHelper::email()) · {{ SiteSettingsHelper::email() }}@endif
                 </div>
             </div>
             <div class="inv-title">

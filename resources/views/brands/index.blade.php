@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'ব্র্যান্ড সমূহ — '.config('site.name'))
+@section('title', 'ব্র্যান্ড সমূহ — '.\App\Support\SiteSettingsHelper::siteName())
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -15,7 +15,7 @@
     @else
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             @foreach($brands as $b)
-                <a href="{{ route('shop', ['brand' => $b->id]) }}" class="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center gap-3 text-center hover:border-orange-500 transition-colors">
+                <a href="{{ route('shop', ['brand' => $b->id]) }}" class="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center gap-3 text-center hover:border-brand-500 transition-colors">
                     @if($b->logo)
                         <img src="{{ $b->logo }}" alt="{{ $b->name }}" class="h-12 object-contain">
                     @else
