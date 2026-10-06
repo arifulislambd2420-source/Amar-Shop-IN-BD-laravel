@@ -14,14 +14,14 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class LatestOrders extends TableWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Latest Orders')
+            ->heading('সর্বশেষ অর্ডার')
             ->query(
                 fn (): Builder => Order::query()->latest('created_at')
             )
@@ -35,7 +35,7 @@ class LatestOrders extends TableWidget
                     ->searchable(),
                 TextColumn::make('phone'),
                 TextColumn::make('total')
-                    ->money('BDT')
+                    ->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2))
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
