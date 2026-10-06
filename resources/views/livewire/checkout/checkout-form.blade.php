@@ -18,7 +18,7 @@
         <div class="grid grid-cols-2 gap-4">
             <label class="flex flex-col gap-1 text-sm">
                 <span class="font-medium text-gray-700">জেলা <span class="text-brand-500">*</span></span>
-                <select wire:model="district" class="border border-gray-300 rounded-lg px-3 py-2">
+                <select wire:model.live="district"class="border border-gray-300 rounded-lg px-3 py-2">
                     <option value="">নির্বাচন করুন</option>
                     @foreach($districts as $d)
                         <option value="{{ $d }}">{{ $d }}</option>
@@ -122,15 +122,24 @@
         </div>
         <div class="flex justify-between text-sm mb-2">
             <span class="text-gray-600">ডেলিভারি চার্জ</span>
-            <span class="font-semibold">@taka($shippingFee)</span>
+            @if(is_null($shippingFee))
+                <span class="text-xs text-gray-500">জেলা বেছে নিন</span>
+            @elseif($shippingFee == 0)
+                <span class="font-semibold text-success-600">ফ্রি</span>
+            @else
+                <span class="font-semibold">@taka($shippingFee)</span>
+            @endif
         </div>
+        @if($freeRemaining)
+            <p class="text-xs text-success-600 mb-2">আর @taka($freeRemaining) এর কেনাকাটা করলে ডেলিভারি ফ্রি!</p>
+        @endif
         <div class="flex justify-between text-sm mb-2">
             <span class="text-gray-600">ডিসকাউন্ট</span>
             <span class="font-semibold text-success-600">-@taka($appliedCoupon['discount'] ?? 0)</span>
         </div>
         <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-3">
             <span>মোট</span>
-            <span class="text-brand-500">@taka(max(0, $subtotal + $shippingFee - ($appliedCoupon['discount'] ?? 0)))</span>
+            <span class="text-brand-500">@taka(max(0, $subtotal + ($shippingFee ?? 0) -($appliedCoupon['discount'] ?? 0)))</span>
         </div>
     </div>
 </div>

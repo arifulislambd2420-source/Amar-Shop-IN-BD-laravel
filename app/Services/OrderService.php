@@ -22,11 +22,6 @@ use Throwable;
  */
 class OrderService
 {
-    // Flat delivery charge — same value as the old app's SHIPPING_FEE
-    // constant in src/lib/format.ts. Always added to the stored total,
-    // never just displayed.
-    public const SHIPPING_FEE = 70;
-
     /**
      * @param  array<int, array{product_id:int, variant_id:?int, quantity:int, unit_price_override?:?float}>  $cartLines
      *         unit_price_override is for server-side callers only (e.g. a
@@ -105,7 +100,10 @@ class OrderService
             }
 
             $subtotal = array_sum(array_column($lineItems, 'line_total'));
-            $shippingFee = self::SHIPPING_FEE;
+            // Delivery charge by district (Dhaka / outside) with optional free
+            // delivery over a minimum subtotal — see App\Support\Delivery.
+            // Always added to the stored total, never just displayed.
+            $shippingFee = \App\Support\Delivery::fee($customer['district'] ?? null, (float) $subtotal);
 
             $discount = 0;
             if ($couponCode) {

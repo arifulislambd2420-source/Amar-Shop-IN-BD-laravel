@@ -30,12 +30,12 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">
                 @foreach ($files as $file)
                     <div
-                        wire:key="media-{{ $file['basename'] }}"
+                        wire:key="media-{{ $file['key'] }}"
                         style="border: 1px solid rgba(127, 127, 127, 0.25); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column;"
                     >
                         <img
                             src="{{ $file['url'] }}"
-                            alt="{{ $file['basename'] }}"
+                            alt="{{ $file['name'] }}"
                             loading="lazy"
                             style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block;"
                         >
@@ -59,8 +59,8 @@
                                     Blade::compileString() while debugging this exact bug).
                                     {{ }} echoes DO get compiled correctly in this position.
                                     Safe without Js::from()'s extra quoting here because both
-                                    values are server-generated (a UUID-based filename, its
-                                    derived public URL) and can never contain a quote char.
+                                    values are server-generated (a Cloudinary URL, an id or a
+                                    UUID-based filename) and can never contain a quote char.
                                 --}}
                                 <x-filament::button
                                     type="button"
@@ -77,7 +77,7 @@
                                     color="danger"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    wire:click="deleteFile('{{ $file['basename'] }}')"
+                                    wire:click="deleteFile('{{ $file['key'] }}')"
                                     wire:confirm="Delete this image permanently? This cannot be undone."
                                 >
                                     Delete

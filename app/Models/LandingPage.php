@@ -9,12 +9,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LandingPage extends Model
 {
-    /** resources/views/landing/templates/{key}.blade.php for each option. */
-    public const TEMPLATE_OPTIONS = [
-        'template-1' => 'Template 1 — Warm/classic',
-        'template-2' => 'Template 2 — Dark/premium',
-        'template-3' => 'Template 3 — Minimal/clean',
+    /**
+     * Block-builder templates: the page is its ordered $blocks, styled by
+     * the template's color scheme (resources/views/landing/templates/{key}.blade.php
+     * once that design exists).
+     */
+    public const BLOCK_TEMPLATES = [
+        'green' => 'Green',
+        'purple' => 'Purple',
+        'cream' => 'Cream',
     ];
+
+    /** Pre-builder templates: render the fixed headline/hero/gallery/features fields. */
+    public const LEGACY_TEMPLATES = [
+        'template-1' => 'Template 1 — Warm/classic (পুরনো)',
+        'template-2' => 'Template 2 — Dark/premium (পুরনো)',
+        'template-3' => 'Template 3 — Minimal/clean (পুরনো)',
+    ];
+
+    /** resources/views/landing/templates/{key}.blade.php for each option. */
+    public const TEMPLATE_OPTIONS = self::BLOCK_TEMPLATES + self::LEGACY_TEMPLATES;
+
+    /** Block types of the page builder (see LandingPageResource::blockSchemas()). */
+    public const BLOCK_TYPES = ['hero', 'features', 'checklist', 'gallery', 'reviews', 'video', 'variants', 'cta', 'notice', 'order_form'];
 
     protected $fillable = [
         'title',
@@ -27,6 +44,8 @@ class LandingPage extends Model
         'description',
         'gallery',
         'features',
+        'blocks',
+        'packages',
         'price_override',
         'button_text',
         'is_active',
@@ -37,6 +56,8 @@ class LandingPage extends Model
         return [
             'gallery' => 'array',
             'features' => 'array',
+            'blocks' => 'array',
+            'packages' => 'array',
             'price_override' => 'decimal:2',
             'is_active' => 'boolean',
             'views' => 'integer',
@@ -73,11 +94,52 @@ class LandingPage extends Model
         return $this->product?->displayPrice() ?? 0.0;
     }
 
-    /** Falls back to template-1 if the stored value isn't a known template. */
+    public static function isLegacyTemplate(?string $template): bool
+    {
+        return array_key_exists((string) $template, self::LEGACY_TEMPLATES);
+    }
+
+    /** Blocks in saved order, without the ones switched off with "লুকাও". */
+    public function visibleBlocks(): array
+    {
+        return array_values(array_filter(
+            (array) $this->blocks,
+            fn ($block) => is_array($block) && ! ($block['data']['hidden'] ?? false),
+        ));
+    }
+
+    /**
+     * A new, inactive copy: " (Copy)" title, unique slug, zero views, no
+     * orders. Content (legacy fields, blocks, packages) is copied as-is.
+     */
+    public function duplicate(): self
+    {
+        $copy = $this->replicate(['views']);
+        $copy->title = $this->title.' (Copy)';
+        $copy->is_active = false;
+        $copy->views = 0;
+
+        $base = $this->slug.'-copy';
+        $slug = $base;
+        for ($i = 2; static::where('slug', $slug)->exists(); $i++) {
+            $slug = $base.'-'.$i;
+        }
+        $copy->slug = $slug;
+
+        $copy->save();
+
+        return $copy;
+    }
+
+    /**
+     * The view for this page's template. Unknown templates, and block
+     * templates whose design view doesn't exist yet, fall back to template-1
+     * so a page never 500s.
+     */
     public function templateView(): string
     {
         $key = array_key_exists($this->template, self::TEMPLATE_OPTIONS) ? $this->template : 'template-1';
 
-        return "landing.templates.{$key}";
+        return view()->exists("landing.templates.{$key}") ? "landing.templates.{$key}" : 'landing.templates.template-1';
     }
 }

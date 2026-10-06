@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Support\CloudinaryUpload;
+use App\Models\MediaLibrary as MediaLibraryItem;
+use App\Services\CloudinaryService;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -16,13 +18,14 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * General-purpose media manager — not tied to any model/table. Uploads go
- * through the exact same App\Filament\Support\CloudinaryUpload helper as
- * every other image field in the app (storage/app/public/media, UUID
- * filenames, jpg/png/webp only, 5 MB max), so a file uploaded here is
- * physically indistinguishable from one uploaded via, say, ProductResource.
- * The grid below is always a fresh directory listing — nothing about
- * "which files exist" is tracked anywhere else, so there's nothing to keep
- * in sync and no migration is needed.
+ * through the same App\Filament\Support\CloudinaryUpload helper as every
+ * other image field in the app (Cloudinary, jpg/png/webp only, 5 MB max).
+ *
+ * The grid lists the Cloudinary uploads recorded in the media_library table
+ * plus any legacy images still sitting on the local `public` disk
+ * (storage/app/public/media) from before the switch to Cloudinary, so
+ * nothing already uploaded disappears from the list. Run
+ * `php artisan media:migrate-to-cloudinary` to move the legacy ones over.
  *
  * A top-level nav item on purpose (no navigationGroup) rather than nested
  * under Settings — this is a workspace, not a configuration page.
@@ -44,7 +47,7 @@ class MediaLibrary extends Page implements HasSchemas
     /** @var array<string, mixed> */
     public ?array $data = [];
 
-    /** Relative to the `public` disk root (storage/app/public/) — the same folder CloudinaryUpload writes to. */
+    /** Legacy local uploads: relative to the `public` disk root (storage/app/public/). */
     public const DIRECTORY = 'media';
 
     public function mount(): void
@@ -65,12 +68,10 @@ class MediaLibrary extends Page implements HasSchemas
     }
 
     /**
-     * Reading the form's state is what makes Filament actually persist any
-     * pending temporary uploads to disk (CloudinaryUpload::saveUploadedFileUsing
-     * runs per file here). The URLs it returns are discarded on purpose —
-     * they're not stored anywhere; getFiles() below just re-scans the
-     * directory afterwards, which is simpler than trying to keep a separate
-     * list in sync.
+     * Reading the form's state is what makes Filament actually run
+     * CloudinaryUpload::saveUploadedFileUsing for each pending file (which
+     * uploads it and records it in media_library). The returned URLs are
+     * discarded; getFiles() reads the table afterwards.
      */
     public function upload(): void
     {
@@ -81,30 +82,87 @@ class MediaLibrary extends Page implements HasSchemas
     }
 
     /**
-     * @return Collection<int, array{basename: string, url: string}>
+     * @return Collection<int, array{key: string, name: string, url: string, legacy: bool}>
      */
     public function getFiles(): Collection
     {
+        $cloud = MediaLibraryItem::query()
+            ->orderByDesc('id')
+            ->get()
+            ->filter(fn (MediaLibraryItem $m) => CloudinaryService::isCloudinaryUrl($m->file_path))
+            ->map(fn (MediaLibraryItem $m): array => [
+                'key' => 'c:'.$m->id,
+                'name' => $m->file_name,
+                'url' => $m->file_path,
+                'legacy' => false,
+                'at' => $m->created_at?->getTimestamp() ?? 0,
+            ]);
+
         $disk = Storage::disk('public');
 
-        return collect($disk->files(self::DIRECTORY))
-            ->sortByDesc(fn (string $path): int => $disk->lastModified($path))
-            ->values()
+        $local = collect($disk->exists(self::DIRECTORY) ? $disk->files(self::DIRECTORY) : [])
             ->map(fn (string $path): array => [
-                'basename' => basename($path),
+                'key' => 'l:'.basename($path),
+                'name' => basename($path),
                 'url' => $disk->url($path),
+                'legacy' => true,
+                'at' => $disk->lastModified($path),
             ]);
+
+        return $cloud->concat($local)->sortByDesc('at')->values();
     }
 
     /**
-     * $basename is a wire:click argument from the grid — untrusted input.
-     * Rejecting anything containing a path separator or ".." means the
-     * value that reaches Storage::delete() can never resolve outside
-     * self::DIRECTORY: with no "/" allowed in $basename at all,
-     * DIRECTORY.'/'.$basename cannot become a path to any other directory,
-     * no matter what string is sent.
+     * $key is a wire:click argument from the grid — untrusted input. It is
+     * either "c:<id>" (a media_library row: the id is cast to int) or
+     * "l:<basename>" (a legacy local file: any path separator or ".." is
+     * rejected, so DIRECTORY.'/'.$basename can never leave that folder).
      */
-    public function deleteFile(string $basename): void
+    public function deleteFile(string $key): void
+    {
+        if (str_starts_with($key, 'c:')) {
+            $this->deleteCloudinary((int) substr($key, 2));
+
+            return;
+        }
+
+        abort_unless(str_starts_with($key, 'l:'), 403);
+
+        $this->deleteLocal(substr($key, 2));
+    }
+
+    protected function deleteCloudinary(int $id): void
+    {
+        $item = MediaLibraryItem::find($id);
+
+        if (! $item) {
+            Notification::make()->title('File not found — it may already have been deleted.')->warning()->send();
+
+            return;
+        }
+
+        if ($this->refuseIfInUse(basename(parse_url($item->file_path, PHP_URL_PATH) ?: $item->file_path))) {
+            return;
+        }
+
+        try {
+            if (! app(CloudinaryService::class)->deleteByUrl($item->file_path)) {
+                Notification::make()->title('Cloudinary did not confirm the delete — not removed.')->danger()->send();
+
+                return;
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->title('Delete failed')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        $item->delete();
+
+        Notification::make()->title('Image deleted.')->success()->send();
+    }
+
+    protected function deleteLocal(string $basename): void
     {
         abort_if(
             $basename === '' || $basename !== basename($basename) || str_contains($basename, '..'),
@@ -120,14 +178,7 @@ class MediaLibrary extends Page implements HasSchemas
             return;
         }
 
-        if ($usedBy = $this->findReferences($basename)) {
-            Notification::make()
-                ->title('Not deleted — this image is still in use')
-                ->body('Used by: '.implode(', ', $usedBy).'. Replace it there first, otherwise it will show as a broken image.')
-                ->danger()
-                ->persistent()
-                ->send();
-
+        if ($this->refuseIfInUse($basename)) {
             return;
         }
 
@@ -136,6 +187,22 @@ class MediaLibrary extends Page implements HasSchemas
         Notification::make()->title('Image deleted.')->success()->send();
     }
 
+    /** Sends the "still in use" notification and returns true when something references the file. */
+    protected function refuseIfInUse(string $basename): bool
+    {
+        if (! $usedBy = $this->findReferences($basename)) {
+            return false;
+        }
+
+        Notification::make()
+            ->title('Not deleted — this image is still in use')
+            ->body('Used by: '.implode(', ', $usedBy).'. Replace it there first, otherwise it will show as a broken image.')
+            ->danger()
+            ->persistent()
+            ->send();
+
+        return true;
+    }
     /**
      * Every column that can hold an uploaded image URL. Deleting a file
      * that one of these still points to leaves a broken image on the live

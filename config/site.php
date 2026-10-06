@@ -22,6 +22,11 @@ return [
         'success' => '#16a34a',
         'error' => '#ef4444',
     ],
+    // Default delivery charges (৳) — used while Site Setting → Delivery is empty.
+    'delivery' => [
+        'dhaka' => 70,
+        'outside' => 70,
+    ],
     'social' => [
         'facebook' => env('FACEBOOK_URL', ''),
         'youtube' => env('YOUTUBE_URL', ''),

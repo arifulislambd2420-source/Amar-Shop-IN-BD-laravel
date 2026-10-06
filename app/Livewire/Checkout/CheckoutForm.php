@@ -6,6 +6,7 @@ use App\Models\Coupon;
 use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\Payment\BkashService;
+use App\Support\Delivery;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use RuntimeException;
@@ -215,7 +216,8 @@ class CheckoutForm extends Component
         return view('livewire.checkout.checkout-form', [
             'lines' => $cart->lines(),
             'subtotal' => $cart->subtotal(),
-            'shippingFee' => OrderService::SHIPPING_FEE,
+            'shippingFee' => Delivery::quote($this->district ?: null, $cart->subtotal()),
+            'freeRemaining' => Delivery::remainingForFree($cart->subtotal()),
             'districts' => config('districts'),
             'bkashAvailable' => $bkash->configured(),
         ]);

@@ -2,36 +2,32 @@
 
 namespace App\Filament\Support;
 
+use App\Models\MediaLibrary;
+use App\Services\CloudinaryService;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * A FileUpload field that stores images on the local `public` disk
- * (storage/app/public/media, requires the public/storage symlink — see
- * `php artisan storage:link`) instead of a remote service. Despite the
- * class name — kept as-is so every call site (ProductResource,
- * BannerResource, SiteSettings, LandingPageResource,
- * ImagesRelationManager) needs zero changes — this no longer talks to
- * Cloudinary at all.
+ * A FileUpload field that uploads images to Cloudinary through
+ * App\Services\CloudinaryService (folder from CLOUDINARY_FOLDER) and stores
+ * the returned secure_url — a full https://res.cloudinary.com/... URL — in
+ * the model column. Every call site (ProductResource, BannerResource,
+ * SiteSettings, LandingPageResource, ImagesRelationManager, MediaLibrary)
+ * goes through here, so there is a single upload path.
  *
- * The field's stored state is still a full absolute URL string (e.g.
- * https://amarshopinbd.com/storage/media/<uuid>.webp), the exact same shape
- * Cloudinary's secure_url was, so every existing image/logo/icon column and
- * every blade view doing <img src="{{ $model->image }}"> keeps working
- * unchanged. Rows saved before this change still hold
- * https://res.cloudinary.com/... URLs — those images are untouched and
- * keep loading from Cloudinary; only new uploads go to the local disk.
+ * Each upload is also recorded in the media_library table (URL, mime, size)
+ * so the Media Library page can list it.
  *
- * App\Services\CloudinaryService is intentionally left in place and
- * untouched (nothing here calls it anymore) — removing it/the Cloudinary
- * package/config is a separate, later cleanup.
+ * Images uploaded before this switch live on the local `public` disk
+ * (storage/app/public/media) and are referenced by /storage/media/... URLs.
+ * Those keep working unchanged (the URL in the DB is just rendered as-is;
+ * see MediaFileController for the no-symlink fallback), and
+ * `php artisan media:migrate-to-cloudinary` moves them to Cloudinary.
  */
 class CloudinaryUpload
 {
-    /** Relative to the `public` disk root (storage/app/public/). */
+    /** Legacy local uploads: relative to the `public` disk root (storage/app/public/). */
     public const DIRECTORY = 'media';
 
     public static function make(string $name): FileUpload
@@ -55,16 +51,16 @@ class CloudinaryUpload
             ] : null)
             ->saveUploadedFileUsing(function ($file) {
                 try {
-                    // Random/unique filename — never trust or reuse the
-                    // client's original name (collisions, overwrites, path
-                    // tricks). Extension is safe to keep: Filament/->image()
-                    // and acceptedFileTypes() above already validated the
-                    // file before this callback ever runs.
-                    $filename = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
+                    $uploaded = app(CloudinaryService::class)->uploadWithMeta($file);
 
-                    $path = $file->storeAs(self::DIRECTORY, $filename, 'public');
+                    MediaLibrary::create([
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $uploaded['url'],
+                        'mime_type' => $uploaded['mime'],
+                        'file_size' => $uploaded['bytes'],
+                    ]);
 
-                    return Storage::disk('public')->url($path);
+                    return $uploaded['url'];
                 } catch (Throwable $e) {
                     Notification::make()
                         ->title('Image upload failed')
@@ -75,6 +71,6 @@ class CloudinaryUpload
                     return null;
                 }
             })
-            ->helperText('Saved on the server (storage/app/public/media). JPG, PNG or WEBP, max 5 MB.');
+            ->helperText('Uploaded to Cloudinary. JPG, PNG or WEBP, max 5 MB.');
     }
 }

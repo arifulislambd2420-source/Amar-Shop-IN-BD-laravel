@@ -49,6 +49,7 @@ class SiteSettings extends Page implements HasSchemas
         'hero_title', 'hero_subtitle',
         'side_card_1_title', 'side_card_1_text', 'side_card_2_title', 'side_card_2_text',
         'seo_title', 'seo_description', 'og_image',
+        'delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min',
         'color_brand', 'color_secondary', 'color_accent', 'color_background', 'color_text', 'color_success', 'color_error',
         'contact_phone', 'contact_whatsapp', 'contact_email', 'contact_address',
         'social_facebook', 'social_youtube', 'social_instagram', 'social_tiktok',
@@ -110,6 +111,23 @@ class SiteSettings extends Page implements HasSchemas
                         ColorPicker::make('color_text')->label('টেক্সট'),
                         ColorPicker::make('color_success')->label('সফল'),
                         ColorPicker::make('color_error')->label('এরর'),
+                    ]),
+                Section::make('ডেলিভারি')
+                    ->description('চেকআউটে জেলা অনুযায়ী ডেলিভারি চার্জ বসে। চার্জ খালি রাখলে ডিফল্ট (' . config('site.delivery.dhaka') . ' / ' . config('site.delivery.outside') . ' টাকা) প্রযোজ্য।')
+                    ->columns(['default' => 1, 'md' => 3])
+                    ->schema([
+                        TextInput::make('delivery_fee_dhaka')
+                            ->label('ঢাকার ভেতরে চার্জ (৳)')
+                            ->numeric()->minValue(0)->maxValue(100000)
+                            ->placeholder((string) config('site.delivery.dhaka')),
+                        TextInput::make('delivery_fee_outside')
+                            ->label('ঢাকার বাইরে চার্জ (৳)')
+                            ->numeric()->minValue(0)->maxValue(100000)
+                            ->placeholder((string) config('site.delivery.outside')),
+                        TextInput::make('delivery_free_min')
+                            ->label('ফ্রি ডেলিভারির ন্যূনতম অর্ডার (৳)')
+                            ->numeric()->minValue(0)->maxValue(10000000)
+                            ->helperText('খালি = ফ্রি ডেলিভারি বন্ধ। কুপন ছাড়ের আগের সাবটোটাল ধরা হয়।'),
                     ]),
                 Section::make('Footer')
                     ->description('Empty fields keep the current built-in text.')

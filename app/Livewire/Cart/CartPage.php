@@ -3,7 +3,7 @@
 namespace App\Livewire\Cart;
 
 use App\Services\CartService;
-use App\Services\OrderService;
+use App\Support\Delivery;
 use Livewire\Component;
 
 class CartPage extends Component
@@ -25,7 +25,8 @@ class CartPage extends Component
         return view('livewire.cart.cart-page', [
             'lines' => $cart->lines(),
             'subtotal' => $cart->subtotal(),
-            'shippingFee' => OrderService::SHIPPING_FEE,
+            'shippingFee' => Delivery::quote(null, $cart->subtotal()),
+            'freeRemaining' => Delivery::remainingForFree($cart->subtotal()),
         ]);
     }
 }

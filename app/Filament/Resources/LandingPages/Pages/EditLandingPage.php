@@ -13,6 +13,7 @@ class EditLandingPage extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            LandingPageResource::duplicateAction(),
             DeleteAction::make(),
         ];
     }

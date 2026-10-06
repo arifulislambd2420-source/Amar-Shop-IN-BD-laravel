@@ -3,7 +3,6 @@
 namespace App\Livewire\Cart;
 
 use App\Services\CartService;
-use App\Services\OrderService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -32,7 +31,6 @@ class CartDrawer extends Component
         return view('livewire.cart.cart-drawer', [
             'lines' => $cart->lines(),
             'subtotal' => $cart->subtotal(),
-            'shippingFee' => OrderService::SHIPPING_FEE,
         ]);
     }
 }

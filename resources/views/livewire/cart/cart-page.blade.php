@@ -41,11 +41,23 @@
                 </div>
                 <div class="flex justify-between text-sm mb-2">
                     <span class="text-gray-600">ডেলিভারি চার্জ</span>
-                    <span class="font-semibold">@taka($shippingFee)</span>
+                    @if(is_null($shippingFee))
+                        <span class="text-xs text-gray-500">চেকআউটে জেলা অনুযায়ী</span>
+                    @elseif($shippingFee == 0)
+                        <span class="font-semibold text-success-600">ফ্রি</span>
+                    @else
+                        <span class="font-semibold">@taka($shippingFee)</span>
+                    @endif
                 </div>
+                @if(is_null($shippingFee))
+                    <p class="text-xs text-gray-500 mb-2">ঢাকার ভেতরে @taka(\App\Support\Delivery::dhakaFee()), ঢাকার বাইরে @taka(\App\Support\Delivery::outsideFee())</p>
+                @endif
+                @if($freeRemaining)
+                    <p class="text-xs text-success-600 mb-2">আর @taka($freeRemaining) এর কেনাকাটা করলে ডেলিভারি ফ্রি!</p>
+                @endif
                 <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-3 mb-4">
                     <span>মোট</span>
-                    <span class="text-brand-500">@taka($subtotal + $shippingFee)</span>
+                    <span class="text-brand-500">@taka($subtotal + ($shippingFee ?? 0))</span>
                 </div>
                 <a href="{{ route('checkout') }}" class="block text-center bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-lg">চেকআউট করুন</a>
             </div>
