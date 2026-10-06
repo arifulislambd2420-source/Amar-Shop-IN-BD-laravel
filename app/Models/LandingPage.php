@@ -20,6 +20,13 @@ class LandingPage extends Model
         'cream' => 'Cream',
     ];
 
+    /** Default [primary, secondary] colors of each block template (overridable per page). */
+    public const TEMPLATE_COLORS = [
+        'green' => ['primary' => '#1f7a3d', 'secondary' => '#7fcf9b'],
+        'purple' => ['primary' => '#8b1d6c', 'secondary' => '#f6b8e8'],
+        'cream' => ['primary' => '#111c3a', 'secondary' => '#d9731a'],
+    ];
+
     /** Pre-builder templates: render the fixed headline/hero/gallery/features fields. */
     public const LEGACY_TEMPLATES = [
         'template-1' => 'Template 1 — Warm/classic (পুরনো)',
@@ -37,6 +44,8 @@ class LandingPage extends Model
         'title',
         'slug',
         'template',
+        'primary_color',
+        'secondary_color',
         'product_id',
         'hero_image',
         'headline',
@@ -92,6 +101,23 @@ class LandingPage extends Model
         }
 
         return $this->product?->displayPrice() ?? 0.0;
+    }
+
+    /**
+     * This page's [primary, secondary] colors: its own picks, else the
+     * template's defaults. Never the site-wide brand color.
+     *
+     * @return array{primary: string, secondary: string}
+     */
+    public function colors(): array
+    {
+        $defaults = self::TEMPLATE_COLORS[$this->template] ?? self::TEMPLATE_COLORS['green'];
+        $valid = fn (?string $c) => $c && preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? strtolower($c) : null;
+
+        return [
+            'primary' => $valid($this->primary_color) ?? $defaults['primary'],
+            'secondary' => $valid($this->secondary_color) ?? $defaults['secondary'],
+        ];
     }
 
     public static function isLegacyTemplate(?string $template): bool
