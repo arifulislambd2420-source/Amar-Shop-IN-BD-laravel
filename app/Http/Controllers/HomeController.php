@@ -17,17 +17,17 @@ class HomeController extends Controller
 
     public function __invoke()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = \App\Support\StorefrontCache::categories();
 
-        $heroBanners = Banner::where('position', 'hero')->where('active', true)->orderBy('sort_order')->get();
-        $sideBanners = Banner::where('position', 'side')->where('active', true)->orderBy('sort_order')->get();
-        $promoBanners = Banner::where('position', 'promo')->where('active', true)->orderBy('sort_order')->get();
+        $heroBanners = \App\Support\StorefrontCache::banners('hero');
+        $sideBanners = \App\Support\StorefrontCache::banners('side');
+        $promoBanners = \App\Support\StorefrontCache::banners('promo');
 
-        // ->with('variants'): every product card's AddToCart reads the
+        // ->with('variants')->withRating(): every product card's AddToCart reads the
         // product's variants; eager-loading here avoids a query per card.
-        $discounted = Product::storefront()->onSale()->with('variants')->latest()->take(8)->get();
+        $discounted = Product::storefront()->onSale()->with('variants')->withRating()->latest()->take(8)->get();
 
-        $products = Product::storefront()->with('variants')->latest()->take(8)->get();
+        $products = Product::storefront()->with('variants')->withRating()->latest()->take(8)->get();
 
         $brands = Brand::whereHas('products', fn ($q) => $q->storefront())->get();
 
@@ -40,7 +40,7 @@ class HomeController extends Controller
         // Only storefront-visible products: a hidden/draft/inactive (or
         // soft-deleted) product in a flash sale used to still show here,
         // linking to a product page that 404s.
-        $activeFlashSale = FlashSale::with(['items.product' => fn ($q) => $q->storefront()->with('variants')])
+        $activeFlashSale = FlashSale::with(['items.product' => fn ($q) => $q->storefront()->with('variants')->withRating()])
             ->where('is_active', true)
             ->where('end_time', '>', now())
             ->first();
@@ -57,7 +57,7 @@ class HomeController extends Controller
                     return [$slug => collect()];
                 }
 
-                return [$slug => Product::storefront()->with('variants')->where('category_id', $sectionCategories[$slug]->id)->take(8)->get()];
+                return [$slug => Product::storefront()->with('variants')->withRating()->where('category_id', $sectionCategories[$slug]->id)->take(8)->get()];
             });
 
         return view('home.index', compact(

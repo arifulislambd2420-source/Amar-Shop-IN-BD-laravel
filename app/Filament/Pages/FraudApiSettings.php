@@ -21,6 +21,10 @@ use UnitEnum;
  */
 class FraudApiSettings extends Page implements HasSchemas
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldExclamation;

@@ -1,5 +1,16 @@
 <div class="grid md:grid-cols-3 gap-8">
     <form wire:submit="placeOrder" class="md:col-span-2 flex flex-col gap-4">
+        @if($savedAddresses->isNotEmpty())
+            <label class="flex flex-col gap-1 text-sm">
+                <span class="font-medium text-gray-700">সেভ করা ঠিকানা থেকে বেছে নিন</span>
+                <select wire:model.live="savedAddressId" class="border border-gray-300 rounded-lg px-3 py-2">
+                    <option value="">— নতুন ঠিকানা —</option>
+                    @foreach($savedAddresses as $saved)
+                        <option value="{{ $saved->id }}">{{ $saved->label }} — {{ \Illuminate\Support\Str::limit($saved->address, 40) }}, {{ $saved->district }}</option>
+                    @endforeach
+                </select>
+            </label>
+        @endif
         <label class="flex flex-col gap-1 text-sm">
             <span class="font-medium text-gray-700">পূর্ণ নাম <span class="text-brand-500">*</span></span>
             <input type="text" wire:model="customer_name" class="border border-gray-300 rounded-lg px-3 py-2">
@@ -7,7 +18,7 @@
         </label>
         <label class="flex flex-col gap-1 text-sm">
             <span class="font-medium text-gray-700">ফোন নম্বর <span class="text-brand-500">*</span></span>
-            <input type="tel" wire:model="phone" placeholder="01XXXXXXXXX" class="border border-gray-300 rounded-lg px-3 py-2">
+            <input type="tel" wire:model.blur="phone" placeholder="01XXXXXXXXX" class="border border-gray-300 rounded-lg px-3 py-2">
             @error('phone') <span class="text-error-500 text-xs">{{ $message }}</span> @enderror
         </label>
         <label class="flex flex-col gap-1 text-sm">
@@ -45,6 +56,12 @@
             <span class="font-medium text-gray-700">অর্ডার নোট (ঐচ্ছিক)</span>
             <textarea rows="2" wire:model="notes" class="border border-gray-300 rounded-lg px-3 py-2"></textarea>
         </label>
+
+        @auth('web')
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" wire:model="saveAddress" class="accent-brand-500"> এই ঠিকানা সেভ করে রাখুন
+            </label>
+        @endauth
 
         <div class="border border-gray-200 rounded-lg p-4">
             <div class="font-medium mb-3">পেমেন্ট পদ্ধতি</div>

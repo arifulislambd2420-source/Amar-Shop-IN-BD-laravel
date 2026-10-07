@@ -19,6 +19,10 @@ use UnitEnum;
  */
 class GtmSettings extends Page implements HasSchemas
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
@@ -40,6 +44,7 @@ class GtmSettings extends Page implements HasSchemas
     {
         $this->form->fill([
             'gtm_id' => SiteSetting::where('setting_key', 'gtm_id')->value('setting_value') ?? '',
+            'meta_pixel_id' => SiteSetting::where('setting_key', 'meta_pixel_id')->value('setting_value') ?? '',
         ]);
     }
 
@@ -53,6 +58,10 @@ class GtmSettings extends Page implements HasSchemas
                         TextInput::make('gtm_id')
                             ->label('GTM container ID')
                             ->placeholder('GTM-XXXXXXX'),
+                        TextInput::make('meta_pixel_id')
+                            ->label('Meta (Facebook) Pixel ID')
+                            ->placeholder('1234567890123456')
+                            ->helperText('চালু থাকলে সারা সাইটে (ল্যান্ডিং পেজসহ) PageView, ViewContent, AddToCart, InitiateCheckout ও Purchase যায়। খালি = বন্ধ।'),
                     ]),
             ]);
     }
@@ -66,6 +75,11 @@ class GtmSettings extends Page implements HasSchemas
             ['setting_value' => trim((string) ($data['gtm_id'] ?? ''))],
         );
 
-        Notification::make()->title('GTM settings saved.')->success()->send();
+        SiteSetting::updateOrCreate(
+            ['setting_key' => 'meta_pixel_id'],
+            ['setting_value' => preg_replace('/\D+/', '', (string) ($data['meta_pixel_id'] ?? ''))],
+        );
+
+        Notification::make()->title('GTM / Pixel settings saved.')->success()->send();
     }
 }

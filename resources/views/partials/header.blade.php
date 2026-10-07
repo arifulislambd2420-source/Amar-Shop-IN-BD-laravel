@@ -5,7 +5,7 @@
         ['href' => route('offers'), 'label' => 'Offers'],
         ['href' => route('shop'), 'label' => 'Shop'],
         ['href' => route('brands'), 'label' => 'Brands'],
-        ['href' => route('blog.index'), 'label' => 'Blog'],
+        ...(\App\Models\Blog::hasPublished() ? [['href' => route('blog.index'), 'label' => 'Blog']] : []),
         ['href' => route('contact'), 'label' => 'Contact'],
     ];
 @endphp
@@ -18,7 +18,7 @@
 
         <a href="{{ url('/') }}" class="text-xl font-bold tracking-tight shrink-0">
             @if($logo)
-                <img src="{{ $logo }}" alt="{{ \App\Support\SiteSettingsHelper::siteName() }}" class="h-8 w-auto object-contain">
+                <img src="{{ $logo }}" alt="{{ \App\Support\SiteSettingsHelper::siteName() }}" width="120" height="32" class="h-8 w-auto object-contain">
             @elseif(\App\Support\SiteSettingsHelper::hasCustomSiteName())
                 {{ \App\Support\SiteSettingsHelper::siteName() }}
             @else
@@ -71,7 +71,7 @@
                 </button>
                 <div class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-b-lg shadow-lg z-50 hidden group-hover:block">
                     <ul class="py-2">
-                        @foreach(\App\Models\Category::orderBy('name')->get() as $c)
+                        @foreach(\App\Support\StorefrontCache::categories() as $c)
                             <li>
                                 <a href="{{ route('shop', ['category' => $c->slug]) }}" class="block px-4 py-2 text-sm hover:bg-surface hover:text-brand-500">{{ $c->name }}</a>
                             </li>
@@ -84,14 +84,14 @@
             @endforeach
             <div class="ml-auto flex items-center gap-4">
                 @auth
-                    <span class="text-gray-600">হ্যালো, {{ auth()->user()->name }}</span>
+                    <a href="{{ route('customer.account') }}" class="text-gray-600 hover:text-brand-500">হ্যালো, {{ auth()->user()->name }}</a>
                     <form action="{{ route('customer.logout') }}" method="POST">
                         @csrf
-                        <button type="submit" class="hover:text-brand-500">Logout</button>
+                        <button type="submit" class="hover:text-brand-500">লগআউট</button>
                     </form>
                 @else
-                    <a href="{{ route('customer.login') }}" class="hover:text-brand-500">Login</a>
-                    <a href="{{ route('customer.register') }}" class="hover:text-brand-500">Sign Up</a>
+                    <a href="{{ route('customer.login') }}" class="hover:text-brand-500">লগইন</a>
+                    <a href="{{ route('customer.register') }}" class="hover:text-brand-500">রেজিস্টার</a>
                 @endauth
             </div>
         </div>
@@ -110,7 +110,7 @@
         </div>
         <div class="bg-surface border-b border-gray-200 p-3 flex gap-2 text-xs font-semibold">
             @auth
-                <span class="flex-1 text-center py-1.5 text-gray-700">হ্যালো, {{ auth()->user()->name }}</span>
+                <a href="{{ route('customer.account') }}" class="flex-1 text-center py-1.5 text-gray-700 font-semibold">আমার অ্যাকাউন্ট ({{ auth()->user()->name }})</a>
             @else
                 <a href="{{ route('customer.login') }}" class="flex-1 bg-white border border-gray-300 py-1.5 px-3 rounded-lg text-center text-gray-700">লগইন</a>
                 <a href="{{ route('customer.register') }}" class="flex-1 bg-secondary text-white py-1.5 px-3 rounded-lg text-center">রেজিস্টার</a>

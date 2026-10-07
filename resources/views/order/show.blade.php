@@ -1,13 +1,14 @@
 @extends('layouts.app')
 
 @section('title', 'অর্ডার নিশ্চিতকরণ — '.\App\Support\SiteSettingsHelper::siteName())
+@section('robots', 'noindex, nofollow')
 
 @section('content')
-@if(session('gtm_purchase'))
+@if(! empty($purchase))
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        if (window.pushToDataLayer) {
-            window.pushToDataLayer('purchase', { ecommerce: @json(session('gtm_purchase')) });
+        if (window.trackEvent) {
+            window.trackEvent('purchase', @json($purchase['ecommerce']), @json($purchase['event_id']));
         }
     });
 </script>
@@ -22,7 +23,7 @@
     <div class="border border-gray-200 rounded-xl p-5">
         <div class="flex justify-between items-center mb-4">
             <div class="font-semibold">অর্ডার বিবরণ</div>
-            <span class="text-xs font-semibold bg-brand-100 text-brand-600 px-2 py-1 rounded">{{ ucfirst($order->status) }}</span>
+            <span class="text-xs font-semibold bg-brand-100 text-brand-600 px-2 py-1 rounded">{{ \App\Support\OrderStatus::label($order->status) }}</span>
         </div>
         <div class="flex flex-col gap-2 mb-3">
             @foreach($order->items as $item)

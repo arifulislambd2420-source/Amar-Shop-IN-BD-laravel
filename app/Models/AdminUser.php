@@ -11,11 +11,22 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * Admin user (separate from customer `users`). Backs the dedicated `admin`
  * auth guard used by the Filament admin panel. Admins log in with `username`.
  *
- * Every admin_users row is an admin (the `role` column exists for future,
- * finer-grained permissions), so canAccessPanel() always returns true.
+ * `role` decides what the admin may open (see App\Support\AdminAccess):
+ * super_admin (everything), manager (everything but settings and admin
+ * users), order_staff (orders only). Existing rows default to super_admin.
  */
 class AdminUser extends Authenticatable implements FilamentUser, HasName
 {
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+    public const ROLE_MANAGER = 'manager';
+    public const ROLE_ORDER_STAFF = 'order_staff';
+
+    public const ROLE_OPTIONS = [
+        self::ROLE_SUPER_ADMIN => 'সুপার অ্যাডমিন (সব)',
+        self::ROLE_MANAGER => 'ম্যানেজার (সেটিং ছাড়া সব)',
+        self::ROLE_ORDER_STAFF => 'অর্ডার স্টাফ (শুধু অর্ডার)',
+    ];
+
     protected $table = 'admin_users';
 
     public $timestamps = false;
@@ -37,8 +48,14 @@ class AdminUser extends Authenticatable implements FilamentUser, HasName
         ];
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
     /**
-     * All seeded admin_users may access the Filament panel.
+     * Every admin_users row may sign in; what they can open is decided by
+     * their role (App\Support\AdminAccess).
      */
     public function canAccessPanel(Panel $panel): bool
     {

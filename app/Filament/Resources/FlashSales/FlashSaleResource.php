@@ -26,6 +26,8 @@ use UnitEnum;
 
 class FlashSaleResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = FlashSale::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBolt;

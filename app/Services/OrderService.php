@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\SiteSettingsHelper;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -36,12 +38,57 @@ class OrderService
      *         once payment is confirmed, by finalizeBkashPayment() below, so
      *         an abandoned/failed payment never holds stock hostage.
      */
-    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null, bool $reserveStock = true): Order
+    public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null, bool $reserveStock = true, bool $bypassCooldown = false): Order
     {
         if (empty($cartLines)) {
             throw new RuntimeException('Cart is empty');
         }
 
+        $minutes = $bypassCooldown ? 0 : self::cooldownMinutes();
+
+        if ($minutes <= 0) {
+            return $this->persistOrder($cartLines, $customer, $couponCode, $landingPageId, $reserveStock);
+        }
+
+        // Same phone ordering again within the cooldown is refused. The lock
+        // makes two simultaneous submissions from one phone serialize, so the
+        // second one sees the first order.
+        $phone = $this->normalizePhone((string) ($customer['phone'] ?? ''));
+        $lock = Cache::lock('order-phone:'.substr($phone, -10), 15);
+
+        if (! $lock->get()) {
+            throw new RuntimeException('আপনার অর্ডারটি প্রসেস হচ্ছে। অনুগ্রহ করে একটু অপেক্ষা করুন।');
+        }
+
+        try {
+            $recent = Order::counted()
+                ->whereIn('phone', app(OrderRiskService::class)->phoneVariants($phone))
+                ->where('created_at', '>=', now()->subMinutes($minutes))
+                ->latest('created_at')
+                ->first();
+
+            if ($recent) {
+                $wait = max(1, $minutes - (int) $recent->created_at->diffInMinutes(now()));
+
+                throw new RuntimeException("এই ফোন নম্বর থেকে সম্প্রতি একটি অর্ডার করা হয়েছে। অনুগ্রহ করে {$wait} মিনিট পর আবার চেষ্টা করুন, অথবা আমাদের কল করুন।");
+            }
+
+            return $this->persistOrder($cartLines, $customer, $couponCode, $landingPageId, $reserveStock);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /** Minutes a phone must wait between orders (Site Setting → Order safety; 0 = off). */
+    public static function cooldownMinutes(): int
+    {
+        $value = SiteSettingsHelper::get('order_cooldown_minutes');
+
+        return is_numeric($value) ? max(0, (int) $value) : 10;
+    }
+
+    private function persistOrder(array $cartLines, array $customer, ?string $couponCode, ?int $landingPageId, bool $reserveStock): Order
+    {
         return DB::transaction(function () use ($cartLines, $customer, $couponCode, $landingPageId, $reserveStock) {
             $lineItems = [];
 
@@ -334,8 +381,10 @@ class OrderService
         $normalizedPhone = $this->normalizePhone($phone);
 
         if (! $normalizedPhone) {
-            return 'অনুগ্রহ করে Phone Number দিন।';
+            return 'অনুগ্রহ করে ফোন নম্বর দিন।';
         }
+
+        $phoneVariants = app(OrderRiskService::class)->phoneVariants($normalizedPhone);
 
         if ($orderIdOrInvoice) {
             $order = Order::with('items')
@@ -348,33 +397,34 @@ class OrderService
                 ->first();
 
             if (! $order) {
-                return 'এই Order ID/Invoice এর কোনো অর্ডার পাওয়া যায়নি।';
+                return 'এই অর্ডার নম্বরের কোনো অর্ডার পাওয়া যায়নি।';
             }
 
+            // 01712…, 8801712… and 1712… are the same number.
             $orderPhone = $this->normalizePhone($order->phone);
-            $matches = $orderPhone === $normalizedPhone
+            $matches = in_array($orderPhone, $phoneVariants, true)
                 || (strlen($normalizedPhone) >= 4 && str_ends_with($orderPhone, $normalizedPhone));
 
             if (! $matches) {
-                return 'Order ID ও Phone Number মিলছে না।';
+                return 'অর্ডার নম্বর ও ফোন নম্বর মিলছে না।';
             }
 
             return $order;
         }
 
         if (strlen($normalizedPhone) < 7) {
-            return 'শুধু Phone দিয়ে খুঁজতে হলে পুরো নম্বর দিন (অন্তত ৭ ডিজিট)।';
+            return 'শুধু ফোন দিয়ে খুঁজতে হলে পুরো নম্বর দিন (অন্তত ৭ ডিজিট)।';
         }
 
         // Exact phone match only — a LIKE/suffix match here could return a
         // different customer's order if two numbers happen to share a tail.
         $order = Order::with('items')
-            ->where('phone', $normalizedPhone)
+            ->whereIn('phone', $phoneVariants)
             ->orderByDesc('created_at')
             ->first();
 
         if (! $order) {
-            return 'এই Phone Number দিয়ে কোনো অর্ডার পাওয়া যায়নি।';
+            return 'এই ফোন নম্বর দিয়ে কোনো অর্ডার পাওয়া যায়নি।';
         }
 
         return $order;

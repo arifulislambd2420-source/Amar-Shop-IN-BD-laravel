@@ -18,7 +18,7 @@
                                   {{ $packageIndex === $i ? 'border-brand-500 bg-brand-50' : 'border-gray-200 bg-white' }}">
                         <input type="radio" wire:model.live="packageIndex" value="{{ $i }}" class="accent-brand-500">
                         @if (! empty($pkg['image']))
-                            <img src="{{ $pkg['image'] }}" alt="" loading="lazy" class="h-12 w-12 shrink-0 rounded-lg object-cover">
+                            <img src="{{ $pkg['image'] }}" alt="" width="56" height="56" loading="lazy" class="h-12 w-12 shrink-0 rounded-lg object-cover">
                         @endif
                         <span class="min-w-0 flex-1">
                             <span class="block text-sm font-semibold leading-snug">{{ $pkg['label'] ?? '' }}</span>
@@ -44,7 +44,7 @@
 
         <label class="flex flex-col gap-1 text-sm">
             <span class="font-medium text-gray-700">ফোন নম্বর <span class="text-brand-500">*</span></span>
-            <input type="tel" wire:model="phone" placeholder="01XXXXXXXXX" autocomplete="tel"
+            <input type="tel" wire:model.blur="phone" placeholder="01XXXXXXXXX" autocomplete="tel"
                    class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-400">
             @error('phone') <span class="text-error-500 text-xs">{{ $message }}</span> @enderror
         </label>

@@ -57,12 +57,15 @@ DB_DATABASE=আপনার_db_নাম
 DB_USERNAME=আপনার_db_user
 DB_PASSWORD=আপনার_db_password
 
-QUEUE_CONNECTION=sync
+QUEUE_CONNECTION=database
 
-# Cloudinary (image upload — Product/Banner/Site Setting logo+favicon)
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
+# Reverse proxy: খালি রাখলে শুধু লোকাল/প্রাইভেট নেটওয়ার্কের proxy বিশ্বাস করা হয়।
+# Hostinger-এ ভিজিটরের আসল IP না এলে (rate limit/IP block কাজ না করলে) নিচে proxy-র IP বা * দিন —
+# শুধু যখন সার্ভারে সরাসরি ঢোকার পথ নেই, সবকিছু হোস্টের নিজস্ব proxy দিয়ে আসে।
+TRUSTED_PROXIES=
+
+# ছবি আপলোডের সর্বোচ্চ সাইজ (KB) — ছবি আমাদের নিজের সার্ভারে থাকে, বাইরের কোনো সার্ভিস লাগে না
+MEDIA_MAX_KB=5120
 
 ENABLE_GTM=true
 ```
@@ -82,11 +85,30 @@ php artisan migrate --force
 
 (`--force` production-এ prompt এড়াতে লাগে।)
 
-## ৬. Storage link + permission
+## ৬. ছবি: Storage link + permission
+
+আপলোড করা সব ছবি সার্ভারের `storage/app/public/media`-তে থাকে এবং সাইটে `/storage/media/…` লিংকে দেখায়।
 
 ```bash
-php artisan storage:link
 chmod -R 775 storage bootstrap/cache
+php artisan storage:link
+```
+
+**`storage:link` ব্যর্থ হলে** (Hostinger shared-এ `symlink()` বন্ধ থাকলে `The [public/storage] link … symlink(): … disabled` ধরনের error), এটা চালান:
+
+```bash
+php artisan media:link
+```
+
+এটা আগে symlink চেষ্টা করে; না পারলে `public/storage` ফোল্ডারে আপলোড করা ছবির কপি বানায় — ওয়েব সার্ভার সরাসরি সেগুলো দেখায়, আর **নতুন আপলোডও নিজে থেকে কপি হয়ে যায়**। এটাও না হলে শেষ ভরসা: Laravel নিজেই `/storage/media/…` দেখাবে (ধীর, কিন্তু ছবি ভাঙবে না)।
+
+> `public_html` যদি Laravel-এর `public/` ফোল্ডারের দিকে না থাকে (প্রজেক্টের `public/` সরাসরি `public_html`), তাহলে `config/media.php`-এর `public_path` ঠিক সেই ফোল্ডারের `storage` হতে হবে।
+
+**পুরনো বাইরের ছবির লিংক** (আগে অন্য সার্ভিসে সেভ হওয়া) নিজের সার্ভারে আনতে:
+
+```bash
+php artisan media:localize-remote --dry-run   # আগে শুধু তালিকা দেখুন
+php artisan media:localize-remote             # তারপর আসলটা (আগে ডাটাবেস ব্যাকআপ নিন)
 ```
 
 ## ৭. Cache warm করুন (production performance)
@@ -98,6 +120,22 @@ php artisan view:cache
 ```
 
 > পরে `.env` বদলালে অবশ্যই `php artisan config:clear` (বা আবার `config:cache`) চালান, নাহলে পুরনো config-ই থেকে যাবে।
+
+## ৭ক. Queue ও Cron (SMS, কুরিয়ার)
+
+কাস্টমার SMS ও কুরিয়ারে পাঠানো এখন queue-তে যায় (`QUEUE_CONNECTION=database`), তাই ধীর SMS/কুরিয়ার API চেকআউট আটকায় না।
+Shared hosting-এ সবসময় চলা worker নেই, তাই **একটি cron job** দিয়ে প্রতি মিনিটে Laravel scheduler চালাতে হবে — সেটাই queue খালি করে।
+
+hPanel → **Advanced → Cron Jobs** → নতুন Cron Job (প্রতি মিনিট: `* * * * *`):
+
+```
+* * * * * cd /home/<hostinger-user>/domains/<আপনার-ডোমেইন>/public_html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+> `<hostinger-user>` ও পাথ hPanel-এ Cron Jobs পেজে বা File Manager-এর উপরে দেখা যায়। PHP-র পূর্ণ পাথ লাগলে (যেমন `/usr/bin/php` বা `/opt/alt/php83/usr/bin/php`) `php`-এর জায়গায় সেটা দিন।
+
+যাচাই: একটা COD অর্ডার দিয়ে ১–২ মিনিট পর `orders`-এর SMS log (Admin → SMS) দেখুন। জমে থাকা jobs দেখতে: `php artisan queue:work --stop-when-empty` হাতে চালান; ব্যর্থ jobs: `php artisan queue:failed`।
+Cron না চালালে SMS/কুরিয়ার job `jobs` টেবিলে জমে থাকবে, পাঠানো হবে না।
 
 ## ৮. Admin login
 
@@ -115,9 +153,14 @@ Deploy করার পর এই জিনিসগুলো একবার �
 - [ ] `/track` — **ফোন নাম্বার ছাড়া কখনো order দেখাবে না** (security টেস্ট)
 - [ ] `/customer/login`, `/customer/register` কাজ করছে
 - [ ] `/admin` লগইন কাজ করছে, dashboard এ সংখ্যা দেখাচ্ছে
-- [ ] Admin থেকে Product/Banner/Site Setting-এ image upload (Cloudinary env সঠিক থাকলে)
+- [ ] Admin থেকে Product/Banner/Brand/Blog/Site Setting/Media Library-তে image upload; আপলোডের পর সাইটে ছবি দেখা যাচ্ছে (`/storage/media/…`)
 - [ ] GTM ID admin panel-এ বসিয়ে homepage-এর view-source এ script/noscript দেখা যাচ্ছে
 - [ ] `/api/feed/facebook` খুললে XML ফিরে আসছে
+- [ ] `/sitemap.xml` ও `/robots.txt` খুলছে; robots.txt-এ আপনার ডোমেইনের Sitemap লাইন আছে
+- [ ] একটা COD অর্ডারের পর ১–২ মিনিটের মধ্যে SMS যাচ্ছে (Cron/queue কাজ করছে)
+- [ ] `/customer/account` — লগইন করে অর্ডার হিস্ট্রি ও ঠিকানা সেভ কাজ করছে
+- [ ] ভুল URL (`/xyz`) খুললে সাইটের ডিজাইনে ৪০৪ পেজ আসছে
+- [ ] Response header-এ `X-Frame-Options`, `X-Content-Type-Options` আছে, `X-Powered-By` নেই
 - [ ] Order-এ courier "Send to Steadfast" (আসল API key দিলে) কাজ করছে; Pathao/RedX (mock) consignment id বানাচ্ছে
 
 ## সমস্যা হলে

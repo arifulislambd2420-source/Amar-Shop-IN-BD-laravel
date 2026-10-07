@@ -33,7 +33,10 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Off: this app never hands out signed URLs for private files, and "on" opens
+            // a catch-all /storage/{path} route (plus a PUT) that competes with our own
+            // /storage/media/{file} image route.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

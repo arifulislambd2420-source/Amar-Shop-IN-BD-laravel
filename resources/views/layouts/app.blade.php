@@ -6,25 +6,35 @@
     @php
         $seoTitle = trim($__env->yieldContent('title')) ?: (\App\Support\SiteSettingsHelper::get('seo_title') ?: \App\Support\SiteSettingsHelper::siteName().' — '.\App\Support\SiteSettingsHelper::siteNameEn());
         $seoDescription = trim($__env->yieldContent('description')) ?: (\App\Support\SiteSettingsHelper::get('seo_description') ?: 'খাঁটি ও প্রাকৃতিক পণ্যের অনলাইন দোকান — মধু, সরিষার তেল, ঘি, খেজুর।');
-        $ogImage = \App\Support\SiteSettingsHelper::get('og_image');
+        $ogImage = trim($__env->yieldContent('og_image')) ?: \App\Support\SiteSettingsHelper::get('og_image');
+        $ogType = trim($__env->yieldContent('og_type')) ?: 'website';
+        $canonical = trim($__env->yieldContent('canonical')) ?: \App\Support\Seo::canonical();
     @endphp
     <title>{{ $seoTitle }}</title>
     <meta name="description" content="{{ $seoDescription }}">
-    <meta property="og:type" content="website">
+    <link rel="canonical" href="{{ $canonical }}">
+    @hasSection('robots')
+        <meta name="robots" content="@yield('robots')">
+    @endif
+    <meta property="og:type" content="{{ $ogType }}">
+    <meta property="og:site_name" content="{{ \App\Support\SiteSettingsHelper::siteName() }}">
+    <meta property="og:locale" content="bn_BD">
     <meta property="og:title" content="{{ $seoTitle }}">
     <meta property="og:description" content="{{ $seoDescription }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="{{ $canonical }}">
     @if($ogImage)
-        <meta property="og:image" content="{{ $ogImage }}">
+        <meta property="og:image" content="{{ \App\Support\Media::absolute($ogImage) }}">
         <meta name="twitter:card" content="summary_large_image">
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.theme-vars')
+    @include('partials.jsonld-organization')
+    @stack('head')
     @livewireStyles
-    <x-gtm-script />
+    <x-tracking-head />
 </head>
 <body class="bg-surface text-ink antialiased pb-16 md:pb-0">
-    <x-gtm-noscript />
+    <x-tracking-noscript />
 
     @include('partials.header')
 

@@ -20,6 +20,8 @@ use UnitEnum;
 
 class CategoryResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Category::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -46,10 +48,39 @@ class CategoryResource extends Resource
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
                 TextInput::make('icon')
-                    ->label('Icon (emoji or image URL)')
+                    ->label('Icon (emoji)')
                     ->maxLength(2048)
-                    ->helperText('An emoji, an icon name, or an image URL.'),
+                    ->helperText('একটি ইমোজি, অথবা নিচে ছবি আপলোড করুন (ছবি দিলে সেটাই ব্যবহার হবে)।'),
+                \App\Filament\Support\ImageUpload::make('icon_image')
+                    ->label('Icon image')
+                    ->afterStateHydrated(function ($component, $state, $record): void {
+                        // Show an already-saved image icon here (emoji stays in the text box).
+                        if (blank($state) && $record && self::isImageIcon($record->icon)) {
+                            $component->state($record->icon);
+                        }
+                    }),
             ]);
+    }
+
+    /** An icon value that is an image (uploaded path or URL) rather than an emoji. */
+    public static function isImageIcon(?string $icon): bool
+    {
+        return is_string($icon) && (str_starts_with($icon, '/') || preg_match('#^https?://#i', $icon) === 1);
+    }
+
+    /** Create/Edit: an uploaded icon image wins over the text icon; the helper field is not a column. */
+    public static function applyIconImage(array $data): array
+    {
+        if (filled($data['icon_image'] ?? null)) {
+            $data['icon'] = $data['icon_image'];
+        } elseif (self::isImageIcon($data['icon'] ?? null) && array_key_exists('icon_image', $data)) {
+            // The image was removed in the form: drop it.
+            $data['icon'] = null;
+        }
+
+        unset($data['icon_image']);
+
+        return $data;
     }
 
     public static function table(Table $table): Table
@@ -72,7 +103,7 @@ class CategoryResource extends Resource
             ])
             ->defaultSort('name')
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->mutateFormDataUsing(fn (array $data): array => self::applyIconImage($data)),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

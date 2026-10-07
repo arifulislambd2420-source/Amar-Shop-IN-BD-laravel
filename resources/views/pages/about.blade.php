@@ -11,6 +11,9 @@
         <h1 class="text-3xl font-bold text-ink border-b border-gray-100 pb-4">
             আমাদের সম্পর্কে — <span class="text-brand-500">{{ \App\Support\SiteSettingsHelper::siteName() }}</span>
         </h1>
+        @if(filled($customContent ?? null))
+            <div class="rich-text text-gray-700">{!! \App\Support\Html::render($customContent) !!}</div>
+        @else
         <p class="text-lg text-gray-600 font-medium">
             স্বাগতম <strong class="text-ink">{{ \App\Support\SiteSettingsHelper::siteNameEn() }}</strong>-এ! আমরা দেশের প্রতিটি প্রান্তে ১০০% খাঁটি, ভেজালমুক্ত এবং প্রাকৃতিক খাদ্যপণ্য পৌঁছে দেওয়ার প্রত্যয় নিয়ে কাজ করছি।
         </p>
@@ -43,6 +46,7 @@
                 <li><strong>ঠিকানা:</strong> {{ \App\Support\SiteSettingsHelper::address() }}</li>
             </ul>
         </section>
+        @endif
     </div>
 </div>
 @endsection

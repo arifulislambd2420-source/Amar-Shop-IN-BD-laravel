@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\SendOrderSms;
 use App\Models\Order;
 use App\Services\Sms\SmsService;
 
@@ -11,9 +12,10 @@ use App\Services\Sms\SmsService;
  * bKash callback, the admin edit form, courier dispatch) without any of
  * those needing to know SMS exists.
  *
- * The SMS is dispatched after the HTTP response is sent (and therefore
- * after any surrounding DB transaction committed), so a slow or failing
+ * The SMS is a queued job (SendOrderSms), dispatched after the response and
+ * after the surrounding DB transaction commits, so a slow or failing
  * gateway can neither delay the customer nor hold order/stock row locks.
+ * (With QUEUE_CONNECTION=sync it simply runs right after the response.)
  * SmsService::sendOrderEvent() is idempotent per (order, event), so a
  * status flipped back and forth never re-sends.
  */
@@ -62,8 +64,6 @@ class OrderObserver
 
     private function send(Order $order, string $event): void
     {
-        $orderId = $order->id;
-
-        dispatch(fn () => app(SmsService::class)->sendOrderEvent($orderId, $event))->afterResponse();
+        SendOrderSms::dispatch($order->id, $event)->afterCommit()->afterResponse();
     }
 }

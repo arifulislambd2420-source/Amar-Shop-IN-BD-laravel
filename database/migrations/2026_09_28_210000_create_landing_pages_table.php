@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('headline');
             $table->string('sub_headline')->nullable();
             $table->text('description')->nullable();
-            // List of Cloudinary image URLs (strings).
+            // List of image URLs (strings).
             $table->json('gallery')->nullable();
             // List of {title, description} feature entries.
             $table->json('features')->nullable();

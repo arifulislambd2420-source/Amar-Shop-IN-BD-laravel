@@ -12,7 +12,7 @@
             @if ($grid)
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                     @foreach ($images as $image)
-                        <img src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
+                        <img width="800" height="800" src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
                              class="w-full aspect-square object-cover rounded-xl border-2 border-dashed border-brand-200">
                     @endforeach
                 </div>
@@ -20,7 +20,7 @@
                 {{-- Scroll-snap carousel: swipeable on mobile, no JS needed. --}}
                 <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4">
                     @foreach ($images as $image)
-                        <img src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
+                        <img width="800" height="800" src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
                              class="snap-center shrink-0 w-[72%] sm:w-[40%] md:w-[31%] aspect-square object-cover rounded-xl border-2 border-dashed border-brand-200">
                     @endforeach
                 </div>

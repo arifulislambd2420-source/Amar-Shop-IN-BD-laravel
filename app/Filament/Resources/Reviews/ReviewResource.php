@@ -26,6 +26,8 @@ use UnitEnum;
 
 class ReviewResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Review::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;

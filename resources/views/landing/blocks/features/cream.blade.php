@@ -12,7 +12,7 @@
         @if ($images)
             <div class="grid grid-cols-2 gap-3">
                 @foreach ($images as $image)
-                    <img src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
+                    <img width="800" height="800" src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
                          class="w-full rounded-xl object-cover shadow-md {{ $loop->odd ? 'aspect-[3/4]' : 'aspect-[3/4] mt-6' }}">
                 @endforeach
             </div>
@@ -39,7 +39,7 @@
                     @foreach ($items as $item)
                         <div class="flex gap-3">
                             @if (! empty($item['icon']))
-                                <img src="{{ $item['icon'] }}" alt="" loading="lazy" class="h-10 w-10 shrink-0 rounded-lg object-cover">
+                                <img width="800" height="800" src="{{ $item['icon'] }}" alt="" loading="lazy" class="h-10 w-10 shrink-0 rounded-lg object-cover">
                             @else
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/15 text-secondary" aria-hidden="true">✦</span>
                             @endif

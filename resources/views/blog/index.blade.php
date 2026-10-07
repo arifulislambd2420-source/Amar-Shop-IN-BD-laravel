@@ -14,7 +14,7 @@
                 <a href="{{ route('blog.show', $b->slug) }}" class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <div class="aspect-video bg-gray-100">
                         @if($b->cover)
-                            <img src="{{ $b->cover }}" alt="{{ $b->title }}" class="w-full h-full object-cover">
+                            <img src="{{ $b->cover }}" alt="{{ $b->title }}" width="600" height="400" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         @endif
                     </div>
                     <div class="p-4">

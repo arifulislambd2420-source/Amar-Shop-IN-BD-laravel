@@ -36,7 +36,7 @@
                                    aria-label="{{ $c['label'] }}" tabindex="-1">
 
                             @if (! empty($c['image']))
-                                <img src="{{ $c['image'] }}" alt="" loading="lazy" class="h-14 w-14 shrink-0 rounded-md object-cover">
+                                <img src="{{ $c['image'] }}" alt="" width="56" height="56" loading="lazy" class="h-14 w-14 shrink-0 rounded-md object-cover">
                             @endif
 
                             <div class="min-w-0 flex-1">
@@ -78,7 +78,7 @@
 
                 <label class="block text-sm">
                     <span class="mb-1 block font-medium text-gray-700">ফোন নম্বর <span class="text-error-500">*</span></span>
-                    <input type="tel" wire:model="phone" placeholder="01XXXXXXXXX" autocomplete="tel" class="{{ $inputClass }}">
+                    <input type="tel" wire:model.blur="phone" placeholder="01XXXXXXXXX" autocomplete="tel" class="{{ $inputClass }}">
                     @error('phone') <span class="text-xs text-error-500">{{ $message }}</span> @enderror
                 </label>
 
@@ -132,7 +132,7 @@
                 @if ($card)
                     <div class="flex items-center gap-3 border-b border-gray-100 pb-3">
                         @if (! empty($card['image']))
-                            <img src="{{ $card['image'] }}" alt="" loading="lazy" class="h-12 w-12 shrink-0 rounded-md object-cover">
+                            <img src="{{ $card['image'] }}" alt="" width="48" height="48" loading="lazy" class="h-12 w-12 shrink-0 rounded-md object-cover">
                         @endif
                         <div class="min-w-0 flex-1 text-sm">
                             <p class="font-medium leading-snug">{{ $card['label'] }}</p>

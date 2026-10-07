@@ -11,6 +11,9 @@
         <h1 class="text-3xl font-bold text-ink border-b border-gray-100 pb-4">
             ডেলিভারি পলিসি ও চার্জ — <span class="text-brand-500">{{ \App\Support\SiteSettingsHelper::siteName() }}</span>
         </h1>
+        @if(filled($customContent ?? null))
+            <div class="rich-text text-gray-700">{!! \App\Support\Html::render($customContent) !!}</div>
+        @else
         <p>গ্রাহকদের কাছে দ্রুত এবং নিরাপদভাবে পণ্য পৌঁছানো আমাদের প্রধান দায়িত্ব। সারাদেশে কুরিয়ার সার্ভিসের মাধ্যমে হোম ডেলিভারি প্রদান করা হয়।</p>
         <div class="grid sm:grid-cols-2 gap-4 my-6">
             <div class="bg-brand-50 border border-brand-200 p-5 rounded-xl">
@@ -42,6 +45,7 @@
             <h2 class="text-xl font-bold text-ink">ট্র্যাকিং</h2>
             <p class="text-sm">অর্ডার করার পর <a href="{{ route('track') }}" class="text-brand-500 font-medium">ট্র্যাক অর্ডার</a> পেজ থেকে আপনার ফোন নম্বর দিয়ে অর্ডারের সর্বশেষ অবস্থা জানতে পারবেন।</p>
         </section>
+        @endif
     </div>
 </div>
 @endsection

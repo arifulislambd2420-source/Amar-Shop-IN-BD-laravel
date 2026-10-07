@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'চেকআউট — '.\App\Support\SiteSettingsHelper::siteName())
+@section('robots', 'noindex, nofollow')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">

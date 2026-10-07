@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
+    use \App\Models\Concerns\FlushesStorefrontCache;
+
     public $timestamps = false;
 
     protected $fillable = [

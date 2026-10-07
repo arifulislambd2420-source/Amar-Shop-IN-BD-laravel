@@ -33,7 +33,7 @@
             </div>
 
             @if (! empty($d['image']))
-                <img src="{{ $d['image'] }}" alt="{{ $d['heading'] ?? $landingPage->title }}" loading="lazy"
+                <img width="800" height="800" src="{{ $d['image'] }}" alt="{{ $d['heading'] ?? $landingPage->title }}" loading="lazy"
                      class="w-full rounded-xl border-2 border-dashed border-secondary object-cover aspect-[4/5] md:order-last">
             @endif
         </div>

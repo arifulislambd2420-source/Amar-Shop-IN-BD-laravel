@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Landing;
 
+use App\Models\IncompleteOrder;
 use App\Models\LandingPage;
 use App\Services\OrderService;
 use App\Services\Payment\BkashService;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use RuntimeException;
+use Throwable;
 
 /**
  * The order form embedded in every landing page template.
@@ -200,6 +202,41 @@ class LandingOrderForm extends Component
         return $this->zone === 'dhaka' ? Delivery::DHAKA : 'ঢাকার বাইরে';
     }
 
+    // Incomplete-order capture (see CheckoutForm): a valid phone typed on blur.
+    public function updatedPhone(): void
+    {
+        try {
+            $page = $this->page();
+            $packages = $this->packages($page);
+            $package = $this->selectedPackage($packages);
+
+            if ($package) {
+                $quantity = max(1, (int) ($package['quantity'] ?? 1)) * $this->quantity;
+                $item = [
+                    'product_id' => (int) $package['product_id'],
+                    'variant_id' => null,
+                    'name' => (string) ($package['label'] ?? ''),
+                    'quantity' => $quantity,
+                    'unit_price' => (float) $package['price'] * $this->quantity / $quantity,
+                ];
+            } elseif ($page->product) {
+                $item = [
+                    'product_id' => $page->product_id,
+                    'variant_id' => null,
+                    'name' => $page->product->name,
+                    'quantity' => $this->quantity,
+                    'unit_price' => $page->effectivePrice(),
+                ];
+            } else {
+                return;
+            }
+
+            IncompleteOrder::capture(session()->getId(), 'landing', $page->id, $this->phone, $this->customer_name, null, $this->address, [$item], request()->ip());
+        } catch (Throwable) {
+            // Never get in the way of ordering.
+        }
+    }
+
     public function increment(): void
     {
         $this->quantity = min(20, $this->quantity + 1);
@@ -334,6 +371,11 @@ class LandingOrderForm extends Component
             }
 
             return redirect()->away($payment['bkashURL']);
+        }
+
+        try {
+            IncompleteOrder::markConverted($this->phone, $order->id);
+        } catch (Throwable) {
         }
 
         return redirect()->route('order.show', $order->order_token);

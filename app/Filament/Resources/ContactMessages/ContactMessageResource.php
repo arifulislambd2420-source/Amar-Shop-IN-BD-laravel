@@ -23,6 +23,8 @@ use UnitEnum;
  */
 class ContactMessageResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = ContactMessage::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;

@@ -11,6 +11,8 @@ use Filament\Widgets\Widget;
  */
 class FeedUrlWidget extends Widget
 {
+    use \App\Filament\Concerns\HasAdminAreaWidget;
+
     protected string $view = 'filament.widgets.feed-url-widget';
 
     protected static ?int $sort = 99;

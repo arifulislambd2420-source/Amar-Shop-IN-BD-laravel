@@ -7,7 +7,7 @@
          class="relative overflow-hidden rounded-xl border-2 border-dashed border-brand-200 bg-white {{ $wrapClass ?? '' }}">
         <div class="flex transition-transform duration-500 ease-out" :style="`transform: translateX(-${i * 100}%)`">
             @foreach ($images as $image)
-                <img src="{{ $image }}" alt="{{ $alt ?? '' }}" class="w-full shrink-0 {{ $aspect ?? 'aspect-square' }} object-cover"
+                <img width="800" height="800" src="{{ $image }}" alt="{{ $alt ?? '' }}" class="w-full shrink-0 {{ $aspect ?? 'aspect-square' }} object-cover"
                      @if (! $loop->first) loading="lazy" @endif>
             @endforeach
         </div>

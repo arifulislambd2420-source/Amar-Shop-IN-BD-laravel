@@ -30,7 +30,7 @@
                 @foreach ($options as $option)
                     <div class="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-gray-100">
                         @if (! empty($option['image']))
-                            <img src="{{ $option['image'] }}" alt="{{ $option['name'] }}" loading="lazy" class="aspect-[3/4] w-full object-cover">
+                            <img width="800" height="800" src="{{ $option['image'] }}" alt="{{ $option['name'] }}" loading="lazy" class="aspect-[3/4] w-full object-cover">
                         @endif
                         <div class="p-2.5 text-center">
                             <p class="text-sm font-semibold text-ink leading-snug">{{ $option['name'] }}</p>

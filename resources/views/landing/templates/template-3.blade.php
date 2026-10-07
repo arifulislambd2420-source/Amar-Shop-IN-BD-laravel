@@ -14,7 +14,7 @@
         @endif
 
         @if ($landingPage->hero_image)
-            <img src="{{ $landingPage->hero_image }}" alt="{{ $landingPage->headline }}"
+            <img src="{{ $landingPage->hero_image }}" alt="{{ $landingPage->headline }}" width="800" height="800" fetchpriority="high"
                  class="mx-auto mt-8 w-full rounded-xl object-cover">
         @endif
 
@@ -40,7 +40,7 @@
         <section class="px-4 py-8 max-w-2xl mx-auto">
             <div class="grid grid-cols-3 gap-2">
                 @foreach ($landingPage->gallery as $image)
-                    <img src="{{ $image }}" alt="{{ $landingPage->title }}"
+                    <img src="{{ $image }}" alt="{{ $landingPage->title }}" width="600" height="600" loading="lazy"
                          class="w-full aspect-square object-cover rounded-lg">
                 @endforeach
             </div>

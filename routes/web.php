@@ -21,6 +21,27 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
+// Search-engine files. robots.txt is dynamic so its Sitemap line carries the
+// real domain (a static public/robots.txt cannot know it).
+Route::get('/sitemap.xml', \App\Http\Controllers\SitemapController::class)->name('sitemap');
+Route::get('/robots.txt', function () {
+    $lines = [
+        'User-agent: *',
+        'Disallow: /admin',
+        'Disallow: /cart',
+        'Disallow: /checkout',
+        'Disallow: /track',
+        'Disallow: /customer',
+        'Disallow: /order/',
+        'Disallow: /livewire',
+        'Allow: /',
+        '',
+        'Sitemap: '.url('/sitemap.xml'),
+    ];
+
+    return response(implode("\n", $lines)."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+})->name('robots');
+
 // Fallback for uploaded images when the public/storage symlink is missing
 // (storage:link fails on this host) — never reached when the symlink
 // exists. No session/cookie middleware: an image shouldn't start a session.
@@ -43,7 +64,7 @@ Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/offers', [ShopController::class, 'offers'])->name('offers');
 
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');
-Route::post('/product/{slug}/reviews', [ProductController::class, 'storeReview'])->name('product.reviews.store');
+Route::post('/product/{slug}/reviews', [ProductController::class, 'storeReview'])->middleware('throttle:review')->name('product.reviews.store');
 
 Route::get('/brands', [BrandController::class, 'index'])->name('brands');
 
@@ -76,7 +97,7 @@ Route::get('/order/{token}/invoice', [InvoiceController::class, 'show'])->name('
 Route::get('/track', [TrackController::class, 'show'])->name('track');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
 
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
@@ -87,11 +108,19 @@ Route::get('/delivery', [PageController::class, 'delivery'])->name('delivery');
 // Customer auth — separate `web` guard from the admin (Filament) guard.
 Route::middleware('guest:web')->group(function () {
     Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])->name('customer.login');
-    Route::post('/customer/login', [CustomerAuthController::class, 'login'])->name('customer.login.submit');
+    Route::post('/customer/login', [CustomerAuthController::class, 'login'])->middleware('throttle:customer-login')->name('customer.login.submit');
     Route::get('/customer/register', [CustomerAuthController::class, 'showRegister'])->name('customer.register');
-    Route::post('/customer/register', [CustomerAuthController::class, 'register'])->name('customer.register.submit');
+    Route::post('/customer/register', [CustomerAuthController::class, 'register'])->middleware('throttle:customer-register')->name('customer.register.submit');
 });
 
 Route::middleware('auth:web')->group(function () {
     Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer.logout');
+
+    // Account: order history, order details, saved addresses.
+    Route::get('/customer/account', [\App\Http\Controllers\Customer\AccountController::class, 'index'])->name('customer.account');
+    Route::get('/customer/orders/{order}', [\App\Http\Controllers\Customer\AccountController::class, 'order'])->whereNumber('order')->name('customer.orders.show');
+    Route::post('/customer/addresses', [\App\Http\Controllers\Customer\AccountController::class, 'storeAddress'])->name('customer.addresses.store');
+    Route::put('/customer/addresses/{address}', [\App\Http\Controllers\Customer\AccountController::class, 'updateAddress'])->whereNumber('address')->name('customer.addresses.update');
+    Route::delete('/customer/addresses/{address}', [\App\Http\Controllers\Customer\AccountController::class, 'destroyAddress'])->whereNumber('address')->name('customer.addresses.destroy');
+    Route::post('/customer/addresses/{address}/default', [\App\Http\Controllers\Customer\AccountController::class, 'defaultAddress'])->whereNumber('address')->name('customer.addresses.default');
 });

@@ -9,6 +9,9 @@
     </nav>
     <div class="bg-white rounded-2xl border border-gray-200 p-6 md:p-10 shadow-sm space-y-6 text-gray-700 leading-relaxed">
         <h1 class="text-3xl font-bold text-ink border-b border-gray-100 pb-4">ব্যবহারের শর্তাবলী (Terms of Service)</h1>
+        @if(filled($customContent ?? null))
+            <div class="rich-text text-gray-700">{!! \App\Support\Html::render($customContent) !!}</div>
+        @else
         <p><strong class="text-ink">{{ \App\Support\SiteSettingsHelper::siteName() }}</strong> ওয়েবসাইট ব্যবহারের মাধ্যমে আপনি নিচের শর্তাবলীতে সম্মত হচ্ছেন।</p>
         <section class="space-y-3">
             <h2 class="text-xl font-bold text-ink">১. অর্ডার ও পেমেন্ট</h2>
@@ -22,6 +25,7 @@
             <h2 class="text-xl font-bold text-ink">৩. একাউন্ট দায়বদ্ধতা</h2>
             <p class="text-sm">আপনার একাউন্টের তথ্য ও পাসওয়ার্ড গোপন রাখার দায়িত্ব সম্পূর্ণরূপে আপনার। কোনো অস্বাভাবিক কার্যকলাপ দেখলে দ্রুত আমাদের জানান।</p>
         </section>
+        @endif
     </div>
 </div>
 @endsection

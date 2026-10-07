@@ -5,7 +5,7 @@ namespace App\Filament\Resources\LandingPages;
 use App\Filament\Resources\LandingPages\Pages\CreateLandingPage;
 use App\Filament\Resources\LandingPages\Pages\EditLandingPage;
 use App\Filament\Resources\LandingPages\Pages\ListLandingPages;
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use App\Models\LandingPage;
 use BackedEnum;
 use App\Models\Product;
@@ -40,6 +40,8 @@ use UnitEnum;
 
 class LandingPageResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = LandingPage::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleGroup;
@@ -115,10 +117,10 @@ class LandingPageResource extends Resource
                         Textarea::make('description')
                             ->rows(4)
                             ->columnSpanFull(),
-                        CloudinaryUpload::make('hero_image')
+                        ImageUpload::make('hero_image')
                             ->label('Hero image')
                             ->columnSpanFull(),
-                        CloudinaryUpload::make('gallery')
+                        ImageUpload::make('gallery')
                             ->label('Gallery images')
                             ->multiple()
                             ->reorderable()
@@ -171,7 +173,7 @@ class LandingPageResource extends Resource
                                     ->placeholder('৩ পিস অফার')
                                     ->required()
                                     ->maxLength(255),
-                                CloudinaryUpload::make('image')
+                                ImageUpload::make('image')
                                     ->label('ছবি'),
                                 TextInput::make('price')
                                     ->label('দাম')
@@ -192,6 +194,14 @@ class LandingPageResource extends Resource
                             ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
                             ->addActionLabel('প্যাকেজ যোগ করুন')
                             ->defaultItems(0),
+                    ]),
+                Section::make('SEO')
+                    ->description('এই পেজের নিজস্ব সার্চ/শেয়ার তথ্য। খালি থাকলে শিরোনাম ও বিবরণ থেকে নেওয়া হয়।')
+                    ->collapsible()
+                    ->schema([
+                        TextInput::make('seo_title')->label('SEO title')->maxLength(120),
+                        Textarea::make('seo_description')->label('Meta description')->rows(2)->maxLength(300),
+                        ImageUpload::make('og_image')->label('OG ছবি (শেয়ারের ছবি)')->helperText('খালি = হিরো ছবি, তারপর সাইটের ডিফল্ট OG ছবি।'),
                     ]),
                 Section::make('Order form')
                     ->columns(2)
@@ -237,7 +247,7 @@ class LandingPageResource extends Resource
                 TextInput::make('offer_line')->label('দাম/অফার লাইন (বা রঙিন দ্বিতীয় শিরোনাম)')->placeholder('মূল্যঃ ১ পিস ৪৮০/- টাকা, ৩ পিস ১১৫০/- টাকা')->maxLength(255)->columnSpanFull(),
                 TextInput::make('button_text')->label('বাটনের লেখা')->default('অর্ডার করুন')->maxLength(100),
                 TextInput::make('badge_text')->label('ব্যাজ/ঘোষণা')->placeholder('নতুন বছর উপলক্ষে বিশেষ মূল্য ছাড়')->maxLength(255),
-                CloudinaryUpload::make('images')->label('ছবি (একাধিক হলে স্লাইডার)')->multiple()->reorderable()->columnSpanFull(),
+                ImageUpload::make('images')->label('ছবি (একাধিক হলে স্লাইডার)')->multiple()->reorderable()->columnSpanFull(),
                 TextInput::make('video_url')->label('ভিডিও লিংক (ঐচ্ছিক)')->url()->maxLength(500)->columnSpanFull(),
                 TextInput::make('list_heading')->label('বৈশিষ্ট্য তালিকার শিরোনাম')->default('পণ্যের বৈশিষ্ট্যসমূহ')->maxLength(255)->columnSpanFull(),
                 Repeater::make('bullets')->label('বৈশিষ্ট্য তালিকা')
@@ -249,12 +259,12 @@ class LandingPageResource extends Resource
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255),
                 TextInput::make('accent')->label('রঙিন দ্বিতীয় লাইন (ঐচ্ছিক)')->maxLength(255)->columnSpanFull(),
                 Textarea::make('description')->label('বর্ণনা (ঐচ্ছিক)')->rows(3)->columnSpanFull(),
-                CloudinaryUpload::make('images')->label('পাশের ছবি (ঐচ্ছিক — কোলাজ)')->multiple()->reorderable()->columnSpanFull(),
+                ImageUpload::make('images')->label('পাশের ছবি (ঐচ্ছিক — কোলাজ)')->multiple()->reorderable()->columnSpanFull(),
                 Repeater::make('items')->label('ফিচার')
                     ->schema([
                         TextInput::make('title')->label('শিরোনাম')->required()->maxLength(255),
                         TextInput::make('description')->label('বিবরণ')->maxLength(500),
-                        CloudinaryUpload::make('icon')->label('আইকন/ছবি'),
+                        ImageUpload::make('icon')->label('আইকন/ছবি'),
                     ])->columns(2)->reorderable()->collapsible()
                     ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
                     ->addActionLabel('ফিচার যোগ করুন')->defaultItems(0)->columnSpanFull(),
@@ -267,23 +277,23 @@ class LandingPageResource extends Resource
                 Repeater::make('items')->label('তালিকা')
                     ->simple(TextInput::make('text')->required()->maxLength(255))
                     ->reorderable()->addActionLabel('লাইন যোগ করুন')->defaultItems(0)->columnSpanFull(),
-                CloudinaryUpload::make('image')->label('পাশের ছবি'),
+                ImageUpload::make('image')->label('পাশের ছবি'),
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->maxLength(100),
             ]),
             self::block('gallery', 'Gallery', 'heroicon-o-photo', [
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255)->columnSpanFull(),
-                CloudinaryUpload::make('images')->label('ছবি')->multiple()->reorderable()->columnSpanFull(),
+                ImageUpload::make('images')->label('ছবি')->multiple()->reorderable()->columnSpanFull(),
                 Select::make('layout')->label('লেআউট')->options(['carousel' => 'Carousel', 'grid' => 'Grid'])->default('carousel'),
             ]),
             self::block('reviews', 'Reviews', 'heroicon-o-chat-bubble-left-right', [
                 TextInput::make('heading')->label('শিরোনাম')->default('সম্মানিত কাস্টমার রিভিউ')->maxLength(255)->columnSpanFull(),
-                CloudinaryUpload::make('images')->label('রিভিউ স্ক্রিনশট')->multiple()->reorderable()->columnSpanFull(),
+                ImageUpload::make('images')->label('রিভিউ স্ক্রিনশট')->multiple()->reorderable()->columnSpanFull(),
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->maxLength(100),
             ]),
             self::block('video', 'Video', 'heroicon-o-play-circle', [
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255)->columnSpanFull(),
                 TextInput::make('url')->label('ভিডিও লিংক (YouTube / MP4)')->url()->required()->maxLength(500)->columnSpanFull(),
-                CloudinaryUpload::make('poster')->label('পোস্টার ছবি'),
+                ImageUpload::make('poster')->label('পোস্টার ছবি'),
             ]),
             self::block('variants', 'Variants (সাইজ/কালার)', 'heroicon-o-swatch', [
                 TextInput::make('label')->label('ছোট লেবেল (ঐচ্ছিক)')->maxLength(100),
@@ -292,7 +302,7 @@ class LandingPageResource extends Resource
                 Textarea::make('description')->label('বর্ণনা (ঐচ্ছিক)')->rows(2)->columnSpanFull(),
                 Repeater::make('options')->label('ছবিসহ কালার/ডিজাইন গ্রিড (প্রতিটায় অর্ডার বাটন)')
                     ->schema([
-                        CloudinaryUpload::make('image')->label('ছবি'),
+                        ImageUpload::make('image')->label('ছবি'),
                         TextInput::make('name')->label('নাম')->required()->maxLength(100),
                     ])->columns(2)->reorderable()->collapsible()
                     ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
@@ -351,13 +361,25 @@ class LandingPageResource extends Resource
                     ->limit(30)
                     ->toggleable(),
                 TextColumn::make('views')
+                    ->label('ভিজিট')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('orders_count')
-                    ->label('Orders')
-                    ->counts('orders')
+                    ->label('অর্ডার')
+                    ->counts(['orders' => fn ($query) => $query->counted()])
                     ->badge()
                     ->sortable(),
+                TextColumn::make('conversion')
+                    ->label('কনভার্শন')
+                    ->state(fn (LandingPage $record): string => $record->views > 0
+                        ? number_format($record->orders_count / $record->views * 100, 1).'%'
+                        : '—')
+                    ->color(fn (LandingPage $record): string => $record->views > 0 && $record->orders_count / $record->views >= 0.03 ? 'success' : 'gray')
+                    ->badge()
+                    ->tooltip('অর্ডার ÷ ভিজিট'),
+                TextColumn::make('revenue')
+                    ->label('বিক্রি')
+                    ->state(fn (LandingPage $record): string => '৳ '.number_format((float) $record->orders()->counted()->sum('total'), 0)),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()

@@ -25,7 +25,9 @@
                 <li><a href="{{ route('about') }}" class="hover:text-brand-500">আমাদের সম্পর্কে</a></li>
                 <li><a href="{{ route('shop') }}" class="hover:text-brand-500">সকল পণ্য (Shop)</a></li>
                 <li><a href="{{ route('offers') }}" class="hover:text-brand-500">অফার সমূহ</a></li>
+                @if(\App\Models\Blog::hasPublished())
                 <li><a href="{{ route('blog.index') }}" class="hover:text-brand-500">ব্লগ ও টিপস</a></li>
+                @endif
                 <li><a href="{{ route('track') }}" class="hover:text-brand-500">অর্ডার ট্র্যাকিং</a></li>
             </ul>
         </div>

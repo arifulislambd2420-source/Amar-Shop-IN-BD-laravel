@@ -1,39 +1,40 @@
 @php
     $statusLabel = [
-        'pending' => 'Pending',
-        'processing' => 'Confirmed',
-        'shipped' => 'Shipped',
-        'out_for_delivery' => 'Out for Delivery',
-        'delivered' => 'Delivered',
-        'completed' => 'Completed',
-        'cancelled' => 'Cancelled',
+        'pending' => 'অপেক্ষমাণ',
+        'processing' => 'কনফার্মড',
+        'shipped' => 'শিপড',
+        'out_for_delivery' => 'ডেলিভারির পথে',
+        'delivered' => 'ডেলিভারড',
+        'completed' => 'সম্পন্ন',
+        'cancelled' => 'বাতিল',
+        'on_hold' => 'যাচাই চলছে',
     ];
     $happyPath = [
-        ['key' => 'pending', 'label' => 'Pending'],
-        ['key' => 'processing', 'label' => 'Confirmed'],
-        ['key' => 'shipped', 'label' => 'Shipped'],
-        ['key' => 'out_for_delivery', 'label' => 'Out for Delivery'],
-        ['key' => 'delivered', 'label' => 'Delivered'],
+        ['key' => 'pending', 'label' => 'অপেক্ষমাণ'],
+        ['key' => 'processing', 'label' => 'কনফার্মড'],
+        ['key' => 'shipped', 'label' => 'শিপড'],
+        ['key' => 'out_for_delivery', 'label' => 'ডেলিভারির পথে'],
+        ['key' => 'delivered', 'label' => 'ডেলিভারড'],
     ];
     $currentIndex = $result ? collect($happyPath)->search(fn ($s) => $s['key'] === $result->status) : -1;
 @endphp
 <div class="max-w-xl mx-auto px-4 py-10">
-    <h1 class="text-2xl font-bold mb-1 text-center">Track Your Order</h1>
-    <p class="text-gray-500 text-center mb-6">Phone Number দিয়ে (Order ID এর সাথে হলে অন্তত শেষ ৪ ডিজিট) অর্ডার status দেখুন</p>
+    <h1 class="text-2xl font-bold mb-1 text-center">অর্ডার ট্র্যাক করুন</h1>
+    <p class="text-gray-500 text-center mb-6">ফোন নম্বর দিয়ে (অর্ডার নম্বরের সাথে হলে শেষ ৪ ডিজিটই যথেষ্ট) আপনার অর্ডারের অবস্থা দেখুন।</p>
 
     <form wire:submit="search" class="border border-gray-200 rounded-xl p-5 flex flex-col gap-3 mb-6">
         <label class="flex flex-col gap-1 text-sm">
-            <span class="font-medium text-gray-700">Order ID / Invoice (ঐচ্ছিক)</span>
-            <input type="text" wire:model="orderId" placeholder="e.g. 1234" class="border border-gray-300 rounded-lg px-3 py-2">
+            <span class="font-medium text-gray-700">অর্ডার নম্বর / ইনভয়েস (ঐচ্ছিক)</span>
+            <input type="text" wire:model="orderId" placeholder="যেমন: INV-261006-ABC123" class="border border-gray-300 rounded-lg px-3 py-2">
         </label>
         <label class="flex flex-col gap-1 text-sm">
-            <span class="font-medium text-gray-700">Phone Number <span class="text-brand-500">*</span></span>
+            <span class="font-medium text-gray-700">ফোন নম্বর <span class="text-brand-500">*</span></span>
             <input type="text" wire:model="phone" placeholder="01XXXXXXXXX" class="border border-gray-300 rounded-lg px-3 py-2">
         </label>
-        <p class="text-xs text-gray-400">Phone Number আবশ্যক (Order ID থাকলে সাথে শেষ ৪ ডিজিটই যথেষ্ট)</p>
+        <p class="text-xs text-gray-400">ফোন নম্বর দেওয়া আবশ্যক (অর্ডার নম্বর থাকলে ফোনের শেষ ৪ ডিজিটই যথেষ্ট)</p>
         @if($error) <p class="text-error-600 text-sm">{{ $error }}</p> @endif
         <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg" wire:loading.attr="disabled" wire:target="search">
-            <span wire:loading.remove wire:target="search">Track Order</span>
+            <span wire:loading.remove wire:target="search">অর্ডার খুঁজুন</span>
             <span wire:loading wire:target="search">খোঁজা হচ্ছে...</span>
         </button>
     </form>
@@ -41,7 +42,7 @@
     @if($result)
         <div class="border border-gray-200 rounded-xl p-5">
             <div class="flex justify-between items-center mb-4">
-                <div class="font-semibold">Order #{{ $result->invoice_no ?? $result->id }}</div>
+                <div class="font-semibold">অর্ডার #{{ $result->invoice_no ?? $result->id }}</div>
                 <span class="text-xs font-semibold bg-brand-100 text-brand-600 px-2 py-1 rounded">{{ $statusLabel[$result->status] ?? $result->status }}</span>
             </div>
 
@@ -49,7 +50,7 @@
                 <div class="flex items-center gap-3 bg-error-50 border border-error-200 rounded-lg px-4 py-3 mb-4">
                     <span class="h-8 w-8 rounded-full bg-error-500 text-white flex items-center justify-center shrink-0">✕</span>
                     <div>
-                        <div class="font-semibold text-error-600">Cancelled</div>
+                        <div class="font-semibold text-error-600">বাতিল</div>
                         <p class="text-xs text-error-500">এই অর্ডারটি বাতিল করা হয়েছে</p>
                     </div>
                 </div>
@@ -86,7 +87,7 @@
             </div>
 
             <a href="{{ route('order.invoice', $result->order_token) }}" target="_blank"
-               class="mt-4 inline-block bg-brand-navy text-white font-semibold px-5 py-2.5 rounded-lg text-sm">
+               class="mt-4 inline-block bg-secondary text-white font-semibold px-5 py-2.5 rounded-lg text-sm">
                 🧾 ইনভয়েস ডাউনলোড
             </a>
         </div>

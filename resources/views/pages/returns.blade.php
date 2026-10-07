@@ -9,6 +9,9 @@
     </nav>
     <div class="bg-white rounded-2xl border border-gray-200 p-6 md:p-10 shadow-sm space-y-6 text-gray-700 leading-relaxed">
         <h1 class="text-3xl font-bold text-ink border-b border-gray-100 pb-4">রিটার্ন ও রিফান্ড পলিসি</h1>
+        @if(filled($customContent ?? null))
+            <div class="rich-text text-gray-700">{!! \App\Support\Html::render($customContent) !!}</div>
+        @else
         <section class="space-y-3">
             <h2 class="text-xl font-bold text-ink">১. রিটার্নের শর্ত</h2>
             <p class="text-sm">পণ্য হাতে পাওয়ার সাথে সাথে যাচাই করুন। ভুল পণ্য বা ক্ষতিগ্রস্ত অবস্থায় পৌঁছালে ডেলিভারির ২৪ ঘণ্টার মধ্যে আমাদের হেল্পলাইনে জানান।</p>
@@ -24,6 +27,7 @@
                 <li>খাদ্যপণ্যের মেয়াদ সংক্রান্ত কোনো সমস্যা না থাকলে।</li>
             </ul>
         </section>
+        @endif
     </div>
 </div>
 @endsection

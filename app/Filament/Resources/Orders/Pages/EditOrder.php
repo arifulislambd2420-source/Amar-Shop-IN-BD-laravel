@@ -4,9 +4,7 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
-use App\Services\Courier\PathaoCourierService;
-use App\Services\Courier\RedxCourierService;
-use App\Services\Courier\SteadfastCourierService;
+use App\Jobs\SendOrderToCourier;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
@@ -39,15 +37,15 @@ class EditOrder extends EditRecord
                 Action::make('steadfast')
                     ->label('Send to Steadfast')
                     ->requiresConfirmation()
-                    ->action(fn (Order $record) => $this->sendToCourier($record, app(SteadfastCourierService::class), 'Steadfast')),
+                    ->action(fn (Order $record) => $this->sendToCourier($record, 'steadfast', 'Steadfast')),
                 Action::make('pathao')
                     ->label('Send to Pathao (mock)')
                     ->requiresConfirmation()
-                    ->action(fn (Order $record) => $this->sendToCourier($record, app(PathaoCourierService::class), 'Pathao')),
+                    ->action(fn (Order $record) => $this->sendToCourier($record, 'pathao', 'Pathao')),
                 Action::make('redx')
                     ->label('Send to RedX (mock)')
                     ->requiresConfirmation()
-                    ->action(fn (Order $record) => $this->sendToCourier($record, app(RedxCourierService::class), 'RedX')),
+                    ->action(fn (Order $record) => $this->sendToCourier($record, 'redx', 'RedX')),
             ])
                 ->label('Send to Courier')
                 ->icon(Heroicon::OutlinedTruck)
@@ -55,30 +53,21 @@ class EditOrder extends EditRecord
         ];
     }
 
-    protected function sendToCourier(Order $record, SteadfastCourierService|PathaoCourierService|RedxCourierService $service, string $courier): void
+    /** Queue the courier call (SendOrderToCourier); the result appears on the order shortly. */
+    protected function sendToCourier(Order $record, string $courierKey, string $courier): void
     {
-        try {
-            $updated = $service->dispatch($record);
+        if ($record->consignment_id) {
+            Notification::make()->title("Already sent to a courier")->body("Consignment ID: {$record->consignment_id}")->warning()->send();
 
-            Notification::make()
-                ->title("Order sent to {$courier}")
-                ->body("Consignment ID: {$updated->consignment_id}")
-                ->success()
-                ->send();
-
-            $this->fillForm();
-        } catch (RuntimeException $e) {
-            Notification::make()
-                ->title("Could not send to {$courier}")
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        } catch (Throwable $e) {
-            Notification::make()
-                ->title("Could not send to {$courier}")
-                ->body('Unexpected error: '.$e->getMessage())
-                ->danger()
-                ->send();
+            return;
         }
+
+        SendOrderToCourier::dispatch($record->id, $courierKey);
+
+        Notification::make()
+            ->title("{$courier}-এ পাঠানো কিউতে দেওয়া হয়েছে")
+            ->body('কিছুক্ষণ পর পেজ রিফ্রেশ করলে Consignment ID (অথবা ব্যর্থ হলে কারণ) দেখা যাবে।')
+            ->success()
+            ->send();
     }
 }

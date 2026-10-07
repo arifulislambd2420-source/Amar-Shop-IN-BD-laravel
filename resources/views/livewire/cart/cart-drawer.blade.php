@@ -18,7 +18,7 @@
                 <div class="flex gap-3" wire:key="drawer-line-{{ $line['key'] }}">
                     <div class="h-16 w-16 rounded-lg bg-surface overflow-hidden shrink-0">
                         @if($line['image'])
-                            <img src="{{ $line['image'] }}" alt="{{ $line['name'] }}" class="h-full w-full object-cover">
+                            <img src="{{ $line['image'] }}" alt="{{ $line['name'] }}" width="64" height="64" loading="lazy" class="h-full w-full object-cover">
                         @endif
                     </div>
                     <div class="flex-1 min-w-0">

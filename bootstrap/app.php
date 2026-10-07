@@ -18,16 +18,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // structurally unaffected by this.
         $middleware->web(append: [
             \App\Http\Middleware\BlockBannedIps::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
-        // Hostinger serves this app through a reverse proxy (its web
-        // server/CDN in front of PHP), so without this, $request->ip() (and
-        // therefore the IP-block check above, plus rate limiters) would see
-        // the proxy's IP instead of the real visitor's. `at: '*'` trusts
-        // whatever immediate hop forwards the request — standard for
-        // shared/managed hosting where the exact proxy IP isn't known —
-        // and reads it from the standard X-Forwarded-* headers.
-        $middleware->trustProxies(at: '*');
+        // Behind a reverse proxy, $request->ip() (rate limits, IP blocks, order
+        // risk checks) only sees the real visitor if the proxy's
+        // X-Forwarded-* headers are trusted — but trusting everyone lets any
+        // visitor fake their IP. So only private ranges are trusted by
+        // default; set TRUSTED_PROXIES in .env for anything else (see
+        // App\Support\TrustedProxies and DEPLOY.md).
+        // Guests hitting a customer-only page (/customer/account…) go to the customer login.
+        // (The admin panel has its own login and never uses this.)
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => route('customer.login'));
+
+        $middleware->trustProxies(at: \App\Support\TrustedProxies::resolve());
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

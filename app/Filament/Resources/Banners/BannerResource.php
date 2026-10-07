@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Banners;
 
 use App\Filament\Resources\Banners\Pages\ManageBanners;
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use App\Models\Banner;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -26,6 +26,8 @@ use UnitEnum;
 
 class BannerResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Banner::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
@@ -38,7 +40,7 @@ class BannerResource extends Resource
     {
         return $schema
             ->components([
-                CloudinaryUpload::make('image')
+                ImageUpload::make('image')
                     ->label('Image')
                     ->required(),
                 TextInput::make('link')

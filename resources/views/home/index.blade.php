@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4">
+    @if($heroBanners->isNotEmpty())
+        <h1 class="sr-only">{{ \App\Support\SiteSettingsHelper::get('hero_title') ?: \App\Support\SiteSettingsHelper::siteName().' — '.\App\Support\SiteSettingsHelper::siteNameEn() }}</h1>
+    @endif
 
     <section class="py-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
         <div class="relative rounded-xl overflow-hidden bg-gray-100 min-h-[220px] lg:min-h-[320px]">
@@ -9,7 +12,7 @@
                 <div x-data="{ i: 0, total: {{ $heroBanners->count() }} }" x-init="setInterval(() => i = (i + 1) % total, 4000)" class="relative h-full min-h-[220px] lg:min-h-[320px]">
                     @foreach($heroBanners as $idx => $banner)
                         <a href="{{ $banner->link ?: '#' }}" x-show="i === {{ $idx }}" x-transition.opacity class="absolute inset-0 block">
-                            <img src="{{ $banner->image }}" alt="banner" class="h-full w-full object-cover">
+                            <img src="{{ $banner->image }}" alt="{{ $banner->title ?? 'banner' }}" width="1200" height="480" @if($idx === 0) fetchpriority="high" @else loading="lazy" @endif class="h-full w-full object-cover">
                         </a>
                     @endforeach
                 </div>
@@ -26,7 +29,7 @@
             @foreach([0, 1] as $i)
                 <a href="{{ $sideBanners[$i]->link ?? '#' }}" class="relative rounded-xl overflow-hidden bg-brand-50 min-h-[120px] flex items-center justify-center text-center p-4">
                     @if(isset($sideBanners[$i]))
-                        <img src="{{ $sideBanners[$i]->image }}" alt="banner" class="absolute inset-0 h-full w-full object-cover">
+                        <img src="{{ $sideBanners[$i]->image }}" alt="banner" width="600" height="300" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
                     @else
                         <div>
                             <p class="font-semibold text-gray-700">{{ \App\Support\SiteSettingsHelper::get('side_card_'.($i + 1).'_title') ?: ($i === 0 ? 'সেরা মানের মধু' : 'ফ্রি ডেলিভারি') }}</p>
@@ -43,7 +46,11 @@
         <div class="flex gap-4 overflow-x-auto pb-2">
             @foreach($categories as $c)
                 <a href="{{ route('shop', ['category' => $c->slug]) }}" class="shrink-0 w-28 sm:w-32 bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 text-center font-medium hover:border-brand-500 hover:text-brand-500 transition-colors">
-                    <span class="text-2xl">{{ $c->icon ?: '🛍️' }}</span>
+                    @if(\App\Filament\Resources\Categories\CategoryResource::isImageIcon($c->icon))
+                        <img src="{{ $c->icon }}" alt="{{ $c->name }}" width="32" height="32" loading="lazy" class="h-8 w-8 object-contain">
+                    @else
+                        <span class="text-2xl">{{ $c->icon ?: '🛍️' }}</span>
+                    @endif
                     <span class="text-sm truncate w-full">{{ $c->name }}</span>
                 </a>
             @endforeach
@@ -116,7 +123,7 @@
             <div class="flex flex-wrap items-center gap-6 bg-white border border-gray-200 rounded-xl p-6">
                 @foreach($brands as $b)
                     @if($b->logo)
-                        <img src="{{ $b->logo }}" alt="{{ $b->name }}" class="h-10 object-contain grayscale hover:grayscale-0 transition">
+                        <img src="{{ $b->logo }}" alt="{{ $b->name }}" width="120" height="40" loading="lazy" class="h-10 object-contain grayscale hover:grayscale-0 transition">
                     @else
                         <span class="text-gray-500 font-semibold text-sm px-3 py-1 border border-gray-200 rounded-full">{{ $b->name }}</span>
                     @endif
@@ -136,7 +143,7 @@
                     <a href="{{ route('blog.show', $b->slug) }}" class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         <div class="aspect-video bg-gray-100">
                             @if($b->cover)
-                                <img src="{{ $b->cover }}" alt="{{ $b->title }}" class="w-full h-full object-cover">
+                                <img src="{{ $b->cover }}" alt="{{ $b->title }}" width="400" height="300" loading="lazy" decoding="async" class="w-full h-full object-cover">
                             @endif
                         </div>
                         <div class="p-3">
@@ -152,7 +159,7 @@
         <section class="py-8 grid grid-cols-1 md:grid-cols-2 gap-4">
             @foreach($promoBanners->take(2) as $banner)
                 <a href="{{ $banner->link ?: '#' }}" class="block h-40 md:h-48 rounded-xl overflow-hidden bg-gray-100">
-                    <img src="{{ $banner->image }}" alt="promo" class="h-full w-full object-cover">
+                    <img src="{{ $banner->image }}" alt="promo" width="800" height="300" loading="lazy" class="h-full w-full object-cover">
                 </a>
             @endforeach
         </section>

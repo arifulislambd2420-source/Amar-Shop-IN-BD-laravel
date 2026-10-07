@@ -20,6 +20,8 @@ use UnitEnum;
 
 class BrandResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Brand::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
@@ -35,11 +37,8 @@ class BrandResource extends Resource
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('logo')
-                    ->label('Logo URL')
-                    ->url()
-                    ->maxLength(2048)
-                    ->helperText('Image URL (Cloudinary upload comes in a later phase).'),
+                \App\Filament\Support\ImageUpload::make('logo')
+                    ->label('Logo'),
             ]);
     }
 

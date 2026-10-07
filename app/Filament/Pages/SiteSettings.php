@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use App\Models\SiteSetting;
 use App\Support\SiteSettingsHelper;
 use BackedEnum;
@@ -25,6 +25,10 @@ use UnitEnum;
  */
 class SiteSettings extends Page implements HasSchemas
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
@@ -49,6 +53,7 @@ class SiteSettings extends Page implements HasSchemas
         'hero_title', 'hero_subtitle',
         'side_card_1_title', 'side_card_1_text', 'side_card_2_title', 'side_card_2_text',
         'seo_title', 'seo_description', 'og_image',
+        'order_cooldown_minutes', 'low_stock_threshold',
         'delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min',
         'color_brand', 'color_secondary', 'color_accent', 'color_background', 'color_text', 'color_success', 'color_error',
         'contact_phone', 'contact_whatsapp', 'contact_email', 'contact_address',
@@ -86,11 +91,11 @@ class SiteSettings extends Page implements HasSchemas
                             ->label('Site name (English)')
                             ->placeholder('Amar Shop in BD')
                             ->helperText('Used in the browser title and the footer copyright line.'),
-                        CloudinaryUpload::make('site_logo')
+                        ImageUpload::make('site_logo')
                             ->label('Site logo'),
-                        CloudinaryUpload::make('site_favicon')
+                        ImageUpload::make('site_favicon')
                             ->label('Favicon')
-                            ->helperText('Falls back to the logo when empty. Uploads to Cloudinary.'),
+                            ->helperText('Falls back to the logo when empty.'),
                     ]),
                 Section::make('রং (Colors)')
                     ->description('সাইটের রং। ডিফল্ট রং বদলাতে না চাইলে অপরিবর্তিত রাখুন। Admin প্যানেলের primary রংও ব্র্যান্ড রং থেকে আসে।')
@@ -111,6 +116,19 @@ class SiteSettings extends Page implements HasSchemas
                         ColorPicker::make('color_text')->label('টেক্সট'),
                         ColorPicker::make('color_success')->label('সফল'),
                         ColorPicker::make('color_error')->label('এরর'),
+                    ]),
+                Section::make('অর্ডার ও স্টক')
+                    ->schema([
+                        TextInput::make('order_cooldown_minutes')
+                            ->label('একই ফোন থেকে পরপর অর্ডারের বিরতি (মিনিট)')
+                            ->numeric()->minValue(0)->maxValue(1440)
+                            ->placeholder('10')
+                            ->helperText('এই সময়ের মধ্যে একই ফোন থেকে আরেকটি অর্ডার নেওয়া হবে না। খালি = ১০ মিনিট, ০ = বন্ধ।'),
+                        TextInput::make('low_stock_threshold')
+                            ->label('কম স্টকের সীমা (পিস)')
+                            ->numeric()->minValue(0)->maxValue(100000)
+                            ->placeholder('5')
+                            ->helperText('স্টক এর সমান বা কম হলে ড্যাশবোর্ডে সতর্কতা আসবে। খালি = ৫।'),
                     ]),
                 Section::make('ডেলিভারি')
                     ->description('চেকআউটে জেলা অনুযায়ী ডেলিভারি চার্জ বসে। চার্জ খালি রাখলে ডিফল্ট (' . config('site.delivery.dhaka') . ' / ' . config('site.delivery.outside') . ' টাকা) প্রযোজ্য।')
@@ -157,7 +175,7 @@ class SiteSettings extends Page implements HasSchemas
                             ->label('Meta description')
                             ->rows(3)
                             ->maxLength(300),
-                        CloudinaryUpload::make('og_image')
+                        ImageUpload::make('og_image')
                             ->label('OG image (social share)')
                             ->helperText('Recommended 1200×630.'),
                     ]),

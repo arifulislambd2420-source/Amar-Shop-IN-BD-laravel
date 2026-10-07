@@ -23,3 +23,9 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+    # Don't advertise PHP (PHP's own expose_php=Off is the other half).
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>

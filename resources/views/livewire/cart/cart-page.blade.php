@@ -13,7 +13,7 @@
                     <div class="flex gap-4 p-4" wire:key="cart-line-{{ $line['key'] }}">
                         <div class="h-20 w-20 rounded-lg bg-surface overflow-hidden shrink-0">
                             @if($line['image'])
-                                <img src="{{ $line['image'] }}" alt="{{ $line['name'] }}" class="h-full w-full object-cover">
+                                <img src="{{ $line['image'] }}" alt="{{ $line['name'] }}" width="80" height="80" loading="lazy" class="h-full w-full object-cover">
                             @endif
                         </div>
                         <div class="flex-1 min-w-0">

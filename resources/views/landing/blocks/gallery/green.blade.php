@@ -11,7 +11,7 @@
 
             <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible">
                 @foreach ($images as $image)
-                    <img src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
+                    <img width="800" height="800" src="{{ $image }}" alt="{{ $landingPage->title }}" loading="lazy"
                          class="snap-center shrink-0 w-[62%] sm:w-[40%] md:w-auto aspect-[4/5] rounded-xl object-cover border border-secondary">
                 @endforeach
             </div>

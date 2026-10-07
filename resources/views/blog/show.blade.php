@@ -6,7 +6,7 @@
 <div class="max-w-3xl mx-auto px-4 py-8">
     @if($blog->cover)
         <div class="aspect-video bg-gray-100 rounded-xl overflow-hidden mb-6">
-            <img src="{{ $blog->cover }}" alt="{{ $blog->title }}" class="w-full h-full object-cover">
+            <img src="{{ $blog->cover }}" alt="{{ $blog->title }}" width="1200" height="600" fetchpriority="high" class="w-full h-full object-cover">
         </div>
     @endif
     @if($blog->category)

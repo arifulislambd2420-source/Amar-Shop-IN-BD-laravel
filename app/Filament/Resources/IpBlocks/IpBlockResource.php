@@ -19,6 +19,10 @@ use UnitEnum;
 
 class IpBlockResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+
     protected static ?string $model = IpBlock::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNoSymbol;

@@ -41,7 +41,7 @@ class FeedController extends Controller
         foreach ($products as $product) {
             $link = $baseUrl.'/product/'.$product->slug;
             $imageLink = $product->image
-                ? (str_starts_with($product->image, 'http') ? $product->image : $baseUrl.$product->image)
+                ? \App\Support\Media::absolute($product->image)
                 : $baseUrl.'/placeholder.png';
 
             $availability = $product->stock > 0 ? 'in stock' : 'out of stock';

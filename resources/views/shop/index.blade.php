@@ -4,7 +4,16 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">{{ $title }}</h1>
+    @if(! empty($activeBrand))
+        <div class="mb-6 flex items-center gap-4">
+            @if($activeBrand->logo)
+                <img src="{{ $activeBrand->logo }}" alt="{{ $activeBrand->name }}" width="96" height="96" class="h-16 w-16 rounded-lg border border-gray-200 bg-white object-contain p-1">
+            @endif
+            <h1 class="text-2xl font-bold">{{ $activeBrand->name }}</h1>
+        </div>
+    @else
+        <h1 class="text-2xl font-bold mb-6">{{ $title }}</h1>
+    @endif
 
     <div class="grid md:grid-cols-[220px_1fr] gap-8">
         <aside class="space-y-6">

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -25,7 +25,7 @@ class ImagesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                CloudinaryUpload::make('url')
+                ImageUpload::make('url')
                     ->label('Image')
                     ->required(),
                 TextInput::make('alt')

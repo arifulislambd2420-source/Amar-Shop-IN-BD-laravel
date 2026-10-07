@@ -17,7 +17,7 @@
             @foreach($brands as $b)
                 <a href="{{ route('shop', ['brand' => $b->id]) }}" class="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center gap-3 text-center hover:border-brand-500 transition-colors">
                     @if($b->logo)
-                        <img src="{{ $b->logo }}" alt="{{ $b->name }}" class="h-12 object-contain">
+                        <img src="{{ $b->logo }}" alt="{{ $b->name }}" width="160" height="48" loading="lazy" class="h-12 object-contain">
                     @else
                         <span class="h-12 flex items-center text-xl font-bold text-gray-400">{{ $b->name }}</span>
                     @endif

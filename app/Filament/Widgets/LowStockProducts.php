@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 /** Dashboard: products that are out of stock or almost (≤ 5), lowest first. */
 class LowStockProducts extends TableWidget
 {
-    public const THRESHOLD = 5;
+    use \App\Filament\Concerns\HasAdminAreaWidget;
 
     protected static ?int $sort = 4;
 
@@ -22,9 +22,9 @@ class LowStockProducts extends TableWidget
     {
         return $table
             ->heading('কম স্টকের প্রোডাক্ট')
-            ->description('স্টক '.self::THRESHOLD.' বা তার কম')
+            ->description('স্টক '.Product::lowStockThreshold().' বা তার কম')
             ->query(fn (): Builder => Product::query()
-                ->where('stock', '<=', self::THRESHOLD)
+                ->where('stock', '<=', Product::lowStockThreshold())
                 ->orderBy('stock')
                 ->orderBy('name'))
             ->defaultPaginationPageOption(5)

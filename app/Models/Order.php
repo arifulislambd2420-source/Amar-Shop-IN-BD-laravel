@@ -38,6 +38,7 @@ class Order extends Model
         'consignment_id',
         'tracking_code',
         'courier_status',
+        'courier_error',
     ];
 
     protected function casts(): array

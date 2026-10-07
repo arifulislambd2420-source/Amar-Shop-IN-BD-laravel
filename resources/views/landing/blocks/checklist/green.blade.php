@@ -6,7 +6,7 @@
 <section class="bg-white px-4 py-8 md:py-12">
     <div class="max-w-6xl mx-auto grid gap-5 md:grid-cols-2 md:items-stretch">
         @if (! empty($d['image']))
-            <img src="{{ $d['image'] }}" alt="{{ $d['heading'] ?? $landingPage->title }}" loading="lazy"
+            <img width="800" height="800" src="{{ $d['image'] }}" alt="{{ $d['heading'] ?? $landingPage->title }}" loading="lazy"
                  class="w-full h-full min-h-64 rounded-xl object-cover aspect-[4/3] md:aspect-auto">
         @endif
 

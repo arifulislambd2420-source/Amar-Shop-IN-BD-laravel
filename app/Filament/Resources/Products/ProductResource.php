@@ -7,7 +7,7 @@ use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\RelationManagers\ImagesRelationManager;
 use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use App\Models\Product;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -20,6 +20,7 @@ use Filament\Actions\ReplicateAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -40,6 +41,8 @@ use UnitEnum;
 
 class ProductResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Product::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
@@ -86,8 +89,8 @@ class ProductResource extends Resource
                             ->options(self::STATUS_OPTIONS)
                             ->default('published')
                             ->required(),
-                        Textarea::make('description')
-                            ->rows(4)
+                        ImageUpload::configureRichEditor(RichEditor::make('description'))
+                            ->label('বিস্তারিত বিবরণ')
                             ->columnSpanFull(),
                     ]),
                 Section::make('Pricing & stock')
@@ -127,7 +130,7 @@ class ProductResource extends Resource
                             ->relationship('brand', 'name')
                             ->searchable()
                             ->preload(),
-                        CloudinaryUpload::make('image')
+                        ImageUpload::make('image')
                             ->label('Main image')
                             ->columnSpanFull(),
                         TextInput::make('tags')

@@ -13,14 +13,15 @@ class ShopController extends Controller
     {
         $products = Product::storefront()
             ->filter($request->only(['category', 'brand', 'q', 'sort']))
-            ->with('variants') // read by every product card's AddToCart
+            ->with('variants')->withRating() // read by every product card's AddToCart
             ->paginate(12)
             ->withQueryString();
 
-        $categories = Category::orderBy('name')->get();
+        $categories = \App\Support\StorefrontCache::categories();
         $brands = Brand::orderBy('name')->get();
 
         return view('shop.index', [
+            'activeBrand' => $request->filled('brand') ? $brands->firstWhere('id', (int) $request->query('brand')) : null,
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
@@ -33,11 +34,11 @@ class ShopController extends Controller
         $products = Product::storefront()
             ->onSale()
             ->filter($request->only(['category', 'brand', 'q', 'sort']))
-            ->with('variants') // read by every product card's AddToCart
+            ->with('variants')->withRating() // read by every product card's AddToCart
             ->paginate(12)
             ->withQueryString();
 
-        $categories = Category::orderBy('name')->get();
+        $categories = \App\Support\StorefrontCache::categories();
         $brands = Brand::orderBy('name')->get();
 
         return view('shop.offers', [

@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class LatestOrders extends TableWidget
 {
+    use \App\Filament\Concerns\HasAdminAreaWidget;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+
     protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';

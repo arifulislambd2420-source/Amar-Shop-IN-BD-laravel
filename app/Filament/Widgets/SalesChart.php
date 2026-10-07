@@ -12,6 +12,8 @@ use Filament\Widgets\ChartWidget;
  */
 class SalesChart extends ChartWidget
 {
+    use \App\Filament\Concerns\HasAdminAreaWidget;
+
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';

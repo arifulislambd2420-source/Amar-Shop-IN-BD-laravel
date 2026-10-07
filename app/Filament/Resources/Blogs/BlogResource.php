@@ -24,6 +24,8 @@ use UnitEnum;
 
 class BlogResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     protected static ?string $model = Blog::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNewspaper;
@@ -58,15 +60,14 @@ class BlogResource extends Resource
                             ->label('Read time (minutes)')
                             ->numeric()
                             ->minValue(1),
-                        TextInput::make('cover')
-                            ->label('Cover image URL')
-                            ->maxLength(2048)
+                        \App\Filament\Support\ImageUpload::make('cover')
+                            ->label('Cover image')
                             ->columnSpanFull(),
                         DateTimePicker::make('published_at'),
                     ]),
                 Section::make('Content')
                     ->schema([
-                        RichEditor::make('content')
+                        \App\Filament\Support\ImageUpload::configureRichEditor(RichEditor::make('content'))
                             ->columnSpanFull(),
                     ]),
             ]);

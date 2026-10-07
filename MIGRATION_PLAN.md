@@ -95,7 +95,7 @@ Dashboard (KPIs + date range + sales chart + top products + recent orders), Orde
 - **Admin (guarded):** full CRUD for products (+variants/images/duplicate/trash/restore/bulk/export/import), orders (+courier: pathao/redx/steadfast), categories, banners, blogs, coupons, flash-sales, reviews, ip-block, settings (site/smtp/fraud-api/gtm/courier), content (live editor), media, upload, stats
 
 ## 5. Integrations to port
-- **Image upload → Cloudinary** (`/api/admin/upload`) → Laravel: `cloudinary-labs/cloudinary-laravel` or Filament FileUpload with a Cloudinary disk.
+- **Image upload** (`/api/admin/upload`) → Laravel: Filament FileUpload on the local `public` disk (our own server; see config/media.php).
 - **GTM + Pixel dataLayer events** (view_item/add_to_cart/begin_checkout/purchase) → Blade JS helper + gtm_id from settings.
 - **Product XML feed** (Google Merchant/Meta compatible) → Laravel route returning XML.
 - **Courier**: Steadfast (live API), Pathao/RedX (currently mock) → Laravel services.
@@ -120,12 +120,12 @@ Dashboard (KPIs + date range + sales chart + top products + recent orders), Orde
 3. Auth — admin (Filament) + customer (Livewire), bcrypt hashes carry over.
 4. Filament admin: dashboard, orders, products+variants, categories, banners, blogs, coupons, flash-sales, site settings, users.
 5. Storefront: home, shop, product, cart, checkout, blog, brands.
-6. Integrations: Cloudinary upload, GTM/Pixel events, courier, product XML feed.
+6. Integrations: image upload (local disk), GTM/Pixel events, courier, product XML feed.
 7. Hostinger deploy guide + live test.
 8. Cutover: point domain to Laravel, keep Next.js as backup.
 
 ## 8. Env vars the Laravel app will need
-`APP_KEY` (php artisan key:generate), `DB_*` (reuse existing MySQL), `CLOUDINARY_*`, mail (SMTP) + courier + SMS creds (or read from `site_settings`), `APP_URL`.
+`APP_KEY` (php artisan key:generate), `DB_*` (reuse existing MySQL), mail (SMTP) + courier + SMS creds (or read from `site_settings`), `APP_URL`.
 
 ---
 

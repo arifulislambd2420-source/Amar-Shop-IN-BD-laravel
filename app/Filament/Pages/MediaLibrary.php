@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Support\CloudinaryUpload;
+use App\Filament\Support\ImageUpload;
 use App\Models\MediaLibrary as MediaLibraryItem;
-use App\Services\CloudinaryService;
+use App\Support\Media;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -18,20 +18,20 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * General-purpose media manager — not tied to any model/table. Uploads go
- * through the same App\Filament\Support\CloudinaryUpload helper as every
- * other image field in the app (Cloudinary, jpg/png/webp only, 5 MB max).
+ * through the same App\Filament\Support\ImageUpload helper as every other
+ * image field (our own server, jpg/png/webp only, size-limited).
  *
- * The grid lists the Cloudinary uploads recorded in the media_library table
- * plus any legacy images still sitting on the local `public` disk
- * (storage/app/public/media) from before the switch to Cloudinary, so
- * nothing already uploaded disappears from the list. Run
- * `php artisan media:migrate-to-cloudinary` to move the legacy ones over.
+ * The grid is a listing of the media directory on disk — the files that
+ * actually exist — with the original file names taken from the
+ * media_library table where known.
  *
  * A top-level nav item on purpose (no navigationGroup) rather than nested
  * under Settings — this is a workspace, not a configuration page.
  */
 class MediaLibrary extends Page implements HasSchemas
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
@@ -47,9 +47,6 @@ class MediaLibrary extends Page implements HasSchemas
     /** @var array<string, mixed> */
     public ?array $data = [];
 
-    /** Legacy local uploads: relative to the `public` disk root (storage/app/public/). */
-    public const DIRECTORY = 'media';
-
     public function mount(): void
     {
         $this->form->fill();
@@ -60,153 +57,96 @@ class MediaLibrary extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                CloudinaryUpload::make('uploads')
+                ImageUpload::make('uploads')
                     ->label('')
-                    ->multiple()
-                    ->helperText('JPG, PNG or WEBP, up to 5 MB each — select several files at once to upload them all.'),
+                    ->multiple(),
             ]);
     }
 
     /**
      * Reading the form's state is what makes Filament actually run
-     * CloudinaryUpload::saveUploadedFileUsing for each pending file (which
-     * uploads it and records it in media_library). The returned URLs are
-     * discarded; getFiles() reads the table afterwards.
+     * ImageUpload::saveUploadedFileUsing for each pending file. The returned
+     * URLs are discarded; getFiles() lists the directory afterwards.
      */
     public function upload(): void
     {
         $this->form->getState();
         $this->form->fill();
 
-        Notification::make()->title('Images uploaded.')->success()->send();
+        Notification::make()->title('ছবি আপলোড হয়েছে।')->success()->send();
     }
 
     /**
-     * @return Collection<int, array{key: string, name: string, url: string, legacy: bool}>
+     * @return Collection<int, array{key: string, name: string, url: string}>
      */
     public function getFiles(): Collection
     {
-        $cloud = MediaLibraryItem::query()
-            ->orderByDesc('id')
-            ->get()
-            ->filter(fn (MediaLibraryItem $m) => CloudinaryService::isCloudinaryUrl($m->file_path))
-            ->map(fn (MediaLibraryItem $m): array => [
-                'key' => 'c:'.$m->id,
-                'name' => $m->file_name,
-                'url' => $m->file_path,
-                'legacy' => false,
-                'at' => $m->created_at?->getTimestamp() ?? 0,
-            ]);
+        $disk = Storage::disk(config('media.disk'));
+        $directory = config('media.directory');
 
-        $disk = Storage::disk('public');
+        if (! $disk->exists($directory)) {
+            return collect();
+        }
 
-        $local = collect($disk->exists(self::DIRECTORY) ? $disk->files(self::DIRECTORY) : [])
-            ->map(fn (string $path): array => [
-                'key' => 'l:'.basename($path),
-                'name' => basename($path),
-                'url' => $disk->url($path),
-                'legacy' => true,
-                'at' => $disk->lastModified($path),
-            ]);
+        $names = MediaLibraryItem::query()->pluck('file_name', 'file_path');
 
-        return $cloud->concat($local)->sortByDesc('at')->values();
+        return collect($disk->files($directory))
+            ->sortByDesc(fn (string $path): int => $disk->lastModified($path))
+            ->values()
+            ->map(function (string $path) use ($names): array {
+                $url = Media::urlFor($path);
+
+                return [
+                    'key' => basename($path),
+                    'name' => $names[$url] ?? basename($path),
+                    'url' => $url,
+                ];
+            });
     }
 
     /**
-     * $key is a wire:click argument from the grid — untrusted input. It is
-     * either "c:<id>" (a media_library row: the id is cast to int) or
-     * "l:<basename>" (a legacy local file: any path separator or ".." is
-     * rejected, so DIRECTORY.'/'.$basename can never leave that folder).
+     * $basename is a wire:click argument from the grid — untrusted input. Any
+     * path separator or ".." is rejected, so the path that reaches
+     * Storage::delete() can never leave the media directory.
      */
-    public function deleteFile(string $key): void
-    {
-        if (str_starts_with($key, 'c:')) {
-            $this->deleteCloudinary((int) substr($key, 2));
-
-            return;
-        }
-
-        abort_unless(str_starts_with($key, 'l:'), 403);
-
-        $this->deleteLocal(substr($key, 2));
-    }
-
-    protected function deleteCloudinary(int $id): void
-    {
-        $item = MediaLibraryItem::find($id);
-
-        if (! $item) {
-            Notification::make()->title('File not found — it may already have been deleted.')->warning()->send();
-
-            return;
-        }
-
-        if ($this->refuseIfInUse(basename(parse_url($item->file_path, PHP_URL_PATH) ?: $item->file_path))) {
-            return;
-        }
-
-        try {
-            if (! app(CloudinaryService::class)->deleteByUrl($item->file_path)) {
-                Notification::make()->title('Cloudinary did not confirm the delete — not removed.')->danger()->send();
-
-                return;
-            }
-        } catch (\Throwable $e) {
-            Notification::make()->title('Delete failed')->body($e->getMessage())->danger()->send();
-
-            return;
-        }
-
-        $item->delete();
-
-        Notification::make()->title('Image deleted.')->success()->send();
-    }
-
-    protected function deleteLocal(string $basename): void
+    public function deleteFile(string $basename): void
     {
         abort_if(
             $basename === '' || $basename !== basename($basename) || str_contains($basename, '..'),
             403,
         );
 
-        $path = self::DIRECTORY.'/'.$basename;
-        $disk = Storage::disk('public');
+        $path = config('media.directory').'/'.$basename;
+        $disk = Storage::disk(config('media.disk'));
 
         if (! $disk->exists($path)) {
-            Notification::make()->title('File not found — it may already have been deleted.')->warning()->send();
+            Notification::make()->title('ফাইলটি পাওয়া যায়নি — হয়তো আগেই মোছা হয়েছে।')->warning()->send();
 
             return;
         }
 
-        if ($this->refuseIfInUse($basename)) {
+        if ($usedBy = $this->findReferences($basename)) {
+            Notification::make()
+                ->title('মোছা হয়নি — ছবিটি এখনো ব্যবহার হচ্ছে')
+                ->body('ব্যবহার হচ্ছে: '.implode(', ', $usedBy).'। আগে সেখান থেকে বদলান, নইলে সাইটে ভাঙা ছবি দেখাবে।')
+                ->danger()
+                ->persistent()
+                ->send();
+
             return;
         }
 
         $disk->delete($path);
+        Media::unmirror($path);
+        MediaLibraryItem::where('file_path', Media::urlFor($path))->delete();
 
-        Notification::make()->title('Image deleted.')->success()->send();
+        Notification::make()->title('ছবি মোছা হয়েছে।')->success()->send();
     }
 
-    /** Sends the "still in use" notification and returns true when something references the file. */
-    protected function refuseIfInUse(string $basename): bool
-    {
-        if (! $usedBy = $this->findReferences($basename)) {
-            return false;
-        }
-
-        Notification::make()
-            ->title('Not deleted — this image is still in use')
-            ->body('Used by: '.implode(', ', $usedBy).'. Replace it there first, otherwise it will show as a broken image.')
-            ->danger()
-            ->persistent()
-            ->send();
-
-        return true;
-    }
     /**
-     * Every column that can hold an uploaded image URL. Deleting a file
-     * that one of these still points to leaves a broken image on the live
-     * site (this happened to a product image) — so deleteFile() refuses.
+     * Every column that can hold an uploaded image URL. Deleting a file that
+     * one of these still points to leaves a broken image on the live site,
+     * so deleteFile() refuses.
      *
      * @return list<string> human-readable "where it's used" labels
      */
@@ -215,13 +155,19 @@ class MediaLibrary extends Page implements HasSchemas
         $needle = '%'.$basename.'%';
 
         $checks = [
-            'Product' => fn () => DB::table('products')->where('image', 'like', $needle)->pluck('name'),
+            'Product' => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
             'Product gallery' => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
             'Banner' => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
             'Brand' => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
             'Category' => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
             'Blog' => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
-            'Landing page' => fn () => DB::table('landing_pages')->where(fn ($q) => $q->where('hero_image', 'like', $needle)->orWhere('gallery', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('title'),
+            'Landing page' => fn () => DB::table('landing_pages')->where(fn ($q) => $q
+                ->where('hero_image', 'like', $needle)
+                ->orWhere('gallery', 'like', $needle)
+                ->orWhere('description', 'like', $needle)
+                ->orWhere('blocks', 'like', $needle)
+                ->orWhere('packages', 'like', $needle)
+                ->orWhere('og_image', 'like', $needle))->pluck('title'),
             'Site setting' => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
         ];
 

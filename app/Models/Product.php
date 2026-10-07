@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use \App\Models\Concerns\FlushesStorefrontCache;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -71,6 +73,24 @@ class Product extends Model
     public function scopeStorefront(Builder $query): Builder
     {
         return $query->where('is_active', true)->where('status', 'published');
+    }
+
+    /** Stock at or below this counts as "low" (Site Setting → low_stock_threshold, default 5). */
+    public static function lowStockThreshold(): int
+    {
+        $value = \App\Support\SiteSettingsHelper::get('low_stock_threshold');
+
+        return is_numeric($value) ? max(0, (int) $value) : 5;
+    }
+
+    /** Adds approved_reviews_count / approved_reviews_avg (for star ratings on cards). */
+    public function scopeWithRating(Builder $query): Builder
+    {
+        $approved = fn ($q) => $q->where('approved', true);
+
+        return $query
+            ->withCount(['reviews as approved_reviews_count' => $approved])
+            ->withAvg(['reviews as approved_reviews_avg' => $approved], 'rating');
     }
 
     /** Discounted products only (sale_price set and lower than price). */

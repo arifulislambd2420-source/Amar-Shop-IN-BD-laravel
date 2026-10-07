@@ -44,7 +44,7 @@
                             <input
                                 type="text"
                                 readonly
-                                value="{{ $file['url'] }}"
+                                value="{{ url($file['url']) }}"
                                 onclick="this.select()"
                                 style="width: 100%; box-sizing: border-box; font-size: 11px; padding: 0.25rem 0.375rem; border: 1px solid rgba(127, 127, 127, 0.3); border-radius: 0.25rem; background: transparent;"
                             >
@@ -59,15 +59,15 @@
                                     Blade::compileString() while debugging this exact bug).
                                     {{ }} echoes DO get compiled correctly in this position.
                                     Safe without Js::from()'s extra quoting here because both
-                                    values are server-generated (a Cloudinary URL, an id or a
-                                    UUID-based filename) and can never contain a quote char.
+                                    values are server-generated (a site URL and a UUID-based
+                                    filename) and can never contain a quote char.
                                 --}}
                                 <x-filament::button
                                     type="button"
                                     color="gray"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    onclick="navigator.clipboard.writeText('{{ $file['url'] }}'); new FilamentNotification().title('Copied!').success().send();"
+                                    onclick="navigator.clipboard.writeText('{{ url($file['url']) }}'); new FilamentNotification().title('Copied!').success().send();"
                                 >
                                     Copy
                                 </x-filament::button>

@@ -14,6 +14,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class StatsOverview extends StatsOverviewWidget
 {
+    use \App\Filament\Concerns\HasAdminAreaWidget;
+
     protected static ?int $sort = 1;
 
     protected ?string $pollingInterval = null;

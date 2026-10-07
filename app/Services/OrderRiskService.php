@@ -90,7 +90,7 @@ class OrderRiskService
      *
      * @return list<string>
      */
-    private function phoneVariants(string $digits): array
+    public function phoneVariants(string $digits): array
     {
         if (preg_match('/^(?:880|0)?(1[3-9]\d{8})$/', $digits, $m)) {
             return ['0'.$m[1], '880'.$m[1], $m[1]];

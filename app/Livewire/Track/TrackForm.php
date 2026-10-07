@@ -4,6 +4,7 @@ namespace App\Livewire\Track;
 
 use App\Models\Order;
 use App\Services\OrderService;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class TrackForm extends Component
@@ -27,6 +28,17 @@ class TrackForm extends Component
         $this->error = '';
         $this->result = null;
         $this->searched = true;
+
+        // Lookups are guessable (phone numbers), so cap them per IP.
+        $key = 'track:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 15)) {
+            $this->error = 'অনেকবার চেষ্টা করা হয়েছে। '.RateLimiter::availableIn($key).' সেকেন্ড পর আবার চেষ্টা করুন।';
+
+            return;
+        }
+
+        RateLimiter::hit($key, 600);
 
         $outcome = $orderService->track($this->phone, $this->orderId ?: null);
 

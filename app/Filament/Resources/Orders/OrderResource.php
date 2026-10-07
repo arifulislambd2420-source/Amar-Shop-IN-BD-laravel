@@ -31,6 +31,10 @@ use UnitEnum;
 
 class OrderResource extends Resource
 {
+    use \App\Filament\Concerns\HasAdminArea;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+
     protected static ?string $model = Order::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
@@ -205,6 +209,13 @@ class OrderResource extends Resource
                             ->maxLength(255),
                         TextInput::make('courier_status')
                             ->maxLength(255),
+                        Textarea::make('courier_error')
+                            ->label('Last courier error')
+                            ->rows(2)
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn (?\Illuminate\Database\Eloquent\Model $record): bool => filled($record?->courier_error))
+                            ->columnSpanFull(),
                     ]),
                 Section::make('Notes')
                     ->schema([

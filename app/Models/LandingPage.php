@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LandingPage extends Model
 {
+    use \App\Models\Concerns\FlushesStorefrontCache;
+
     /**
      * Block-builder templates: the page is its ordered $blocks, styled by
      * the template's color scheme (resources/views/landing/templates/{key}.blade.php
@@ -47,6 +49,9 @@ class LandingPage extends Model
         'primary_color',
         'secondary_color',
         'product_id',
+        'seo_title',
+        'seo_description',
+        'og_image',
         'hero_image',
         'headline',
         'sub_headline',

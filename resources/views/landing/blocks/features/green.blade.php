@@ -12,7 +12,7 @@
                 @foreach ($items as $item)
                     <div class="rounded-xl bg-white p-4 text-center shadow-lg">
                         @if (! empty($item['icon']))
-                            <img src="{{ $item['icon'] }}" alt="" loading="lazy" class="mx-auto mb-3 h-14 w-14 md:h-16 md:w-16 object-contain">
+                            <img width="800" height="800" src="{{ $item['icon'] }}" alt="" loading="lazy" class="mx-auto mb-3 h-14 w-14 md:h-16 md:w-16 object-contain">
                         @else
                             <span class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white text-xl font-bold" aria-hidden="true">{{ $loop->iteration }}</span>
                         @endif

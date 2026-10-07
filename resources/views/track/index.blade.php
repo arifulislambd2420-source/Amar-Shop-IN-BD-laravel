@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'অর্ডার ট্র্যাকিং — '.\App\Support\SiteSettingsHelper::siteName())
+@section('robots', 'noindex, nofollow')
 
 @section('content')
     @livewire('track.track-form')

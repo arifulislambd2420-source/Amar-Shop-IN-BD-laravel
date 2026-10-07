@@ -9,6 +9,9 @@
     </nav>
     <div class="bg-white rounded-2xl border border-gray-200 p-6 md:p-10 shadow-sm space-y-6 text-gray-700 leading-relaxed">
         <h1 class="text-3xl font-bold text-ink border-b border-gray-100 pb-4">প্রাইভেসি পলিসি (Privacy Policy)</h1>
+        @if(filled($customContent ?? null))
+            <div class="rich-text text-gray-700">{!! \App\Support\Html::render($customContent) !!}</div>
+        @else
         <p>
             <strong class="text-ink">{{ \App\Support\SiteSettingsHelper::siteNameEn() }}</strong> গ্রাহকদের ব্যক্তিগত তথ্যের সর্বোচ্চ সুরক্ষা ও গোপনীয়তা নিশ্চিত করতে প্রতিশ্রুতিবদ্ধ। আমাদের ওয়েবসাইট ব্যবহারের মাধ্যমে আপনি আমাদের গোপনীয়তা নীতি মেনে নিচ্ছেন।
         </p>
@@ -28,6 +31,7 @@
             <h2 class="text-xl font-bold text-ink">৩. তথ্য সুরক্ষা</h2>
             <p class="text-sm">আপনার পাসওয়ার্ড এনক্রিপ্টেড (hashed) অবস্থায় সংরক্ষণ করা হয় এবং কোনো ভাবেই প্লেইন টেক্সটে দেখানো বা রিটার্ন করা হয় না।</p>
         </section>
+        @endif
     </div>
 </div>
 @endsection

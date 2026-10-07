@@ -16,7 +16,7 @@
             <div class="relative rounded-xl bg-white p-3">
                 <div x-ref="track" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     @foreach ($images as $image)
-                        <img src="{{ $image }}" alt="কাস্টমার রিভিউ" loading="lazy"
+                        <img width="800" height="800" src="{{ $image }}" alt="কাস্টমার রিভিউ" loading="lazy"
                              class="snap-center shrink-0 w-[88%] sm:w-[48%] md:w-[32%] rounded-lg border border-gray-200 object-contain">
                     @endforeach
                 </div>

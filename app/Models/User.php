@@ -25,6 +25,17 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomerAddress::class);
+    }
+
+    /** Every way this customer's phone may be stored on an order (01…, 8801…, 1…). */
+    public function orderPhones(): array
+    {
+        return app(\App\Services\OrderRiskService::class)->phoneVariants(preg_replace('/[^0-9]/', '', (string) $this->phone));
+    }
+
     protected function casts(): array
     {
         return [

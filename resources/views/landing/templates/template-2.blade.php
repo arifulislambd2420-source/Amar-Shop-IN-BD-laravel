@@ -4,7 +4,7 @@
     {{-- Template 2 — Dark/premium look. --}}
     <section class="bg-secondary text-white px-4 pt-12 pb-10 text-center">
         @if ($landingPage->hero_image)
-            <img src="{{ $landingPage->hero_image }}" alt="{{ $landingPage->headline }}"
+            <img src="{{ $landingPage->hero_image }}" alt="{{ $landingPage->headline }}" width="800" height="800" fetchpriority="high"
                  class="mx-auto mb-6 w-full max-w-sm rounded-2xl shadow-2xl ring-1 ring-white/10 object-cover">
         @endif
 
@@ -40,7 +40,7 @@
         <section class="px-4 py-8 max-w-3xl mx-auto bg-secondary">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 @foreach ($landingPage->gallery as $image)
-                    <img src="{{ $image }}" alt="{{ $landingPage->title }}"
+                    <img src="{{ $image }}" alt="{{ $landingPage->title }}" width="600" height="600" loading="lazy"
                          class="w-full aspect-square object-cover rounded-xl ring-1 ring-white/10">
                 @endforeach
             </div>

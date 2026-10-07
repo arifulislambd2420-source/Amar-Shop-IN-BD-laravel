@@ -3,13 +3,16 @@
 namespace App\Livewire\Checkout;
 
 use App\Models\Coupon;
+use App\Models\IncompleteOrder;
 use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\Payment\BkashService;
 use App\Support\Delivery;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use RuntimeException;
+use Throwable;
 
 class CheckoutForm extends Component
 {
@@ -24,6 +27,10 @@ class CheckoutForm extends Component
 
     public string $payment_method = 'cod';
 
+    /** Logged-in customers: pick a saved address / remember this one. */
+    public ?int $savedAddressId = null;
+    public bool $saveAddress = false;
+
     public string $couponCode = '';
     public ?array $appliedCoupon = null; // ['code' => ..., 'discount' => ...]
     public string $couponError = '';
@@ -35,6 +42,10 @@ class CheckoutForm extends Component
         if (Auth::guard('web')->check()) {
             $this->customer_name = Auth::guard('web')->user()->name;
             $this->phone = Auth::guard('web')->user()->phone;
+
+            if ($default = Auth::guard('web')->user()->addresses()->where('is_default', true)->first()) {
+                $this->fillFromAddress($default);
+            }
         }
 
         // GTM begin_checkout — fired once when the checkout page loads with
@@ -67,6 +78,98 @@ class CheckoutForm extends Component
             'notes' => ['nullable', 'string'],
             'payment_method' => ['required', 'in:cod,bkash'],
         ];
+    }
+
+    public function updatedSavedAddressId($value): void
+    {
+        $address = $value && Auth::guard('web')->check()
+            ? Auth::guard('web')->user()->addresses()->whereKey((int) $value)->first()
+            : null;
+
+        if ($address) {
+            $this->fillFromAddress($address);
+        }
+    }
+
+    private function fillFromAddress(\App\Models\CustomerAddress $address): void
+    {
+        $this->savedAddressId = $address->id;
+        $this->customer_name = $address->name;
+        $this->phone = $address->phone;
+        $this->district = $address->district;
+        $this->thana = $address->thana;
+        $this->postcode = (string) $address->postcode;
+        $this->address = $address->address;
+    }
+
+    /** "Save this address" ticked by a logged-in customer: store it (max 5, no duplicates). */
+    private function rememberAddress(): void
+    {
+        if (! $this->saveAddress || ! Auth::guard('web')->check()) {
+            return;
+        }
+
+        $user = Auth::guard('web')->user();
+
+        $exists = $user->addresses()
+            ->where('address', $this->address)
+            ->where('district', $this->district)
+            ->exists();
+
+        if ($exists || $user->addresses()->count() >= 5) {
+            return;
+        }
+
+        $user->addresses()->create([
+            'label' => $user->addresses()->exists() ? 'ঠিকানা '.($user->addresses()->count() + 1) : 'বাসা',
+            'name' => $this->customer_name,
+            'phone' => preg_replace('/[^0-9]/', '', $this->phone),
+            'district' => $this->district,
+            'thana' => $this->thana,
+            'postcode' => $this->postcode ?: null,
+            'address' => $this->address,
+            'is_default' => ! $user->addresses()->exists(),
+        ]);
+    }
+
+    // Incomplete-order capture: once a valid phone is typed (on blur), remember the
+    // lead so an admin can call and convert it if the order is never placed.
+    public function updatedPhone(): void
+    {
+        $this->captureLead();
+    }
+
+    public function updatedCustomerName(): void
+    {
+        $this->captureLead();
+    }
+
+    public function updatedAddress(): void
+    {
+        $this->captureLead();
+    }
+
+    private function captureLead(): void
+    {
+        try {
+            $items = [];
+
+            foreach (app(CartService::class)->lines() as $l) {
+                if ($l['quantity'] >= 1) {
+                    $items[] = [
+                        'product_id' => $l['product']->id,
+                        'variant_id' => $l['variant']?->id,
+                        'name' => $l['name'],
+                        'quantity' => $l['quantity'],
+                        'unit_price' => (float) $l['price'],
+                    ];
+                }
+            }
+
+            IncompleteOrder::capture(session()->getId(), 'checkout', null, $this->phone, $this->customer_name, $this->district, $this->address, $items, request()->ip());
+        } catch (Throwable) {
+            // Lead capture must never get in the way of checkout.
+        }
     }
 
     public function applyCoupon(): void
@@ -113,7 +216,20 @@ class CheckoutForm extends Component
     public function placeOrder(OrderService $orderService, BkashService $bkash)
     {
         $this->error = '';
+
+        // Per-IP limit on order attempts (an order is heavier than a page
+        // view: row locks, stock). Failed validation does not count.
+        $limitKey = 'checkout-order:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($limitKey, 6)) {
+            $this->error = 'একটু বেশি বার চেষ্টা করা হয়েছে। '.RateLimiter::availableIn($limitKey).' সেকেন্ড পর আবার চেষ্টা করুন।';
+
+            return null;
+        }
+
         $this->validate();
+
+        RateLimiter::hit($limitKey, 600);
 
         $isBkash = $this->payment_method === 'bkash';
 
@@ -187,24 +303,15 @@ class CheckoutForm extends Component
             return redirect()->away($payment['bkashURL']);
         }
 
-        // GTM purchase — flashed to session and fired once from the order
-        // confirmation page (order.show), rather than from here: a Livewire
-        // action that both dispatches a browser event AND redirects on the
-        // same response can lose the event to the navigation, so the
-        // confirmation page is the reliable place to fire it exactly once.
-        session()->flash('gtm_purchase', [
-            'transaction_id' => $order->order_token,
-            'value' => (float) $order->total,
-            'currency' => 'BDT',
-            'shipping' => (float) $order->shipping_fee,
-            'coupon' => $this->appliedCoupon['code'] ?? null,
-            'items' => $order->items->map(fn ($item) => [
-                'item_id' => $item->product_id,
-                'item_name' => $item->product_name,
-                'price' => (float) $item->unit_price,
-                'quantity' => $item->quantity,
-            ])->all(),
-        ]);
+        // The Purchase event is fired from the order confirmation page
+        // (OrderController::show → order.show), built from the stored order.
+
+        $this->rememberAddress();
+
+        try {
+            IncompleteOrder::markConverted($this->phone, $order->id);
+        } catch (Throwable) {
+        }
 
         $cart->clear();
 
@@ -220,6 +327,7 @@ class CheckoutForm extends Component
             'freeRemaining' => Delivery::remainingForFree($cart->subtotal()),
             'districts' => config('districts'),
             'bkashAvailable' => $bkash->configured(),
+            'savedAddresses' => Auth::guard('web')->check() ? Auth::guard('web')->user()->addresses()->orderByDesc('is_default')->get() : collect(),
         ]);
     }
 }

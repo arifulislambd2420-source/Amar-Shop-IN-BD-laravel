@@ -66,8 +66,6 @@ class BkashCallbackController extends Controller
 
             $cart->clear();
 
-            session()->flash('gtm_purchase', $this->gtmPurchasePayload($order));
-
             return redirect()->route('order.show', $order->order_token);
         }
 
@@ -75,26 +73,6 @@ class BkashCallbackController extends Controller
 
         return $this->retryRedirect($order)
             ->with('status', 'বিকাশ পেমেন্ট সম্পন্ন হয়নি (ব্যর্থ অথবা বাতিল করা হয়েছে)। অনুগ্রহ করে আবার চেষ্টা করুন।');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function gtmPurchasePayload(Order $order): array
-    {
-        return [
-            'transaction_id' => $order->order_token,
-            'value' => (float) $order->total,
-            'currency' => 'BDT',
-            'shipping' => (float) $order->shipping_fee,
-            'coupon' => null,
-            'items' => $order->items->map(fn ($item) => [
-                'item_id' => $item->product_id,
-                'item_name' => $item->product_name,
-                'price' => (float) $item->unit_price,
-                'quantity' => $item->quantity,
-            ])->all(),
-        ];
     }
 
     /**

@@ -9,6 +9,10 @@ use Filament\Widgets\ChartWidget;
 /** Dashboard: orders grouped by status (doughnut). */
 class OrdersByStatusChart extends ChartWidget
 {
+    use \App\Filament\Concerns\HasAdminAreaWidget;
+
+    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+
     protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 1;
