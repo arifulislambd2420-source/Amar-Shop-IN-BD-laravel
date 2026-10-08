@@ -39,32 +39,101 @@
     bottom: calc(var(--mnav-lift) + 4.75rem);
 }
 
+/*
+ * --i is the active slot (0-based). Registering it as a <number> lets the
+ * browser animate it, so everything drawn from it — the arch (.mnav-glow) and
+ * the gap in the bottom line (.mnav::after) — glides together to the new slot.
+ */
+@property --i {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+}
+
 .mnav {
+    --mnav-pad: 1.25rem; /* inner side padding, keeps the arch clear of the round ends */
+    --mnav-arch: 0.25rem; /* gap between the slot edge and the arch */
+    --mnav-foot: 0.65rem; /* radius of the curve where the arch meets the bottom line */
+    --mnav-line: 1.5px;
+    --mnav-slot: calc((100% - 2 * var(--mnav-pad)) / var(--n));
     bottom: var(--mnav-lift);
     background: var(--mnav-bg);
     box-shadow: 0 10px 28px -6px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.2),
         inset 0 1px 0 rgb(255 255 255 / 0.06);
+    transition: --i 340ms cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 
-/* The highlight: one element that slides to the active slot (--i, 0-based). */
-.mnav-glow {
-    width: calc(100% / var(--n));
-    transform: translateX(calc(var(--i) * 100%));
+/*
+ * The brand-coloured line: it hugs the lower edge of the pill and is cut open
+ * under the active item, where the arch takes over (see .mnav-glow).
+ */
+.mnav::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: var(--mnav-line) solid var(--brand);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 68%),
+        linear-gradient(to right, #000 calc(var(--mnav-pad) + var(--i) * var(--mnav-slot) + var(--mnav-arch) - var(--mnav-foot) + 0.5px),
+            transparent 0, transparent calc(var(--mnav-pad) + (var(--i) + 1) * var(--mnav-slot) - var(--mnav-arch) + var(--mnav-foot) - 0.5px), #000 0);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to bottom, transparent 42%, #000 68%),
+        linear-gradient(to right, #000 calc(var(--mnav-pad) + var(--i) * var(--mnav-slot) + var(--mnav-arch) - var(--mnav-foot) + 0.5px),
+            transparent 0, transparent calc(var(--mnav-pad) + (var(--i) + 1) * var(--mnav-slot) - var(--mnav-arch) + var(--mnav-foot) - 0.5px), #000 0);
+    mask-composite: intersect;
+}
+
+/* Nothing active (e.g. a page outside the five): keep the line unbroken. */
+.mnav--none::after {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 68%);
+    mask-image: linear-gradient(to bottom, transparent 42%, #000 68%);
+}
+
+/* Browsers that cannot animate --i: slide the arch with a plain transform instead. */
+.mnav--fallback .mnav-glow {
     transition: transform 320ms cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 
+/* The highlight: one element that follows --i. */
+.mnav-glow {
+    left: var(--mnav-pad);
+    width: var(--mnav-slot);
+    transform: translateX(calc(var(--i) * 100%));
+}
+
+/* The arch: top and sides of a rounded tab around the active item … */
 .mnav-glow::before {
     content: '';
     position: absolute;
-    inset: 0.3rem 0.25rem;
-    border-radius: 1.25rem;
-    border: 1.5px solid var(--brand);
-    background: color-mix(in srgb, var(--brand) 14%, transparent);
-    box-shadow: 0 0 14px -2px color-mix(in srgb, var(--brand) 55%, transparent),
-        inset 0 0 10px -4px color-mix(in srgb, var(--brand) 60%, transparent);
+    left: var(--mnav-arch);
+    right: var(--mnav-arch);
+    top: 0.3rem;
+    bottom: var(--mnav-foot);
+    border: var(--mnav-line) solid var(--brand);
+    border-bottom: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--brand) 18%, transparent), transparent);
+    box-shadow: 0 -4px 12px -6px color-mix(in srgb, var(--brand) 70%, transparent);
+}
+
+/* … and the two curved feet that bend it out into the bottom line. */
+.mnav-glow::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--mnav-arch) - var(--mnav-foot));
+    right: calc(var(--mnav-arch) - var(--mnav-foot));
+    bottom: 0;
+    height: var(--mnav-foot);
+    background:
+        radial-gradient(circle at 0 0, transparent calc(var(--mnav-foot) - var(--mnav-line) - 0.5px), var(--brand) calc(var(--mnav-foot) - var(--mnav-line)),
+            var(--brand) var(--mnav-foot), transparent calc(var(--mnav-foot) + 0.5px)) left bottom / var(--mnav-foot) var(--mnav-foot) no-repeat,
+        radial-gradient(circle at 100% 0, transparent calc(var(--mnav-foot) - var(--mnav-line) - 0.5px), var(--brand) calc(var(--mnav-foot) - var(--mnav-line)),
+            var(--brand) var(--mnav-foot), transparent calc(var(--mnav-foot) + 0.5px)) right bottom / var(--mnav-foot) var(--mnav-foot) no-repeat;
 }
 
 .mnav-item {
+    font-size: clamp(0.65rem, 3.1vw, 0.75rem); /* "অ্যাকাউন্ট" must fit one slot at 360px */
     color: rgb(255 255 255 / 0.62);
     transition: color 200ms;
 }
@@ -85,6 +154,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .mnav,
     .mnav-glow,
     .mnav-item,
     .mnav-dot {
