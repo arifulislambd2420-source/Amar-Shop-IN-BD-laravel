@@ -14,7 +14,9 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# public/build is committed on purpose: the shared host has no Node, so the
+# built CSS/JS (and manifest.json that points at them) ship with the repo.
+# Run `npm run build` and commit the whole folder after any CSS/JS change.
 /public/css/filament
 /public/fonts-manifest.dev.json
 /public/fonts/filament
