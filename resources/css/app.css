@@ -63,7 +63,7 @@
     --mnav-notch: calc(var(--mnav-r) + var(--mnav-gap));
     bottom: var(--mnav-lift);
     height: var(--mnav-h);
-    transition: --i 380ms cubic-bezier(0.34, 1.25, 0.64, 1);
+    transition: --i 380ms cubic-bezier(0.34, 1.25, 0.64, 1), translate 260ms ease, opacity 200ms;
     /* the bar is masked, so its shadow is drawn here, around the cut shape */
     filter: drop-shadow(0 6px 14px rgb(15 23 42 / 0.14)) drop-shadow(0 1px 2px rgb(15 23 42 / 0.1));
 }
@@ -85,7 +85,8 @@
     height: calc(2 * var(--mnav-r));
     border-radius: 9999px;
     background: var(--brand);
-    box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--brand) 60%, transparent);
+    box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--brand) 60%, transparent),
+        inset 0 1px 0 rgb(255 255 255 / 0.25), inset 0 -2px 4px rgb(0 0 0 / 0.08);
     transform: translate(-50%, -50%);
 }
 
@@ -100,6 +101,18 @@
 
 .mnav-item {
     color: #6b7280;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mnav-item:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: -4px;
+    border-radius: 1rem;
+}
+
+/* press feedback (scale is separate from the transform that raises the icon) */
+.mnav-item:active .mnav-icon {
+    scale: 0.88;
 }
 
 /* Icon: centred in the upper part of the bar; when active it rises into the circle. */
@@ -109,7 +122,7 @@
     top: 0.75rem;
     display: flex;
     transform: translate(-50%, 0);
-    transition: transform 380ms cubic-bezier(0.34, 1.25, 0.64, 1), color 200ms;
+    transition: transform 380ms cubic-bezier(0.34, 1.25, 0.64, 1), color 200ms, scale 120ms;
 }
 
 .mnav-item[aria-current='page'] .mnav-icon {
@@ -143,6 +156,23 @@
     background: #fff;
     color: var(--brand);
     box-shadow: 0 0 0 2px var(--brand);
+}
+
+/*
+ * While the phone keyboard is up (an input has focus) the nav and the floating
+ * WhatsApp button slide away so they never sit on top of the field being typed
+ * in. html.kb-open is toggled by the script in partials/mobile-nav.
+ */
+@media (max-width: 47.99rem) {
+    html.kb-open .mnav {
+        translate: 0 calc(100% + var(--mnav-lift) + var(--mnav-r) + 1rem);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    html.kb-open [data-floating-buttons] {
+        display: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

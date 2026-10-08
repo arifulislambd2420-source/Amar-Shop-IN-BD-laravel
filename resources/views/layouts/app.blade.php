@@ -26,6 +26,12 @@
         <meta property="og:image" content="{{ \App\Support\Media::absolute($ogImage) }}">
         <meta name="twitter:card" content="summary_large_image">
     @endif
+    @php $favicon = \App\Support\SiteSettingsHelper::get('site_favicon') ?: \App\Support\SiteSettingsHelper::get('site_logo'); @endphp
+    <link rel="icon" href="{{ $favicon ?: asset('favicon.ico') }}">
+    @if($favicon)
+        <link rel="apple-touch-icon" href="{{ $favicon }}">
+    @endif
+    <meta name="theme-color" content="{{ \App\Support\SiteSettingsHelper::color('brand') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.theme-vars')
     @include('partials.jsonld-organization')

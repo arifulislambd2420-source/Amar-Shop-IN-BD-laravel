@@ -13,6 +13,9 @@ class CartBadge extends Component
     /** Mobile bottom navigation: sits on the cart icon's top-right corner. */
     public bool $nav = false;
 
+    /** Header cart button (round brand icon button). */
+    public bool $header = false;
+
     #[On('cart-updated')]
     public function refresh(): void
     {

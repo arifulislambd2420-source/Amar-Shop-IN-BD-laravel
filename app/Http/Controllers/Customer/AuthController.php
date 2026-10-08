@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\OrderRiskService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -20,6 +20,17 @@ use Illuminate\Validation\ValidationException;
  */
 class AuthController extends Controller
 {
+    /** Validation messages in Bangla (the app locale has no Bangla translation files). */
+    private const MESSAGES = [
+        'name.required' => 'আপনার নাম লিখুন।',
+        'name.max' => 'নাম অনেক বড় হয়ে গেছে।',
+        'phone.required' => 'মোবাইল নম্বর লিখুন।',
+        'phone.max' => 'সঠিক মোবাইল নম্বর দিন।',
+        'password.required' => 'পাসওয়ার্ড লিখুন।',
+        'password.min' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+        'password.max' => 'পাসওয়ার্ড অনেক বড় হয়ে গেছে।',
+    ];
+
     public function showLogin()
     {
         return view('customer.login');
@@ -28,11 +39,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'phone' => ['required', 'string'],
+            'phone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string'],
-        ]);
+        ], self::MESSAGES);
 
-        $phone = $this->normalizePhone($credentials['phone']);
+        // The same number may be stored as 01…, 880… or 1… (older accounts) —
+        // log in with whichever form this account was saved under.
+        $variants = $this->phoneVariants($credentials['phone']);
+        $phone = User::whereIn('phone', $variants)->value('phone') ?? $variants[0];
 
         if (! Auth::guard('web')->attempt(['phone' => $phone, 'password' => $credentials['password']], $request->boolean('remember'))) {
             throw ValidationException::withMessages([
@@ -54,13 +68,20 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:6'],
-        ]);
+            'phone' => ['required', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
+                // A Bangladeshi mobile number: 01XXXXXXXXX, optionally with the 88 / +88 prefix.
+                if (! preg_match('/^(?:88)?01[3-9]\d{8}$/', $this->normalizePhone((string) $value))) {
+                    $fail('সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)।');
+                }
+            }],
+            'password' => ['required', 'string', 'min:6', 'max:255'],
+        ], self::MESSAGES);
 
-        $phone = $this->normalizePhone($data['phone']);
+        // Saved as 01XXXXXXXXX; any other form of the same number counts as taken.
+        $variants = $this->phoneVariants($data['phone']);
+        $phone = $variants[0];
 
-        if (User::where('phone', $phone)->exists()) {
+        if (User::whereIn('phone', $variants)->exists()) {
             throw ValidationException::withMessages([
                 'phone' => 'এই ফোন নম্বর দিয়ে ইতিমধ্যে একাউন্ট আছে।',
             ]);
@@ -75,7 +96,7 @@ class AuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home');
+        return redirect()->intended(route('home'));
     }
 
     public function logout(Request $request)
@@ -90,5 +111,11 @@ class AuthController extends Controller
     private function normalizePhone(string $raw): string
     {
         return preg_replace('/[^0-9]/', '', $raw) ?? '';
+    }
+
+    /** 01XXXXXXXXX first, then the 880… / 1… forms of the same number (see OrderRiskService). */
+    private function phoneVariants(string $raw): array
+    {
+        return app(OrderRiskService::class)->phoneVariants($this->normalizePhone($raw));
     }
 }

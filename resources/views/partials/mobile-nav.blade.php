@@ -67,6 +67,14 @@
             nav.style.setProperty('--i', String(active));
         }
 
+        // Phone keyboard up (a text field has focus) -> hide the nav and the
+        // floating buttons so they don't cover the field (CSS: html.kb-open).
+        const typing = (el) => el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]):not([type=file]), textarea, select, [contenteditable=""], [contenteditable=true]');
+        document.addEventListener('focusin', (e) => { if (typing(e.target)) document.documentElement.classList.add('kb-open'); });
+        document.addEventListener('focusout', () => setTimeout(() => {
+            if (! typing(document.activeElement)) document.documentElement.classList.remove('kb-open');
+        }, 50));
+
         // Tap: move the circle and notch right away, before the next page loads.
         nav.addEventListener('click', (e) => {
             const link = e.target.closest('a[data-index]');
