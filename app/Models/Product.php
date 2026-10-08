@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesStorefrontCache;
+use App\Support\SiteSettingsHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use \App\Models\Concerns\FlushesStorefrontCache;
-
+    use FlushesStorefrontCache;
     use SoftDeletes;
 
     protected $fillable = [
@@ -78,7 +79,7 @@ class Product extends Model
     /** Stock at or below this counts as "low" (Site Setting → low_stock_threshold, default 5). */
     public static function lowStockThreshold(): int
     {
-        $value = \App\Support\SiteSettingsHelper::get('low_stock_threshold');
+        $value = SiteSettingsHelper::get('low_stock_threshold');
 
         return is_numeric($value) ? max(0, (int) $value) : 5;
     }
@@ -136,6 +137,20 @@ class Product extends Model
     public function hasDiscount(): bool
     {
         return $this->sale_price !== null && (float) $this->sale_price < (float) $this->price;
+    }
+
+    /**
+     * Nothing left to buy: with sizes/variants, only when every variant is
+     * out of stock (the product's own stock column is not reliable then);
+     * without, when the product's stock is 0.
+     */
+    public function isSoldOut(): bool
+    {
+        $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+
+        return $variants->isNotEmpty()
+            ? $variants->every(fn ($v) => $v->stock <= 0)
+            : $this->stock <= 0;
     }
 
     public function discountPercent(): int

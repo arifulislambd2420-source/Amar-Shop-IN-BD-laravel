@@ -8,8 +8,12 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Reused on both the ProductCard (mode=card, iconOnly quick add) and the
- * product detail page (mode=detail, full variant selector + qty + buy now).
+ * Reused on both the ProductCard (mode=card) and the product detail page
+ * (mode=detail: size/variant chips, quantity stepper, add / buy now, and a
+ * sticky buy bar on phones).
+ *
+ * On a card, a product with more than one variant never adds a size the
+ * customer did not pick: its buttons lead to the product page instead.
  */
 class AddToCart extends Component
 {
@@ -29,9 +33,8 @@ class AddToCart extends Component
     /**
      * The already-loaded product from the parent (e.g. a product card in a
      * grid), reused for the first render so each card doesn't re-query its
-     * product + variants — that was 4 queries per card (28 on the
-     * homepage). Protected, so Livewire doesn't persist it: later requests
-     * (add/buyNow) just fall back to a fresh query.
+     * product + variants. Protected, so Livewire doesn't persist it: later
+     * requests (add/buyNow) just fall back to a fresh query.
      */
     protected ?Product $preloaded = null;
 
@@ -48,16 +51,54 @@ class AddToCart extends Component
         $this->preloaded = $product;
 
         if ($product && $product->variants->isNotEmpty()) {
-            $this->variantId = $product->variants->first()->id;
+            // Preselect the first size that can actually be bought.
+            $this->variantId = ($product->variants->first(fn ($v) => $v->stock > 0) ?? $product->variants->first())->id;
         }
+    }
+
+    public function selectVariant(int $variantId): void
+    {
+        $product = $this->product();
+
+        if ($product?->variants->contains('id', $variantId)) {
+            $this->variantId = $variantId;
+            $this->message = '';
+            $this->quantity = max(1, min($this->quantity, $this->maxQuantity($product)));
+        }
+    }
+
+    public function increment(): void
+    {
+        $this->quantity = min($this->quantity + 1, $this->maxQuantity($this->product()));
+    }
+
+    public function decrement(): void
+    {
+        $this->quantity = max(1, $this->quantity - 1);
     }
 
     public function add(): void
     {
-        app(CartService::class)->add($this->productId, max(1, $this->quantity), $this->variantId);
+        if (! $this->canBuy()) {
+            return;
+        }
+
+        app(CartService::class)->add($this->productId, $this->cleanQuantity(), $this->variantId);
         $this->dispatch('cart-updated');
         $this->dispatch('gtm:add_to_cart', ecommerce: $this->addToCartPayload());
         $this->message = 'কার্টে যোগ করা হয়েছে!';
+    }
+
+    public function buyNow()
+    {
+        if (! $this->canBuy()) {
+            return null;
+        }
+
+        app(CartService::class)->add($this->productId, $this->cleanQuantity(), $this->variantId);
+        $this->dispatch('cart-updated');
+
+        return redirect()->route('checkout');
     }
 
     /**
@@ -67,9 +108,9 @@ class AddToCart extends Component
      */
     protected function addToCartPayload(): array
     {
-        $product = Product::with('variants')->find($this->productId);
-        $variant = $this->variantId ? $product?->variants->firstWhere('id', $this->variantId) : null;
-        $quantity = max(1, $this->quantity);
+        $product = $this->product();
+        $variant = $this->selectedVariant($product);
+        $quantity = $this->cleanQuantity();
         $price = $variant ? (float) $variant->price : (float) ($product?->sale_price ?? $product?->price ?? 0);
 
         return [
@@ -84,25 +125,65 @@ class AddToCart extends Component
         ];
     }
 
-    public function buyNow()
+    protected function product(): ?Product
     {
-        app(CartService::class)->add($this->productId, max(1, $this->quantity), $this->variantId);
-        $this->dispatch('cart-updated');
+        return $this->preloaded ??= Product::with('variants')->find($this->productId);
+    }
 
-        return redirect()->route('checkout');
+    protected function selectedVariant(?Product $product)
+    {
+        return $this->variantId ? $product?->variants->firstWhere('id', $this->variantId) : null;
+    }
+
+    /** Units of the current choice that are in stock (0 = sold out). */
+    protected function availableStock(?Product $product): int
+    {
+        if (! $product) {
+            return 0;
+        }
+
+        $variant = $this->selectedVariant($product);
+
+        return max(0, (int) ($variant ? $variant->stock : $product->stock));
+    }
+
+    protected function maxQuantity(?Product $product): int
+    {
+        return max(1, $this->availableStock($product));
+    }
+
+    protected function cleanQuantity(): int
+    {
+        return max(1, min($this->quantity, $this->maxQuantity($this->product())));
+    }
+
+    /** A card can't buy a product whose size has to be chosen first. */
+    protected function canBuy(): bool
+    {
+        $product = $this->product();
+
+        if (! $product || $this->availableStock($product) <= 0) {
+            return false;
+        }
+
+        return ! ($this->mode === 'card' && $product->variants->count() > 1);
     }
 
     public function render()
     {
-        $product = $this->preloaded ?? Product::with('variants')->find($this->productId);
+        $product = $this->product();
+        $variant = $this->selectedVariant($product);
+        $stock = $this->availableStock($product);
 
         return view('livewire.product.add-to-cart', [
             'product' => $product,
-            'outOfStock' => $product
-                ? ($this->variantId
-                    ? optional($product->variants->firstWhere('id', $this->variantId))->stock <= 0
-                    : $product->stock <= 0)
-                : true,
+            'variant' => $variant,
+            'stock' => $stock,
+            'outOfStock' => $stock <= 0,
+            'soldOut' => ! $product || $product->isSoldOut(),
+            'needsChoice' => $product && $product->variants->count() > 1,
+            'unitPrice' => $variant ? (float) $variant->price : ($product ? $product->displayPrice() : 0),
+            'lowStock' => $stock > 0 && $stock <= Product::lowStockThreshold(),
         ]);
     }
 }

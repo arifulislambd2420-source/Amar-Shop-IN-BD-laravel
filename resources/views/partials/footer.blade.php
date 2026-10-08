@@ -1,5 +1,5 @@
 <footer class="bg-secondary text-white/80 mt-16 pb-mobile-nav md:pb-0">
-    <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+    <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
         <div>
             <div class="text-white text-lg font-bold mb-2">@if(\App\Support\SiteSettingsHelper::hasCustomSiteName()){{ \App\Support\SiteSettingsHelper::siteName() }}@else আমার<span class="text-brand-500">শপ</span>@endif</div>
             <p>{{ \App\Support\SiteSettingsHelper::get('footer_description') ?: 'খাঁটি ও প্রাকৃতিক পণ্যের অনলাইন দোকান। মধু, সরিষার তেল, ঘি, খেজুর — সরাসরি আপনার দোরগোড়ায়।' }}</p>
@@ -12,7 +12,7 @@
                 ]);
             @endphp
             @if($socials)
-                <div class="flex items-center gap-3 mt-4">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4">
                     @foreach($socials as $label => $url)
                         <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="hover:text-brand-500">{{ $label }}</a>
                     @endforeach

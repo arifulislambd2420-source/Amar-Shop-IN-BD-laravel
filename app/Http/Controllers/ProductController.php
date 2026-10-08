@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -47,6 +46,7 @@ class ProductController extends Controller
             'ratingAvg' => $product->reviews->count() ? round((float) $product->reviews->avg('rating'), 1) : null,
         ]);
     }
+
     /**
      * New reviews are unapproved by default and only show up on the product
      * page once approved from the admin (Filament Reviews resource).
@@ -59,6 +59,11 @@ class ProductController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'customer_name.required' => 'আপনার নাম লিখুন।',
+            'customer_name.max' => 'নাম অনেক বড় হয়ে গেছে।',
+            'rating.*' => '১ থেকে ৫ এর মধ্যে রেটিং দিন।',
+            'comment.max' => 'মন্তব্য ২০০০ অক্ষরের মধ্যে লিখুন।',
         ]);
 
         Review::create([
@@ -69,7 +74,7 @@ class ProductController extends Controller
             'approved' => false,
         ]);
 
-        return redirect()->route('product.show', $product->slug)
+        return redirect()->to(route('product.show', $product->slug).'#reviews')
             ->with('status', 'আপনার রিভিউ সাবমিট হয়েছে। এটি অ্যাডমিন অ্যাপ্রুভ করার পর দেখা যাবে।');
     }
 }
