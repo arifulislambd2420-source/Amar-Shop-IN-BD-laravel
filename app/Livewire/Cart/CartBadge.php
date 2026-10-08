@@ -10,6 +10,9 @@ class CartBadge extends Component
 {
     public bool $floating = false;
 
+    /** Mobile bottom navigation: sits on the cart icon's top-right corner. */
+    public bool $nav = false;
+
     #[On('cart-updated')]
     public function refresh(): void
     {

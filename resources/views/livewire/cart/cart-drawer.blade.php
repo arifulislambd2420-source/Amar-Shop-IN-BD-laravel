@@ -38,7 +38,7 @@
         </div>
 
         @if(count($lines) > 0)
-            <div class="p-4 border-t border-gray-200 space-y-2">
+            <div class="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-gray-200 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">সাবটোটাল</span>
                     <span class="font-semibold">@taka($subtotal)</span>

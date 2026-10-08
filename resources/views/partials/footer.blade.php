@@ -1,4 +1,4 @@
-<footer class="bg-secondary text-white/80 mt-16">
+<footer class="bg-secondary text-white/80 mt-16 pb-mobile-nav md:pb-0">
     <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
         <div>
             <div class="text-white text-lg font-bold mb-2">@if(\App\Support\SiteSettingsHelper::hasCustomSiteName()){{ \App\Support\SiteSettingsHelper::siteName() }}@else আমার<span class="text-brand-500">শপ</span>@endif</div>
