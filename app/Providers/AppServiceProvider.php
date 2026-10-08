@@ -9,6 +9,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Behind the host's proxy the app can see the request as plain http
+        // (X-Forwarded-Proto ignored — see TrustedProxies), which makes
+        // asset()/@vite emit http:// CSS and JS links that browsers block as
+        // mixed content on an https page. APP_URL is the source of truth.
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         // @taka(1234) — storefront money formatting, ported from the old
         // app's formatTaka() helper (see App\Support\Money).
         // Customer SMS on order confirmed / shipped / delivered.
