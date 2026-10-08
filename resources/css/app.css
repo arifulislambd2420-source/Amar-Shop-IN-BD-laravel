@@ -13,36 +13,43 @@
 }
 
 /*
- * Mobile bottom navigation (partials/mobile-nav): a floating 4rem pill that
- * sits --mnav-lift above the screen edge — at least 0.75rem, more on iPhones
- * with a home indicator (env() needs viewport-fit=cover in the layout meta).
+ * Mobile bottom navigation (partials/mobile-nav): "floating active circle
+ * with notch". A light bar with round corners, fixed --mnav-lift above the
+ * screen edge (at least 0.75rem, more on iPhones with a home indicator —
+ * env() needs viewport-fit=cover in the layout meta). The active item's icon
+ * sits in a brand-coloured circle that sticks half out of the bar's top edge,
+ * resting in a round notch cut into the bar; the page shows through the gap
+ * between circle and notch.
  *
- * Colours come from the Site Setting theme: the bar is a near-black tinted by
- * --secondary (always dark, so the light icons stay readable whatever is
- * picked) and everything active uses --brand.
+ * Colours come from the Site Setting theme (--brand); the bar itself is a
+ * neutral light surface so grey icons and labels always read.
  *
  * pb-mobile-nav (on the footer, so the space keeps the footer's colour) keeps
- * the end of the page clear of the pill *and* of the WhatsApp button parked
- * above it by bottom-above-mobile-nav. Pair with md: variants to reset.
+ * the end of the page clear of the bar, the circle *and* the WhatsApp button
+ * parked above them by bottom-above-mobile-nav. Pair with md: variants.
  */
 :root {
     --mnav-lift: max(0.75rem, env(safe-area-inset-bottom));
-    --mnav-bg: color-mix(in srgb, var(--secondary) 30%, #0b0c10);
+    --mnav-bg: #ffffff;
+    --mnav-h: 4rem; /* bar height */
+    --mnav-r: 1.5rem; /* circle radius: the circle is 3rem across */
+    --mnav-gap: 0.3125rem; /* page background ring between circle and notch */
 }
 
 @utility pb-mobile-nav {
-    /* lift + 4rem pill + 0.75rem gap + 2.75rem button + 0.75rem */
-    padding-bottom: calc(var(--mnav-lift) + 8.25rem);
+    /* lift + bar + circle overhang + gap + 2.75rem button + 0.75rem */
+    padding-bottom: calc(var(--mnav-lift) + var(--mnav-h) + var(--mnav-r) + 0.5rem + 3.5rem);
 }
 
 @utility bottom-above-mobile-nav {
-    bottom: calc(var(--mnav-lift) + 4.75rem);
+    /* clear of the circle too, which can sit under the button on the last slot */
+    bottom: calc(var(--mnav-lift) + var(--mnav-h) + var(--mnav-r) + 0.5rem);
 }
 
 /*
- * --i is the active slot (0-based). Registering it as a <number> lets the
- * browser animate it, so everything drawn from it — the arch (.mnav-glow) and
- * the gap in the bottom line (.mnav::after) — glides together to the new slot.
+ * --i is the active slot (0-based). Registered as a <number> so the browser
+ * animates it: the notch (mask on .mnav-bar), the circle (.mnav-bubble) and
+ * the raised icon are all positioned from it, so they glide together.
  */
 @property --i {
     syntax: '<number>';
@@ -51,113 +58,97 @@
 }
 
 .mnav {
-    --mnav-pad: 1.25rem; /* inner side padding, keeps the arch clear of the round ends */
-    --mnav-arch: 0.25rem; /* gap between the slot edge and the arch */
-    --mnav-foot: 0.65rem; /* radius of the curve where the arch meets the bottom line */
-    --mnav-line: 1.5px;
-    --mnav-slot: calc((100% - 2 * var(--mnav-pad)) / var(--n));
+    --mnav-pad: 0.5rem; /* inner side padding, keeps the notch off the round corners */
+    --mnav-x: calc(var(--mnav-pad) + (var(--i) + 0.5) * (100% - 2 * var(--mnav-pad)) / var(--n));
+    --mnav-notch: calc(var(--mnav-r) + var(--mnav-gap));
     bottom: var(--mnav-lift);
-    background: var(--mnav-bg);
-    box-shadow: 0 10px 28px -6px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.2),
-        inset 0 1px 0 rgb(255 255 255 / 0.06);
-    transition: --i 340ms cubic-bezier(0.34, 1.3, 0.64, 1);
+    height: var(--mnav-h);
+    transition: --i 380ms cubic-bezier(0.34, 1.25, 0.64, 1);
+    /* the bar is masked, so its shadow is drawn here, around the cut shape */
+    filter: drop-shadow(0 6px 14px rgb(15 23 42 / 0.14)) drop-shadow(0 1px 2px rgb(15 23 42 / 0.1));
 }
 
-/*
- * The brand-coloured line: it hugs the lower edge of the pill and is cut open
- * under the active item, where the arch takes over (see .mnav-glow).
- */
-.mnav::after {
-    content: '';
+.mnav-bar {
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    border: var(--mnav-line) solid var(--brand);
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 68%),
-        linear-gradient(to right, #000 calc(var(--mnav-pad) + var(--i) * var(--mnav-slot) + var(--mnav-arch) - var(--mnav-foot) + 0.5px),
-            transparent 0, transparent calc(var(--mnav-pad) + (var(--i) + 1) * var(--mnav-slot) - var(--mnav-arch) + var(--mnav-foot) - 0.5px), #000 0);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to bottom, transparent 42%, #000 68%),
-        linear-gradient(to right, #000 calc(var(--mnav-pad) + var(--i) * var(--mnav-slot) + var(--mnav-arch) - var(--mnav-foot) + 0.5px),
-            transparent 0, transparent calc(var(--mnav-pad) + (var(--i) + 1) * var(--mnav-slot) - var(--mnav-arch) + var(--mnav-foot) - 0.5px), #000 0);
-    mask-composite: intersect;
+    border-radius: 1.25rem;
+    background: var(--mnav-bg);
+    -webkit-mask: radial-gradient(circle at var(--mnav-x) 0, transparent var(--mnav-notch), #000 calc(var(--mnav-notch) + 0.5px));
+    mask: radial-gradient(circle at var(--mnav-x) 0, transparent var(--mnav-notch), #000 calc(var(--mnav-notch) + 0.5px));
 }
 
-/* Nothing active (e.g. a page outside the five): keep the line unbroken. */
-.mnav--none::after {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 68%);
-    mask-image: linear-gradient(to bottom, transparent 42%, #000 68%);
-}
-
-/* Browsers that cannot animate --i: slide the arch with a plain transform instead. */
-.mnav--fallback .mnav-glow {
-    transition: transform 320ms cubic-bezier(0.34, 1.3, 0.64, 1);
-}
-
-/* The highlight: one element that follows --i. */
-.mnav-glow {
-    left: var(--mnav-pad);
-    width: var(--mnav-slot);
-    transform: translateX(calc(var(--i) * 100%));
-}
-
-/* The arch: top and sides of a rounded tab around the active item … */
-.mnav-glow::before {
-    content: '';
+.mnav-bubble {
     position: absolute;
-    left: var(--mnav-arch);
-    right: var(--mnav-arch);
-    top: 0.3rem;
-    bottom: var(--mnav-foot);
-    border: var(--mnav-line) solid var(--brand);
-    border-bottom: 0;
-    border-radius: 1.5rem 1.5rem 0 0;
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--brand) 18%, transparent), transparent);
-    box-shadow: 0 -4px 12px -6px color-mix(in srgb, var(--brand) 70%, transparent);
+    top: 0;
+    left: var(--mnav-x);
+    width: calc(2 * var(--mnav-r));
+    height: calc(2 * var(--mnav-r));
+    border-radius: 9999px;
+    background: var(--brand);
+    box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--brand) 60%, transparent);
+    transform: translate(-50%, -50%);
 }
 
-/* … and the two curved feet that bend it out into the bottom line. */
-.mnav-glow::after {
-    content: '';
-    position: absolute;
-    left: calc(var(--mnav-arch) - var(--mnav-foot));
-    right: calc(var(--mnav-arch) - var(--mnav-foot));
-    bottom: 0;
-    height: var(--mnav-foot);
-    background:
-        radial-gradient(circle at 0 0, transparent calc(var(--mnav-foot) - var(--mnav-line) - 0.5px), var(--brand) calc(var(--mnav-foot) - var(--mnav-line)),
-            var(--brand) var(--mnav-foot), transparent calc(var(--mnav-foot) + 0.5px)) left bottom / var(--mnav-foot) var(--mnav-foot) no-repeat,
-        radial-gradient(circle at 100% 0, transparent calc(var(--mnav-foot) - var(--mnav-line) - 0.5px), var(--brand) calc(var(--mnav-foot) - var(--mnav-line)),
-            var(--brand) var(--mnav-foot), transparent calc(var(--mnav-foot) + 0.5px)) right bottom / var(--mnav-foot) var(--mnav-foot) no-repeat;
+.mnav--none .mnav-bar {
+    -webkit-mask: none;
+    mask: none;
+}
+
+.mnav--none .mnav-bubble {
+    display: none;
 }
 
 .mnav-item {
-    font-size: clamp(0.65rem, 3.1vw, 0.75rem); /* "অ্যাকাউন্ট" must fit one slot at 360px */
-    color: rgb(255 255 255 / 0.62);
+    color: #6b7280;
+}
+
+/* Icon: centred in the upper part of the bar; when active it rises into the circle. */
+.mnav-icon {
+    position: absolute;
+    left: 50%;
+    top: 0.75rem;
+    display: flex;
+    transform: translate(-50%, 0);
+    transition: transform 380ms cubic-bezier(0.34, 1.25, 0.64, 1), color 200ms;
+}
+
+.mnav-item[aria-current='page'] .mnav-icon {
+    color: #fff;
+    /* 0.75rem + 11px (half the 22px icon) up = centred on the bar's top edge */
+    transform: translate(-50%, calc(-0.75rem - 11px));
+}
+
+.mnav-label {
+    position: absolute;
+    left: 50%;
+    bottom: 0.625rem;
+    transform: translateX(-50%);
+    white-space: nowrap;
     transition: color 200ms;
 }
 
-.mnav-item[aria-current='page'] {
+.mnav-item[aria-current='page'] .mnav-label {
     color: var(--brand);
+    font-weight: 600;
 }
 
-.mnav-dot {
-    opacity: 0;
-    transform: scale(0);
-    transition: opacity 200ms, transform 250ms;
+/* Cart count: brand pill; inverted when the cart icon is inside the brand circle. */
+.mnav-badge {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: 0 0 0 2px var(--mnav-bg);
 }
 
-.mnav-item[aria-current='page'] .mnav-dot {
-    opacity: 1;
-    transform: scale(1);
+.mnav-item[aria-current='page'] .mnav-badge {
+    background: #fff;
+    color: var(--brand);
+    box-shadow: 0 0 0 2px var(--brand);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .mnav,
-    .mnav-glow,
-    .mnav-item,
-    .mnav-dot {
+    .mnav-icon,
+    .mnav-label {
         transition: none;
     }
 }
