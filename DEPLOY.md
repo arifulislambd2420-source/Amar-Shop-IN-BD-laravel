@@ -111,6 +111,24 @@ php artisan media:localize-remote --dry-run   # আগে শুধু তাল
 php artisan media:localize-remote             # তারপর আসলটা (আগে ডাটাবেস ব্যাকআপ নিন)
 ```
 
+## ৬ক. ডেমো ডাটা (ঐচ্ছিক — Clothing)
+
+৫টা ক্যাটাগরি (পাঞ্জাবি, শার্ট, টি-শার্ট, প্যান্ট, বোরকা/আবায়া) × ৪টা প্রোডাক্ট, সাইজ S/M/L/XL-সহ, ছবিসহ। সব ডেমো সারি `is_demo` দিয়ে চিহ্নিত, ছবিগুলোর নাম `demo-*.png`। আসল ডাটায় হাত দেয় না; বারবার চালালেও ডুপ্লিকেট হয় না। `migrate --seed` এটা যোগ করে না — আলাদা করে চালাতে হয়:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --class=DemoClothingSeeder --force
+```
+
+পরে শুধু ডেমো ডাটা মুছতে (আগে `--dry-run` দিয়ে দেখে নিন):
+
+```bash
+php artisan demo:remove --dry-run
+php artisan demo:remove
+```
+
+কোনো ডেমো প্রোডাক্ট কাস্টমার অর্ডার করে থাকলে সেটা মোছা হয় না (অর্ডারের ইতিহাস ঠিক রাখতে) — শুধু শপ থেকে লুকানো হয়।
+
 ## ৭. Cache warm করুন (production performance)
 
 ```bash
