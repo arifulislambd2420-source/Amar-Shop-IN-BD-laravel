@@ -1,9 +1,10 @@
 {{--
-    Mobile bottom navigation. 64px bar (+ iPhone safe area), icon above a 12px
-    label, each item a full-height tap target. The active item is marked by
-    colour, a tinted pill behind the icon and a bar on top — so it stays
-    visible whatever brand colour is set in Site Setting. The page itself
-    keeps clear of this bar via `pb-mobile-nav` on <body>.
+    Mobile bottom navigation — a floating dark pill (styles: .mnav* in
+    resources/css/app.css). The active item gets brand-coloured icon, label
+    and dot, and one highlight (.mnav-glow) slides to it: from the previous
+    page's slot on load, and straight away when an item is tapped. Colours
+    follow the Site Setting theme (--brand / --secondary). The page keeps
+    clear of the pill via `pb-mobile-nav` on the footer.
 --}}
 @php
     $items = [
@@ -15,32 +16,64 @@
             'icon' => '<circle cx="9" cy="20" r="1.25"/><circle cx="18" cy="20" r="1.25"/><path d="M2 3h3l2.6 12.1a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.2L21 7H6.2"/>'],
         ['href' => route('track'), 'is' => ['track', 'track/*', 'order/*'], 'label' => 'ট্র্যাকিং',
             'icon' => '<path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="1.75"/><circle cx="17" cy="18" r="1.75"/>'],
+        ['href' => auth()->check() ? route('customer.account') : route('customer.login'), 'is' => ['customer', 'customer/*'], 'label' => 'অ্যাকাউন্ট',
+            'icon' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
     ];
+    $activeIndex = collect($items)->search(fn ($item) => request()->is(...$item['is']));
+    $activeIndex = $activeIndex === false ? -1 : $activeIndex;
 @endphp
-<nav aria-label="মোবাইল মেনু"
-    class="md:hidden fixed inset-x-0 bottom-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] pb-safe">
-    <ul class="grid grid-cols-4 h-16">
-        @foreach($items as $item)
-            @php $active = request()->is(...$item['is']); @endphp
+<nav id="mnav" aria-label="মোবাইল মেনু" data-active="{{ $activeIndex }}"
+    class="mnav md:hidden fixed inset-x-3 z-40 h-16 rounded-[1.75rem] overflow-hidden"
+    style="--n: {{ count($items) }}; --i: {{ max($activeIndex, 0) }}">
+    <span class="mnav-glow absolute inset-y-0 left-0 pointer-events-none {{ $activeIndex < 0 ? 'opacity-0' : '' }}" aria-hidden="true"></span>
+    <ul class="relative grid h-full" style="grid-template-columns: repeat({{ count($items) }}, minmax(0, 1fr))">
+        @foreach($items as $i => $item)
             <li>
-                <a href="{{ $item['href'] }}" @if($active) aria-current="page" @endif
-                    @class([
-                        'relative flex h-full w-full flex-col items-center justify-center gap-1 text-xs leading-none transition-colors',
-                        'text-brand-600 font-semibold' => $active,
-                        'text-gray-500 font-medium active:bg-gray-50' => ! $active,
-                    ])>
-                    @if($active)
-                        <span class="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-10 rounded-b-full bg-brand-500" aria-hidden="true"></span>
-                    @endif
-                    <span @class(['relative flex h-8 w-14 items-center justify-center rounded-full', 'bg-brand-50' => $active])>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ $active ? '2.2' : '1.8' }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $item['icon'] !!}</svg>
+                <a href="{{ $item['href'] }}" data-index="{{ $i }}" @if($i === $activeIndex) aria-current="page" @endif
+                    class="mnav-item flex h-full w-full flex-col items-center justify-center gap-[3px] text-xs font-medium leading-none">
+                    <span class="relative">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $item['icon'] !!}</svg>
                         @if(! empty($item['cart']))
                             @livewire('cart.cart-badge', ['nav' => true])
                         @endif
                     </span>
-                    <span>{{ $item['label'] }}</span>
+                    <span class="whitespace-nowrap">{{ $item['label'] }}</span>
+                    <span class="mnav-dot h-1 w-1 rounded-full bg-brand-500" aria-hidden="true"></span>
                 </a>
             </li>
         @endforeach
     </ul>
 </nav>
+<script>
+    (() => {
+        const nav = document.getElementById('mnav');
+        if (! nav) return;
+        const glow = nav.querySelector('.mnav-glow');
+        const active = Number(nav.dataset.active);
+        const key = 'mnav-last';
+        let last = null;
+        try { last = sessionStorage.getItem(key); sessionStorage.setItem(key, String(active)); } catch (e) {}
+
+        // Slide in from where the highlight was on the previous page. The
+        // forced reflow pins the start position; the end position is set
+        // synchronously, so the highlight can never be left on the old slot.
+        if (active >= 0 && last !== null && Number(last) >= 0 && Number(last) !== active) {
+            glow.style.transition = 'none';
+            nav.style.setProperty('--i', last);
+            glow.getBoundingClientRect();
+            glow.style.transition = '';
+            nav.style.setProperty('--i', String(active));
+        }
+
+        // Tap: move the highlight right away, before the next page loads.
+        nav.addEventListener('click', (e) => {
+            const link = e.target.closest('a[data-index]');
+            if (! link || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+            nav.querySelector('[aria-current]')?.removeAttribute('aria-current');
+            link.setAttribute('aria-current', 'page');
+            glow.classList.remove('opacity-0');
+            nav.style.setProperty('--i', link.dataset.index);
+            try { sessionStorage.setItem(key, link.dataset.index); } catch (e) {}
+        });
+    })();
+</script>
