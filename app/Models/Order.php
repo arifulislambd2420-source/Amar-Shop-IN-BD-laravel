@@ -50,6 +50,7 @@ class Order extends Model
             'discount' => 'decimal:2',
             'total' => 'decimal:2',
             'is_flagged' => 'boolean',
+            'stock_reserved' => 'boolean',
             'created_at' => 'datetime',
         ];
     }

@@ -7,7 +7,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Delivery;
 use App\Support\SiteSettingsHelper;
+use App\Support\Stock;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -26,17 +28,17 @@ class OrderService
 {
     /**
      * @param  array<int, array{product_id:int, variant_id:?int, quantity:int, unit_price_override?:?float}>  $cartLines
-     *         unit_price_override is for server-side callers only (e.g. a
-     *         landing page's admin-set price_override) — it is never taken
-     *         from client/request input directly, only from trusted DB data
-     *         looked up beforehand by the caller.
+     *                                                                                                                    unit_price_override is for server-side callers only (e.g. a
+     *                                                                                                                    landing page's admin-set price_override) — it is never taken
+     *                                                                                                                    from client/request input directly, only from trusted DB data
+     *                                                                                                                    looked up beforehand by the caller.
      * @param  array  $customer  keys: customer_name, phone, email, district, thana, postcode, address, notes, payment_method,
-     *         ip_address (optional; enables the per-IP fraud rule)
+     *                           ip_address (optional; enables the per-IP fraud rule)
      * @param  bool  $reserveStock  Decrement stock now (the default — correct
-     *         for COD, where the order itself is the commitment). Pass false
-     *         for a gateway payment (bKash): stock is only ever decremented
-     *         once payment is confirmed, by finalizeBkashPayment() below, so
-     *         an abandoned/failed payment never holds stock hostage.
+     *                              for COD, where the order itself is the commitment). Pass false
+     *                              for a gateway payment (bKash): stock is only ever decremented
+     *                              once payment is confirmed, by finalizeBkashPayment() below, so
+     *                              an abandoned/failed payment never holds stock hostage.
      */
     public function createOrder(array $cartLines, array $customer, ?string $couponCode = null, ?int $landingPageId = null, bool $reserveStock = true, bool $bypassCooldown = false): Order
     {
@@ -150,26 +152,21 @@ class OrderService
             // Delivery charge by district (Dhaka / outside) with optional free
             // delivery over a minimum subtotal — see App\Support\Delivery.
             // Always added to the stored total, never just displayed.
-            $shippingFee = \App\Support\Delivery::fee($customer['district'] ?? null, (float) $subtotal);
+            $shippingFee = Delivery::fee($customer['district'] ?? null, (float) $subtotal);
 
             $discount = 0;
             if ($couponCode) {
-                $coupon = Coupon::where('code', $couponCode)->where('is_active', true)->lockForUpdate()->first();
+                $coupon = Coupon::findByCode($couponCode, lock: true);
 
-                $valid = $coupon
-                    && (! $coupon->valid_until || $coupon->valid_until->greaterThanOrEqualTo(now()))
-                    && ($coupon->max_uses === null || $coupon->uses < $coupon->max_uses)
-                    && $subtotal >= (float) $coupon->min_spend;
-
-                if (! $valid) {
-                    throw new RuntimeException('কুপন কোডটি সঠিক নয় অথবা শর্ত পূরণ করেনি');
+                if (! $coupon) {
+                    throw new RuntimeException('কুপন কোডটি সঠিক নয়।');
                 }
 
-                $discount = $coupon->discount_type === 'percent'
-                    ? ($subtotal * (float) $coupon->discount_value) / 100
-                    : (float) $coupon->discount_value;
+                if ($problem = $coupon->problemFor((float) $subtotal)) {
+                    throw new RuntimeException($problem);
+                }
 
-                $discount = min($discount, $subtotal);
+                $discount = $coupon->discountFor((float) $subtotal);
 
                 $coupon->increment('uses');
             }
@@ -183,8 +180,8 @@ class OrderService
             $order = Order::create([
                 'landing_page_id' => $landingPageId,
                 'is_flagged' => $flagReasons !== [],
-                'flag_reason' => $flagReasons ? implode("
-", $flagReasons) : null,
+                'flag_reason' => $flagReasons ? implode('
+', $flagReasons) : null,
                 'ip_address' => $ip,
                 'order_token' => Str::random(40),
                 'invoice_no' => 'INV-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
@@ -209,6 +206,7 @@ class OrderService
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $li['product']->id,
+                    'variant_id' => $li['variant_id'],
                     'product_name' => $li['product_name'],
                     'unit_price' => $li['unit_price'],
                     'quantity' => $li['quantity'],
@@ -217,15 +215,67 @@ class OrderService
                 ]);
 
                 if ($reserveStock) {
-                    if ($li['variant_id']) {
-                        ProductVariant::where('id', $li['variant_id'])->decrement('stock', $li['quantity']);
-                    } else {
-                        Product::where('id', $li['product']->id)->decrement('stock', $li['quantity']);
-                    }
+                    Stock::take($li['product']->id, $li['variant_id'], $li['quantity']);
                 }
             }
 
+            if ($reserveStock) {
+                $order->forceFill(['stock_reserved' => true])->saveQuietly();
+            }
+
             return $order;
+        });
+    }
+
+    /**
+     * Should this order be holding stock right now? Not when cancelled; a
+     * COD order otherwise always does; a bKash order only once paid and not
+     * put on hold (paid but out of stock — an admin resolves that by hand).
+     */
+    public static function shouldHoldStock(Order $order): bool
+    {
+        if ($order->status === 'cancelled') {
+            return false;
+        }
+
+        return $order->payment_method !== 'bkash'
+            || ($order->payment_status === 'paid' && $order->status !== 'on_hold');
+    }
+
+    /**
+     * Called whenever an order's status / payment status changes (from any
+     * path — see OrderObserver): gives the stock back when an order is
+     * cancelled, and takes it again if a cancelled order is brought back.
+     * stock_reserved makes it happen exactly once in each direction.
+     */
+    public function reconcileStock(Order $order): void
+    {
+        $hold = self::shouldHoldStock($order);
+
+        if ($hold === (bool) $order->stock_reserved) {
+            return;
+        }
+
+        DB::transaction(function () use ($order, $hold) {
+            $fresh = Order::with('items')->lockForUpdate()->find($order->id);
+
+            if (! $fresh || (bool) $fresh->stock_reserved === $hold) {
+                return;
+            }
+
+            foreach ($fresh->items as $item) {
+                if ($item->product_id === null) {
+                    continue;
+                }
+
+                $hold
+                    ? Stock::take($item->product_id, $item->variant_id, $item->quantity)
+                    : Stock::release($item->product_id, $item->variant_id, $item->quantity);
+            }
+
+            $fresh->forceFill(['stock_reserved' => $hold])->saveQuietly();
+            $order->setAttribute('stock_reserved', $hold);
+            $order->syncOriginalAttribute('stock_reserved');
         });
     }
 
@@ -320,13 +370,15 @@ class OrderService
                     continue;
                 }
 
-                // The order stores only product_id, not which variant was
-                // ordered — this mirrors OrderItem's own schema. Falling
-                // back to the base product's stock is the same trade-off
-                // OrderService already made at order-creation time.
+                // The size/variant's own stock when it is known; older
+                // orders (no variant_id) fall back to the product's stock.
                 $product = Product::where('id', $item->product_id)->lockForUpdate()->first();
+                $variant = $item->variant_id
+                    ? ProductVariant::where('id', $item->variant_id)->lockForUpdate()->first()
+                    : null;
+                $available = $variant ? $variant->stock : $product?->stock;
 
-                if (! $product || $product->stock < $item->quantity) {
+                if (! $product || $available < $item->quantity) {
                     $stockConflict = $item->product_name;
 
                     break;
@@ -346,10 +398,11 @@ class OrderService
 
             foreach ($order->items as $item) {
                 if ($item->product_id !== null) {
-                    Product::where('id', $item->product_id)->decrement('stock', $item->quantity);
+                    Stock::take($item->product_id, $item->variant_id, $item->quantity);
                 }
             }
 
+            $order->forceFill(['stock_reserved' => true]);
             $order->update([
                 'payment_status' => 'paid',
                 'transaction_id' => $trxId,

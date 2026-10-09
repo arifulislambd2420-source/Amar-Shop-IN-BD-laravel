@@ -22,7 +22,7 @@
     </form>
 
     <x-slot:footer>
-        আগে থেকেই অ্যাকাউন্ট আছে? <a href="{{ route('customer.login') }}" class="font-semibold text-brand-600 hover:underline">লগইন করুন</a>
+        আগে থেকেই অ্যাকাউন্ট আছে? <a href="{{ route('customer.login') }}" class="inline-flex min-h-11 items-center font-semibold text-brand-600 hover:underline">লগইন করুন</a>
     </x-slot:footer>
 </x-auth-card>
 @endsection

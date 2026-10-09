@@ -111,7 +111,7 @@
         </div>
 
         {{-- Phones: the buy buttons stay on screen, just above the bottom nav. --}}
-        <div class="pdp-cta md:hidden fixed inset-x-3 bottom-above-mobile-nav z-30 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2 pl-4 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.25)]">
+        <div class="sticky-cta md:hidden fixed inset-x-3 bottom-above-mobile-nav z-30 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white p-2 pl-4 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.25)]">
             <div class="min-w-0 flex-1 leading-tight">
                 <p class="text-lg font-bold text-brand-600 tabular-nums">@taka($unitPrice)</p>
                 <p class="truncate text-xs text-gray-500">

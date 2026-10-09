@@ -71,7 +71,7 @@ class OrderTrackingTest extends TestCase
     {
         $html = $this->get('/track')->assertOk()->getContent();
 
-        foreach (['অর্ডার ট্র্যাক করুন', 'ফোন নম্বর', 'অর্ডার খুঁজুন'] as $text) {
+        foreach (['অর্ডার ট্র্যাক করুন', 'মোবাইল নম্বর', 'অর্ডার খুঁজুন'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
         foreach (['Track Your Order', 'Phone Number', 'Track Order', 'Order ID'] as $english) {

@@ -3,6 +3,7 @@
 namespace App\Livewire\Checkout;
 
 use App\Models\Coupon;
+use App\Models\CustomerAddress;
 use App\Models\IncompleteOrder;
 use App\Services\CartService;
 use App\Services\OrderService;
@@ -10,6 +11,7 @@ use App\Services\Payment\BkashService;
 use App\Support\Delivery;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use RuntimeException;
 use Throwable;
@@ -17,22 +19,35 @@ use Throwable;
 class CheckoutForm extends Component
 {
     public string $customer_name = '';
+
     public string $phone = '';
+
     public string $email = '';
+
     public string $district = '';
+
     public string $thana = '';
+
     public string $postcode = '';
+
     public string $address = '';
+
     public string $notes = '';
 
     public string $payment_method = 'cod';
 
+    /** Delivery area picked on the form: 'dhaka' (district = ঢাকা) or 'outside' (pick a district). */
+    public string $area = '';
+
     /** Logged-in customers: pick a saved address / remember this one. */
     public ?int $savedAddressId = null;
+
     public bool $saveAddress = false;
 
     public string $couponCode = '';
+
     public ?array $appliedCoupon = null; // ['code' => ..., 'discount' => ...]
+
     public string $couponError = '';
 
     public string $error = '';
@@ -69,15 +84,55 @@ class CheckoutForm extends Component
     {
         return [
             'customer_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'min:7', 'max:20'],
-            'email' => ['nullable', 'email'],
-            'district' => ['required', 'string'],
-            'thana' => ['required', 'string'],
-            'postcode' => ['nullable', 'string'],
-            'address' => ['required', 'string'],
-            'notes' => ['nullable', 'string'],
+            'phone' => ['required', 'string', 'max:20', function (string $attribute, mixed $value, \Closure $fail) {
+                // A Bangladeshi mobile: 01XXXXXXXXX, optionally with 88 / +88.
+                if (! preg_match('/^(?:88)?01[3-9]\d{8}$/', preg_replace('/[^0-9]/', '', (string) $value))) {
+                    $fail('সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)।');
+                }
+            }],
+            'email' => ['nullable', 'email', 'max:255'],
+            'district' => ['required', 'string', 'max:100'],
+            'thana' => ['required', 'string', 'max:100'],
+            'postcode' => ['nullable', 'string', 'max:20'],
+            'address' => ['required', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:cod,bkash'],
         ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'customer_name.required' => 'আপনার নাম লিখুন।',
+            'customer_name.max' => 'নাম অনেক বড় হয়ে গেছে।',
+            'phone.required' => 'মোবাইল নম্বর লিখুন।',
+            'phone.max' => 'সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)।',
+            'email.email' => 'সঠিক ইমেইল ঠিকানা দিন, অথবা ঘরটি খালি রাখুন।',
+            'district.required' => 'ডেলিভারি এলাকা ও জেলা বাছাই করুন।',
+            'thana.required' => 'থানা / উপজেলা লিখুন।',
+            'address.required' => 'বাসা, রোড, এলাকা — বিস্তারিত ঠিকানা লিখুন।',
+            'address.max' => 'ঠিকানা ৫০০ অক্ষরের মধ্যে লিখুন।',
+            'notes.max' => 'নোট ১০০০ অক্ষরের মধ্যে লিখুন।',
+            '*.max' => 'লেখাটি অনেক বড় হয়ে গেছে।',
+            'payment_method.*' => 'পেমেন্ট পদ্ধতি বাছাই করুন।',
+        ];
+    }
+
+    /** Dhaka sets the district; outside clears it so a district is picked. */
+    public function updatedArea(string $value): void
+    {
+        if ($value === 'dhaka') {
+            $this->district = Delivery::DHAKA;
+        } elseif (Delivery::isDhaka($this->district)) {
+            $this->district = '';
+        }
+
+        $this->resetValidation('district');
+    }
+
+    public function updatedDistrict(string $value): void
+    {
+        $this->area = $value === '' ? $this->area : (Delivery::isDhaka($value) ? 'dhaka' : 'outside');
     }
 
     public function updatedSavedAddressId($value): void
@@ -91,12 +146,13 @@ class CheckoutForm extends Component
         }
     }
 
-    private function fillFromAddress(\App\Models\CustomerAddress $address): void
+    private function fillFromAddress(CustomerAddress $address): void
     {
         $this->savedAddressId = $address->id;
         $this->customer_name = $address->name;
         $this->phone = $address->phone;
         $this->district = $address->district;
+        $this->area = Delivery::isDhaka($address->district) ? 'dhaka' : 'outside';
         $this->thana = $address->thana;
         $this->postcode = (string) $address->postcode;
         $this->address = $address->address;
@@ -183,27 +239,21 @@ class CheckoutForm extends Component
         }
 
         $subtotal = app(CartService::class)->subtotal();
+        $coupon = Coupon::findByCode($code);
 
-        $coupon = Coupon::where('code', $code)->where('is_active', true)->first();
-
-        $valid = $coupon
-            && (! $coupon->valid_until || $coupon->valid_until->greaterThanOrEqualTo(now()))
-            && ($coupon->max_uses === null || $coupon->uses < $coupon->max_uses)
-            && $subtotal >= (float) $coupon->min_spend;
-
-        if (! $valid) {
-            $this->couponError = 'কুপন কোডটি সঠিক নয় অথবা শর্ত পূরণ করেনি';
+        if (! $coupon) {
+            $this->couponError = 'কুপন কোডটি সঠিক নয়।';
 
             return;
         }
 
-        $discount = $coupon->discount_type === 'percent'
-            ? ($subtotal * (float) $coupon->discount_value) / 100
-            : (float) $coupon->discount_value;
+        if ($problem = $coupon->problemFor($subtotal)) {
+            $this->couponError = $problem;
 
-        $discount = min($discount, $subtotal);
+            return;
+        }
 
-        $this->appliedCoupon = ['code' => $coupon->code, 'discount' => $discount];
+        $this->appliedCoupon = ['code' => $coupon->code, 'discount' => $coupon->discountFor($subtotal)];
     }
 
     public function removeCoupon(): void
@@ -227,7 +277,18 @@ class CheckoutForm extends Component
             return null;
         }
 
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            // Let the page scroll to the first field that needs fixing.
+            $this->dispatch('checkout-invalid');
+
+            throw $e;
+        }
+
+        if (Delivery::isDhaka($this->district)) {
+            $this->district = Delivery::DHAKA;
+        }
 
         RateLimiter::hit($limitKey, 600);
 
@@ -325,6 +386,9 @@ class CheckoutForm extends Component
             'subtotal' => $cart->subtotal(),
             'shippingFee' => Delivery::quote($this->district ?: null, $cart->subtotal()),
             'freeRemaining' => Delivery::remainingForFree($cart->subtotal()),
+            // What each delivery area would cost for this cart (0 when it qualifies for free delivery).
+            'dhakaFee' => Delivery::fee(Delivery::DHAKA, $cart->subtotal()),
+            'outsideFee' => Delivery::fee(null, $cart->subtotal()),
             'districts' => config('districts'),
             'bkashAvailable' => $bkash->configured(),
             'savedAddresses' => Auth::guard('web')->check() ? Auth::guard('web')->user()->addresses()->orderByDesc('is_default')->get() : collect(),

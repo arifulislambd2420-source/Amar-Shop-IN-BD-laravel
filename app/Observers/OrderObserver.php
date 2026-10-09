@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Jobs\SendOrderSms;
 use App\Models\Order;
+use App\Services\OrderService;
 use App\Services\Sms\SmsService;
 
 /**
@@ -36,6 +37,11 @@ class OrderObserver
 
     public function updated(Order $order): void
     {
+        // Cancelled -> stock back; un-cancelled -> stock taken again.
+        if ($order->wasChanged(['status', 'payment_status'])) {
+            app(OrderService::class)->reconcileStock($order);
+        }
+
         // Admin reviewed a flagged COD order and cleared the flag: it's now
         // a normal confirmed order. (SmsService dedupes, so this can never
         // double-send.)

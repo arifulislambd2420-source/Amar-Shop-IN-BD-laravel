@@ -128,6 +128,10 @@
                     <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white font-bold">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
                     <span class="min-w-0"><span class="block truncate font-semibold text-gray-800">{{ auth()->user()->name }}</span><span class="text-xs text-brand-600">আমার অ্যাকাউন্ট দেখুন</span></span>
                 </a>
+                <form action="{{ route('customer.logout') }}" method="POST" class="mt-2">
+                    @csrf
+                    <button type="submit" class="flex min-h-11 w-full items-center rounded-xl px-3 text-sm font-medium text-gray-600 hover:bg-gray-50">লগআউট</button>
+                </form>
             @else
                 <div class="grid grid-cols-2 gap-2">
                     <a href="{{ route('customer.login') }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-gray-300 text-sm font-semibold text-gray-700">লগইন</a>

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Product;
-use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Session;
 
 /**
@@ -65,7 +64,9 @@ class CartService
         if ($quantity <= 0) {
             unset($cart[$key]);
         } else {
-            $cart[$key]['quantity'] = $quantity;
+            // Never more than is in stock.
+            $line = collect($this->lines())->firstWhere('key', $key);
+            $cart[$key]['quantity'] = $line ? min($quantity, max(1, (int) $line['stock'])) : $quantity;
         }
 
         Session::put(self::SESSION_KEY, $cart);

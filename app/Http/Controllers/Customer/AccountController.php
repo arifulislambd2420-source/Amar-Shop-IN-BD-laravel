@@ -114,6 +114,17 @@ class AccountController extends Controller
             'thana' => ['required', 'string', 'max:100'],
             'postcode' => ['nullable', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:1000'],
+        ], [
+            'label.required' => 'ঠিকানার একটি নাম দিন (যেমন বাসা / অফিস)।',
+            'name.required' => 'নাম লিখুন।',
+            'phone.required' => 'মোবাইল নম্বর লিখুন।',
+            'phone.min' => 'সঠিক মোবাইল নম্বর দিন।',
+            'phone.max' => 'সঠিক মোবাইল নম্বর দিন।',
+            'district.required' => 'জেলা বাছাই করুন।',
+            'district.in' => 'তালিকা থেকে জেলা বাছাই করুন।',
+            'thana.required' => 'থানা / উপজেলা লিখুন।',
+            'address.required' => 'বিস্তারিত ঠিকানা লিখুন।',
+            '*.max' => 'লেখাটি অনেক বড় হয়ে গেছে।',
         ]);
 
         $data['phone'] = preg_replace('/[^0-9]/', '', $data['phone']);

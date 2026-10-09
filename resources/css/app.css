@@ -174,17 +174,17 @@
         display: none;
     }
 
-    html.kb-open .pdp-cta {
+    html.kb-open .sticky-cta {
         display: none;
     }
 
     /* Product page: the sticky buy bar takes the floating button's place (WhatsApp is
        still in the menu drawer), and the page end clears the bar too. */
-    body:has(.pdp-cta) [data-floating-buttons] {
+    body:has(.sticky-cta) [data-floating-buttons] {
         display: none;
     }
 
-    body:has(.pdp-cta) footer {
+    body:has(.sticky-cta) footer {
         padding-bottom: calc(var(--mnav-lift) + var(--mnav-h) + var(--mnav-r) + 0.5rem + 4.75rem);
     }
 }

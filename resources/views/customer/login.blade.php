@@ -26,7 +26,7 @@
     </form>
 
     <x-slot:footer>
-        অ্যাকাউন্ট নেই? <a href="{{ route('customer.register') }}" class="font-semibold text-brand-600 hover:underline">নতুন অ্যাকাউন্ট খুলুন</a>
+        অ্যাকাউন্ট নেই? <a href="{{ route('customer.register') }}" class="inline-flex min-h-11 items-center font-semibold text-brand-600 hover:underline">নতুন অ্যাকাউন্ট খুলুন</a>
     </x-slot:footer>
 </x-auth-card>
 @endsection

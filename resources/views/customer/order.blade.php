@@ -4,13 +4,13 @@
 @section('robots', 'noindex, nofollow')
 
 @section('content')
-<div class="max-w-2xl mx-auto px-4 py-8">
-    <a href="{{ route('customer.account') }}#orders" class="text-sm text-brand-500">← আমার অর্ডার</a>
+<div class="max-w-2xl mx-auto px-4 py-5 md:py-8">
+    <a href="{{ route('customer.account') }}#orders" class="inline-flex min-h-11 items-center text-sm font-semibold text-brand-600">← আমার অর্ডার</a>
 
     <div class="mt-3 mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold">অর্ডার {{ $order->invoice_no }}</h1>
-            <p class="text-sm text-gray-500">{{ $order->created_at->format('d M Y, h:i A') }}</p>
+            <h1 class="break-all text-xl font-bold md:text-2xl">অর্ডার {{ $order->invoice_no }}</h1>
+            <p class="text-sm text-gray-500">{{ $order->created_at->locale('bn')->translatedFormat('j F Y, g:i A') }}</p>
         </div>
         <span class="rounded bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-600">{{ \App\Support\OrderStatus::label($order->status) }}</span>
     </div>
@@ -42,8 +42,8 @@
     </div>
 
     <div class="mt-4 flex flex-wrap gap-3">
-        <a href="{{ route('order.invoice', $order->order_token) }}" target="_blank" class="rounded-lg bg-secondary px-5 py-2.5 text-sm font-semibold text-white">🧾 ইনভয়েস</a>
-        <a href="{{ route('track') }}" class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold hover:border-brand-500">ট্র্যাক করুন</a>
+        <a href="{{ route('order.invoice', $order->order_token) }}" target="_blank" class="inline-flex h-11 items-center rounded-xl bg-secondary px-5 text-sm font-semibold text-white">ইনভয়েস দেখুন</a>
+        <a href="{{ route('track') }}" class="inline-flex h-11 items-center rounded-xl border border-gray-300 px-5 text-sm font-semibold hover:border-brand-500">ট্র্যাক করুন</a>
     </div>
 </div>
 @endsection

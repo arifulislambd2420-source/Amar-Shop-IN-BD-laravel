@@ -10,7 +10,7 @@ class CartPage extends Component
 {
     public function updateQuantity(int $productId, ?int $variantId, int $quantity): void
     {
-        app(CartService::class)->updateQuantity($productId, $variantId, $quantity);
+        app(CartService::class)->updateQuantity($productId, $variantId, $quantity); // capped at stock
         $this->dispatch('cart-updated');
     }
 

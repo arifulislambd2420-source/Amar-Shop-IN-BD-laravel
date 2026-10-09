@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Coupons;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Coupons\Pages\ManageCoupons;
 use App\Models\Coupon;
 use BackedEnum;
@@ -24,7 +25,7 @@ use UnitEnum;
 
 class CouponResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Coupon::class;
 
@@ -40,7 +41,8 @@ class CouponResource extends Resource
             ->components([
                 TextInput::make('code')
                     ->required()
-                    ->maxLength(255)
+                    ->maxLength(50)
+                    ->helperText('Customers can type it in upper or lower case.')
                     ->unique(ignoreRecord: true),
                 Select::make('discount_type')
                     ->options([

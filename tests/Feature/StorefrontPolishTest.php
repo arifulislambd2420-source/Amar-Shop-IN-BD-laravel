@@ -115,7 +115,7 @@ class StorefrontPolishTest extends TestCase
             ->assertSee('snap-x snap-mandatory', false)
             ->assertSee('role="radio"', false)
             ->assertSee('সাইজ বাছাই করুন')
-            ->assertSee('pdp-cta', false);
+            ->assertSee('sticky-cta', false);
     }
 
     public function test_shop_heading_names_the_category_and_the_search(): void
