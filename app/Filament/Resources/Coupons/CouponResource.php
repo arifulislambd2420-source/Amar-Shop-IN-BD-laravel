@@ -80,19 +80,24 @@ class CouponResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('discount_type')
+                    ->visibleFrom('md')
                     ->badge(),
                 TextColumn::make('discount_value')
                     ->sortable(),
                 TextColumn::make('min_spend')
+                    ->visibleFrom('md')
                     ->money('BDT')
                     ->sortable(),
                 TextColumn::make('uses')
+                    ->visibleFrom('md')
                     ->label('Used')
                     ->sortable(),
                 TextColumn::make('max_uses')
+                    ->visibleFrom('md')
                     ->label('Max')
                     ->placeholder('∞'),
                 TextColumn::make('valid_until')
+                    ->visibleFrom('md')
                     ->dateTime()
                     ->sortable(),
                 IconColumn::make('is_active')

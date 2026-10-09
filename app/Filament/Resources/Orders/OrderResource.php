@@ -2,13 +2,17 @@
 
 namespace App\Filament\Resources\Orders;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Models\Order;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -16,6 +20,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -27,13 +32,15 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class OrderResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+    protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
     protected static ?string $model = Order::class;
 
@@ -214,7 +221,7 @@ class OrderResource extends Resource
                             ->rows(2)
                             ->disabled()
                             ->dehydrated(false)
-                            ->visible(fn (?\Illuminate\Database\Eloquent\Model $record): bool => filled($record?->courier_error))
+                            ->visible(fn (?Model $record): bool => filled($record?->courier_error))
                             ->columnSpanFull(),
                     ]),
                 Section::make('Notes')
@@ -234,10 +241,11 @@ class OrderResource extends Resource
                     ->label('Invoice')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (Order $record): string => '#' . $record->id)
+                    ->description(fn (Order $record): string => '#'.$record->id.' · '.$record->created_at?->format('d M, h:i A'))
                     ->color(fn (Order $record): ?string => $record->is_flagged ? 'danger' : null)
                     ->weight(fn (Order $record): ?FontWeight => $record->is_flagged ? FontWeight::Bold : null),
                 TextColumn::make('is_flagged')
+                    ->visibleFrom('md')
                     ->label('Review')
                     ->badge()
                     ->state(fn (Order $record): ?string => $record->is_flagged ? 'Flagged' : null)
@@ -247,9 +255,11 @@ class OrderResource extends Resource
                     ->wrap()
                     ->sortable(),
                 TextColumn::make('customer_name')
+                    ->description(fn (Order $record): string => (string) $record->phone)
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('phone')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('total')
                     ->money('BDT')
@@ -260,6 +270,7 @@ class OrderResource extends Resource
                     ->color(fn (?string $state): string => self::STATUS_COLORS[$state] ?? 'gray')
                     ->sortable(),
                 TextColumn::make('payment_status')
+                    ->visibleFrom('lg')
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => self::PAYMENT_STATUS_OPTIONS[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => match ($state) {
@@ -269,6 +280,7 @@ class OrderResource extends Resource
                     })
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->visibleFrom('md')
                     ->dateTime()
                     ->sortable(),
             ])
@@ -303,9 +315,37 @@ class OrderResource extends Resource
                     ->modalDescription(fn (Order $record): string => (string) $record->flag_reason)
                     ->requiresConfirmation()
                     ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()->iconButton(),
+                EditAction::make()->iconButton(),
+                // Only a cancelled order can be deleted (see Order::canBeDeleted).
+                DeleteAction::make()->iconButton()->visible(fn (Order $record): bool => $record->canBeDeleted()),
+            ])
+            ->toolbarActions([
+                BulkAction::make('deleteCancelled')
+                    ->label('Delete cancelled orders')
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete the selected cancelled orders?')
+                    ->modalDescription('Only cancelled orders are deleted. Any other selected order is left as it is — cancel it first if it really should go.')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records): void {
+                        [$cancelled, $kept] = $records->partition(fn (Order $order): bool => $order->canBeDeleted());
+                        $cancelled->each->delete();
+
+                        Notification::make()
+                            ->title($cancelled->count().' cancelled order(s) deleted')
+                            ->body($kept->isNotEmpty() ? $kept->count().' order(s) were not cancelled, so they were kept.' : null)
+                            ->success()
+                            ->send();
+                    }),
             ]);
+    }
+
+    /** Deleting is only for cancelled orders; a live order must be cancelled first. */
+    public static function canDelete(Model $record): bool
+    {
+        return $record instanceof Order && $record->canBeDeleted() && parent::canDelete($record);
     }
 
     public static function getRelations(): array

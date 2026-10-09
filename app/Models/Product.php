@@ -34,6 +34,15 @@ class Product extends Model
         'tags',
     ];
 
+    protected static function booted(): void
+    {
+        // The column is NOT NULL (default ''), but the admin form sends null
+        // when no picture is chosen — that used to fail the whole save.
+        static::saving(function (Product $product): void {
+            $product->image ??= '';
+        });
+    }
+
     protected function casts(): array
     {
         return [

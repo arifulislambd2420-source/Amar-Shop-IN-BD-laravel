@@ -2,28 +2,29 @@
 
 namespace App\Filament\Resources\LandingPages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\LandingPages\Pages\CreateLandingPage;
 use App\Filament\Resources\LandingPages\Pages\EditLandingPage;
 use App\Filament\Resources\LandingPages\Pages\ListLandingPages;
 use App\Filament\Support\ImageUpload;
 use App\Models\LandingPage;
-use BackedEnum;
 use App\Models\Product;
+use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Builder;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Builder\Block;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -40,7 +41,7 @@ use UnitEnum;
 
 class LandingPageResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = LandingPage::class;
 
@@ -349,14 +350,17 @@ class LandingPageResource extends Resource
                     ->sortable()
                     ->limit(40),
                 TextColumn::make('slug')
+                    ->visibleFrom('lg')
                     ->searchable()
                     ->copyable()
                     ->toggleable(),
                 TextColumn::make('template')
+                    ->visibleFrom('lg')
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => LandingPage::TEMPLATE_OPTIONS[$state] ?? (string) $state)
                     ->toggleable(),
                 TextColumn::make('product.name')
+                    ->visibleFrom('md')
                     ->label('Product')
                     ->limit(30)
                     ->toggleable(),
@@ -370,6 +374,7 @@ class LandingPageResource extends Resource
                     ->badge()
                     ->sortable(),
                 TextColumn::make('conversion')
+                    ->visibleFrom('md')
                     ->label('কনভার্শন')
                     ->state(fn (LandingPage $record): string => $record->views > 0
                         ? number_format($record->orders_count / $record->views * 100, 1).'%'
@@ -378,6 +383,7 @@ class LandingPageResource extends Resource
                     ->badge()
                     ->tooltip('অর্ডার ÷ ভিজিট'),
                 TextColumn::make('revenue')
+                    ->visibleFrom('md')
                     ->label('বিক্রি')
                     ->state(fn (LandingPage $record): string => '৳ '.number_format((float) $record->orders()->counted()->sum('total'), 0)),
                 IconColumn::make('is_active')

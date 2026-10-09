@@ -11,6 +11,23 @@ class Order extends Model
     // Old table has only created_at (no updated_at).
     public const UPDATED_AT = null;
 
+    /** Only a cancelled order may be deleted (its stock has already been given back). */
+    public function canBeDeleted(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
+    protected static function booted(): void
+    {
+        // Last line of defence, whatever path tries it (admin, code, tinker):
+        // a live order is cancelled first, never deleted outright.
+        static::deleting(function (Order $order): void {
+            if (! $order->canBeDeleted()) {
+                throw new \LogicException('শুধু বাতিল করা অর্ডার মোছা যায়। আগে অর্ডারটি বাতিল করুন।');
+            }
+        });
+    }
+
     protected $fillable = [
         'landing_page_id',
         'is_flagged',

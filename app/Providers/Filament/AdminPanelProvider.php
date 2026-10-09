@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\Login;
+use App\Http\Middleware\EnsureAdminAreaAccess;
+use App\Http\Middleware\SecurityHeaders;
+use App\Support\SiteSettingsHelper;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -24,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
     private function primaryColor(): string|array
     {
         try {
-            return \App\Support\SiteSettingsHelper::color('brand');
+            return SiteSettingsHelper::color('brand');
         } catch (\Throwable) {
             return Color::Amber;
         }
@@ -34,12 +38,22 @@ class AdminPanelProvider extends PanelProvider
     private function brandName(): string
     {
         try {
-            $name = \App\Support\SiteSettingsHelper::get('site_name');
+            $name = SiteSettingsHelper::get('site_name');
         } catch (\Throwable) {
             $name = null;
         }
 
         return ($name ?: 'আমারশপ').' Admin';
+    }
+
+    /** A Site Setting value, or null (never touches the DB during boot/migrate failures). */
+    private function setting(string $key): ?string
+    {
+        try {
+            return SiteSettingsHelper::get($key) ?: null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function panel(Panel $panel): Panel
@@ -50,7 +64,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->authGuard('admin')
             ->brandName(fn () => $this->brandName())
-            ->login(\App\Filament\Auth\Login::class)
+            // The shop's own logo / favicon from Site Setting (text name when there's no logo).
+            ->brandLogo(fn () => $this->setting('site_logo'))
+            ->brandLogoHeight('2.25rem')
+            ->favicon(fn () => $this->setting('site_favicon') ?? $this->setting('site_logo'))
+            ->login(Login::class)
             ->colors(fn () => [
                 'primary' => $this->primaryColor(),
             ])
@@ -72,11 +90,11 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\SecurityHeaders::class,
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
-                \App\Http\Middleware\EnsureAdminAreaAccess::class,
+                EnsureAdminAreaAccess::class,
             ], isPersistent: true);
     }
 }

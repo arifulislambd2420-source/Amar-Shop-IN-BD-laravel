@@ -2,8 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\HasAdminAreaWidget;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
+use App\Support\AdminAccess;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -14,9 +16,9 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class LatestOrders extends TableWidget
 {
-    use \App\Filament\Concerns\HasAdminAreaWidget;
+    use HasAdminAreaWidget;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+    protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
     protected static ?int $sort = 5;
 
@@ -32,12 +34,12 @@ class LatestOrders extends TableWidget
             ->defaultPaginationPageOption(5)
             ->columns([
                 TextColumn::make('invoice_no')
-                    ->label('Invoice')
+                    ->label('ইনভয়েস')
                     ->searchable(),
                 TextColumn::make('customer_name')
-                    ->label('Customer')
+                    ->label('গ্রাহক')
                     ->searchable(),
-                TextColumn::make('phone'),
+                TextColumn::make('phone')->label('ফোন'),
                 TextColumn::make('total')
                     ->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2))
                     ->sortable(),

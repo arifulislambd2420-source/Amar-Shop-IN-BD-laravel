@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Categories;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Support\ImageUpload;
 use App\Models\Category;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -20,7 +22,7 @@ use UnitEnum;
 
 class CategoryResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Category::class;
 
@@ -51,7 +53,7 @@ class CategoryResource extends Resource
                     ->label('Icon (emoji)')
                     ->maxLength(2048)
                     ->helperText('একটি ইমোজি, অথবা নিচে ছবি আপলোড করুন (ছবি দিলে সেটাই ব্যবহার হবে)।'),
-                \App\Filament\Support\ImageUpload::make('icon_image')
+                ImageUpload::make('icon_image')
                     ->label('Icon image')
                     ->afterStateHydrated(function ($component, $state, $record): void {
                         // Show an already-saved image icon here (emoji stays in the text box).
@@ -94,6 +96,7 @@ class CategoryResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')
+                    ->visibleFrom('md')
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('products_count')

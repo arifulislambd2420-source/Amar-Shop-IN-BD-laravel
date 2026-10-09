@@ -2,7 +2,15 @@
      color from Site Setting → Colors, exposed by Filament as --primary-*).
      Rendered into <head> by AdminPanelProvider; plain CSS on purpose, since
      the admin's own stylesheet is a prebuilt bundle. --}}
+@php $c = fn (string $name) => \App\Support\SiteSettingsHelper::color($name); @endphp
 <style>
+    /* Card tones come from Site Setting → Colors too, so a client's palette carries through. */
+    :root {
+        --dash-success: {{ $c('success') }};
+        --dash-warning: {{ $c('accent') }};
+        --dash-info: {{ $c('secondary') }};
+        --dash-danger: {{ $c('error') }};
+    }
     /* ── Sidebar ─────────────────────────────────────────────── */
     .fi-sidebar {
         background: color-mix(in srgb, var(--primary-500) 6%, #ffffff);
@@ -63,9 +71,11 @@
         border-left: 4px solid var(--tone);
         background: color-mix(in srgb, var(--tone) 9%, transparent) !important;
     }
-    .dash-stat--info    { --tone: #0ea5e9; }
-    .dash-stat--success { --tone: #16a34a; }
-    .dash-stat--warning { --tone: #f59e0b; }
+    .dash-stat--info    { --tone: var(--dash-info); }
+    .dash-stat--success { --tone: var(--dash-success); }
+    .dash-stat--warning { --tone: var(--dash-warning); }
+    .dash-stat--danger  { --tone: var(--dash-danger); }
+    a.dash-stat:hover, .dash-stat a:hover { filter: brightness(0.98); }
     .dash-stat .fi-wi-stats-overview-stat-label-ctn > svg {
         width: 2.25rem;
         height: 2.25rem;
@@ -76,5 +86,11 @@
     }
     .dash-stat .fi-wi-stats-overview-stat-value {
         color: color-mix(in srgb, var(--tone) 70%, currentColor);
+    }
+    /* Phones: 16px text in fields so iOS doesn't zoom the page on focus. */
+    @media (max-width: 640px) {
+        .fi-input, .fi-select-input, .fi-fo-textarea textarea, .fi-input-wrp input, .fi-input-wrp select, .fi-input-wrp textarea {
+            font-size: 16px !important;
+        }
     }
 </style>

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reviews;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Reviews\Pages\ManageReviews;
 use App\Models\Review;
 use BackedEnum;
@@ -26,7 +27,7 @@ use UnitEnum;
 
 class ReviewResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Review::class;
 
@@ -71,15 +72,17 @@ class ReviewResource extends Resource
                 TextColumn::make('customer_name')
                     ->searchable(),
                 TextColumn::make('rating')
-                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                     ->sortable(),
                 TextColumn::make('comment')
+                    ->visibleFrom('md')
                     ->limit(50)
                     ->wrap(),
                 IconColumn::make('approved')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->visibleFrom('md')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),

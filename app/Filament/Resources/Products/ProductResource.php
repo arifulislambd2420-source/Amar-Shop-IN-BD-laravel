@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
@@ -10,6 +11,7 @@ use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
 use App\Filament\Support\ImageUpload;
 use App\Models\Product;
 use BackedEnum;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -19,8 +21,8 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -41,7 +43,7 @@ use UnitEnum;
 
 class ProductResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Product::class;
 
@@ -161,16 +163,20 @@ class ProductResource extends Resource
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->limit(40),
+                    ->limit(60)
+                    ->wrap(),
                 TextColumn::make('sku')
+                    ->visibleFrom('lg')
                     ->label('SKU')
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('category.name')
+                    ->visibleFrom('lg')
                     ->label('Category')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('brand.name')
+                    ->visibleFrom('lg')
                     ->label('Brand')
                     ->sortable()
                     ->toggleable(),
@@ -213,19 +219,22 @@ class ProductResource extends Resource
                     ),
                 TrashedFilter::make(),
             ])
+            // Edit as an icon, the rest in a ⋯ menu — keeps the table narrow on phones.
             ->recordActions([
-                EditAction::make(),
-                ReplicateAction::make()
-                    ->label('Duplicate')
-                    ->excludeAttributes(['slug', 'sku'])
-                    ->beforeReplicaSaved(function (Product $replica): void {
-                        $replica->name = $replica->name . ' (copy)';
-                        $replica->slug = Str::slug($replica->name) . '-' . Str::random(5);
-                        $replica->sku = null;
-                    }),
-                DeleteAction::make(),
-                RestoreAction::make(),
-                ForceDeleteAction::make(),
+                EditAction::make()->iconButton(),
+                ActionGroup::make([
+                    ReplicateAction::make()
+                        ->label('Duplicate')
+                        ->excludeAttributes(['slug', 'sku'])
+                        ->beforeReplicaSaved(function (Product $replica): void {
+                            $replica->name = $replica->name.' (copy)';
+                            $replica->slug = Str::slug($replica->name).'-'.Str::random(5);
+                            $replica->sku = null;
+                        }),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    ForceDeleteAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

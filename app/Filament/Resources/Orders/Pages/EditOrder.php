@@ -3,15 +3,14 @@
 namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Resources\Orders\OrderResource;
-use App\Models\Order;
 use App\Jobs\SendOrderToCourier;
+use App\Models\Order;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Icons\Heroicon;
-use RuntimeException;
-use Throwable;
 
 class EditOrder extends EditRecord
 {
@@ -50,6 +49,9 @@ class EditOrder extends EditRecord
                 ->label('Send to Courier')
                 ->icon(Heroicon::OutlinedTruck)
                 ->button(),
+
+            // Shown only for a cancelled order (OrderResource::canDelete).
+            DeleteAction::make(),
         ];
     }
 
@@ -57,7 +59,7 @@ class EditOrder extends EditRecord
     protected function sendToCourier(Order $record, string $courierKey, string $courier): void
     {
         if ($record->consignment_id) {
-            Notification::make()->title("Already sent to a courier")->body("Consignment ID: {$record->consignment_id}")->warning()->send();
+            Notification::make()->title('Already sent to a courier')->body("Consignment ID: {$record->consignment_id}")->warning()->send();
 
             return;
         }
