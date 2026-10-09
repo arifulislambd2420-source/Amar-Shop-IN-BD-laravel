@@ -130,9 +130,46 @@ class SiteSettingsHelper
         return self::get('contact_address') ?: config('site.address');
     }
 
-    /** @param  'facebook'|'youtube'|'instagram'|'tiktok'  $network */
+    /** Social networks the shop can link to in the footer: key => label. */
+    public const SOCIALS = [
+        'facebook' => 'Facebook',
+        'youtube' => 'YouTube',
+        'instagram' => 'Instagram',
+        'tiktok' => 'TikTok',
+        'twitter' => 'X (Twitter)',
+        'linkedin' => 'LinkedIn',
+        'telegram' => 'Telegram',
+    ];
+
     public static function social(string $network): ?string
     {
         return self::get("social_{$network}") ?: (config("site.social.{$network}") ?: null);
+    }
+
+    /** label => url of every social link that is filled in. */
+    public static function socialLinks(): array
+    {
+        $links = [];
+
+        foreach (self::SOCIALS as $key => $label) {
+            if ($url = self::social($key)) {
+                $links[$label] = $url;
+            }
+        }
+
+        return $links;
+    }
+
+    /** Opening hours line shown in the footer (empty = hidden). */
+    public static function contactHours(): ?string
+    {
+        return self::get('contact_hours') ?: null;
+    }
+
+    /** Footer copyright line: the shop's own text, or one built from the shop names. */
+    public static function copyright(): string
+    {
+        return self::get('footer_copyright')
+            ?: '© '.date('Y').' '.self::siteName().' ('.self::siteNameEn().') — সব অধিকার সংরক্ষিত';
     }
 }

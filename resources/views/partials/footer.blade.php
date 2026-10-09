@@ -1,16 +1,13 @@
 <footer class="bg-secondary text-white/80 mt-16 pb-mobile-nav md:pb-0">
     <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
         <div>
-            <div class="text-white text-lg font-bold mb-2">@if(\App\Support\SiteSettingsHelper::hasCustomSiteName()){{ \App\Support\SiteSettingsHelper::siteName() }}@else আমার<span class="text-brand-500">শপ</span>@endif</div>
+            @if($footerLogo = \App\Support\SiteSettingsHelper::get('footer_logo'))
+                <img src="{{ $footerLogo }}" alt="{{ \App\Support\SiteSettingsHelper::siteName() }}" loading="lazy" class="mb-3 h-10 w-auto max-w-[200px] object-contain">
+            @else
+                <div class="text-white text-lg font-bold mb-2">@if(\App\Support\SiteSettingsHelper::hasCustomSiteName()){{ \App\Support\SiteSettingsHelper::siteName() }}@else আমার<span class="text-brand-500">শপ</span>@endif</div>
+            @endif
             <p>{{ \App\Support\SiteSettingsHelper::get('footer_description') ?: 'খাঁটি ও প্রাকৃতিক পণ্যের অনলাইন দোকান। মধু, সরিষার তেল, ঘি, খেজুর — সরাসরি আপনার দোরগোড়ায়।' }}</p>
-            @php
-                $socials = array_filter([
-                    'Facebook' => \App\Support\SiteSettingsHelper::social('facebook'),
-                    'YouTube' => \App\Support\SiteSettingsHelper::social('youtube'),
-                    'Instagram' => \App\Support\SiteSettingsHelper::social('instagram'),
-                    'TikTok' => \App\Support\SiteSettingsHelper::social('tiktok'),
-                ]);
-            @endphp
+            @php $socials = \App\Support\SiteSettingsHelper::socialLinks(); @endphp
             @if($socials)
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4">
                     @foreach($socials as $label => $url)
@@ -46,6 +43,9 @@
             <p>ফোন: <a href="tel:{{ \App\Support\SiteSettingsHelper::phoneRaw() }}" class="hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::phone() }}</a></p>
             <p class="mt-1">ইমেইল: <a href="mailto:{{ \App\Support\SiteSettingsHelper::email() }}" class="hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::email() }}</a></p>
             <p class="mt-1 text-xs text-white/60">ঠিকানা: {{ \App\Support\SiteSettingsHelper::address() }}</p>
+            @if($hours = \App\Support\SiteSettingsHelper::contactHours())
+                <p class="mt-1 text-xs text-white/60">সময়: {{ $hours }}</p>
+            @endif
             <div class="text-white font-semibold mt-4 mb-2">পেমেন্ট মেথড</div>
             <div class="flex flex-wrap gap-2 text-xs">
                 @if(app(\App\Services\Payment\BkashService::class)->configured())
@@ -56,6 +56,6 @@
         </div>
     </div>
     <div class="border-t border-white/10 py-4 text-center text-xs text-white/50">
-        &copy; {{ date('Y') }} {{ \App\Support\SiteSettingsHelper::siteName() }} ({{ \App\Support\SiteSettingsHelper::siteNameEn() }}) — সব অধিকার সংরক্ষিত
+        {{ \App\Support\SiteSettingsHelper::copyright() }}
     </div>
 </footer>

@@ -47,27 +47,31 @@ class ProductResource extends Resource
 
     protected static ?string $model = Product::class;
 
+    protected static ?string $modelLabel = 'পণ্য';
+
+    protected static ?string $pluralModelLabel = 'পণ্য';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Catalog';
+    protected static string|UnitEnum|null $navigationGroup = 'ক্যাটালগ';
 
     protected static ?int $navigationSort = 0;
 
     protected static ?string $recordTitleAttribute = 'name';
 
     public const STATUS_OPTIONS = [
-        'draft' => 'Draft',
-        'published' => 'Published',
-        'hidden' => 'Hidden',
-        'outofstock' => 'Out of stock',
-        'archived' => 'Archived',
+        'draft' => 'খসড়া',
+        'published' => 'প্রকাশিত',
+        'hidden' => 'লুকানো',
+        'outofstock' => 'স্টক শেষ',
+        'archived' => 'আর্কাইভ',
     ];
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Details')
+                Section::make('বিবরণ')
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
@@ -84,7 +88,7 @@ class ProductResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         TextInput::make('sku')
-                            ->label('SKU')
+                            ->label('এসকেইউ (SKU)')
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         Select::make('status')
@@ -95,7 +99,7 @@ class ProductResource extends Resource
                             ->label('বিস্তারিত বিবরণ')
                             ->columnSpanFull(),
                     ]),
-                Section::make('Pricing & stock')
+                Section::make('দাম ও স্টক')
                     ->columns(2)
                     ->schema([
                         TextInput::make('price')
@@ -116,39 +120,39 @@ class ProductResource extends Resource
                             ->default(0)
                             ->required(),
                         Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('চালু')
                             ->default(true),
                     ]),
-                Section::make('Organization')
+                Section::make('শ্রেণিবিন্যাস')
                     ->columns(2)
                     ->schema([
                         Select::make('category_id')
-                            ->label('Category')
+                            ->label('ক্যাটাগরি')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload(),
                         Select::make('brand_id')
-                            ->label('Brand')
+                            ->label('ব্র্যান্ড')
                             ->relationship('brand', 'name')
                             ->searchable()
                             ->preload(),
                         ImageUpload::make('image')
-                            ->label('Main image')
+                            ->label('মূল ছবি')
                             ->columnSpanFull(),
                         TextInput::make('tags')
                             ->maxLength(255)
                             ->columnSpanFull()
-                            ->helperText('Comma-separated tags.'),
+                            ->helperText('কমা দিয়ে ট্যাগ লিখুন।'),
                     ]),
-                Section::make('SEO')
+                Section::make('এসইও')
                     ->columns(1)
                     ->collapsed()
                     ->schema([
                         TextInput::make('seo_title')
-                            ->label('SEO title')
+                            ->label('এসইও টাইটেল')
                             ->maxLength(255),
                         Textarea::make('meta_description')
-                            ->label('Meta description')
+                            ->label('মেটা বিবরণ')
                             ->rows(2),
                     ]),
             ]);
@@ -159,7 +163,7 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image')
-                    ->label('Image'),
+                    ->label('ছবি'),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
@@ -167,17 +171,17 @@ class ProductResource extends Resource
                     ->wrap(),
                 TextColumn::make('sku')
                     ->visibleFrom('lg')
-                    ->label('SKU')
+                    ->label('এসকেইউ (SKU)')
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('category.name')
                     ->visibleFrom('lg')
-                    ->label('Category')
+                    ->label('ক্যাটাগরি')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('brand.name')
                     ->visibleFrom('lg')
-                    ->label('Brand')
+                    ->label('ব্র্যান্ড')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('price')
@@ -196,22 +200,22 @@ class ProductResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('category_id')
-                    ->label('Category')
+                    ->label('ক্যাটাগরি')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('brand_id')
-                    ->label('Brand')
+                    ->label('ব্র্যান্ড')
                     ->relationship('brand', 'name')
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('status')
                     ->options(self::STATUS_OPTIONS),
                 TernaryFilter::make('stock')
-                    ->label('Stock')
-                    ->placeholder('All')
-                    ->trueLabel('In stock')
-                    ->falseLabel('Out of stock')
+                    ->label('স্টক')
+                    ->placeholder('সব')
+                    ->trueLabel('স্টকে আছে')
+                    ->falseLabel('স্টক শেষ')
                     ->queries(
                         true: fn (Builder $query) => $query->where('stock', '>', 0),
                         false: fn (Builder $query) => $query->where('stock', '<=', 0),
@@ -224,7 +228,7 @@ class ProductResource extends Resource
                 EditAction::make()->iconButton(),
                 ActionGroup::make([
                     ReplicateAction::make()
-                        ->label('Duplicate')
+                        ->label('কপি করুন')
                         ->excludeAttributes(['slug', 'sku'])
                         ->beforeReplicaSaved(function (Product $replica): void {
                             $replica->name = $replica->name.' (copy)';

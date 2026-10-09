@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ContactMessages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\ContactMessages\Pages\ManageContactMessages;
 use App\Models\ContactMessage;
 use BackedEnum;
@@ -23,13 +24,17 @@ use UnitEnum;
  */
 class ContactMessageResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = ContactMessage::class;
 
+    protected static ?string $modelLabel = 'যোগাযোগের বার্তা';
+
+    protected static ?string $pluralModelLabel = 'যোগাযোগের বার্তা';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Customers';
+    protected static string|UnitEnum|null $navigationGroup = 'গ্রাহক';
 
     protected static ?int $navigationSort = 2;
 

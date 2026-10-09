@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Support\ImageUpload;
 use App\Models\MediaLibrary as MediaLibraryItem;
 use App\Support\Media;
@@ -30,15 +31,14 @@ use Illuminate\Support\Facades\Storage;
  */
 class MediaLibrary extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
-
+    use HasAdminArea;
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static ?string $navigationLabel = 'Media Library';
+    protected static ?string $navigationLabel = 'মিডিয়া লাইব্রেরি';
 
-    protected static ?string $title = 'Media Library';
+    protected static ?string $title = 'মিডিয়া লাইব্রেরি';
 
     protected static ?int $navigationSort = 6;
 
@@ -155,20 +155,20 @@ class MediaLibrary extends Page implements HasSchemas
         $needle = '%'.$basename.'%';
 
         $checks = [
-            'Product' => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
-            'Product gallery' => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
-            'Banner' => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
-            'Brand' => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
-            'Category' => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
-            'Blog' => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
-            'Landing page' => fn () => DB::table('landing_pages')->where(fn ($q) => $q
+            'পণ্য' => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
+            'পণ্যের গ্যালারি' => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
+            'ব্যানার' => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
+            'ব্র্যান্ড' => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
+            'ক্যাটাগরি' => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
+            'ব্লগ' => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
+            'ল্যান্ডিং পেজ' => fn () => DB::table('landing_pages')->where(fn ($q) => $q
                 ->where('hero_image', 'like', $needle)
                 ->orWhere('gallery', 'like', $needle)
                 ->orWhere('description', 'like', $needle)
                 ->orWhere('blocks', 'like', $needle)
                 ->orWhere('packages', 'like', $needle)
                 ->orWhere('og_image', 'like', $needle))->pluck('title'),
-            'Site setting' => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
+            'সাইট সেটিং' => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
         ];
 
         $found = [];

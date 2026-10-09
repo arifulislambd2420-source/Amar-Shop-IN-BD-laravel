@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Models\SiteSetting;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -26,19 +28,19 @@ use UnitEnum;
  */
 class CourierSettings extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
-    protected static ?string $navigationLabel = 'Courier';
+    protected static ?string $navigationLabel = 'কুরিয়ার';
 
-    protected static ?string $title = 'Courier (Steadfast)';
+    protected static ?string $title = 'কুরিয়ার (স্টিডফাস্ট)';
 
     protected static ?int $navigationSort = 4;
 
@@ -69,16 +71,16 @@ class CourierSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Steadfast Courier')
+                Section::make('স্টিডফাস্ট কুরিয়ার')
                     ->schema([
                         TextInput::make('steadfast_api_key')
-                            ->label('API key')
-                            ->placeholder('Enter your Steadfast API-Key'),
+                            ->label('এপিআই কী')
+                            ->placeholder('আপনার স্টিডফাস্ট এপিআই কী লিখুন'),
                         TextInput::make('steadfast_secret_key')
-                            ->label('Secret key')
+                            ->label('সিক্রেট কী')
                             ->password()
                             ->revealable()
-                            ->helperText('Leave blank to keep the current secret.')
+                            ->helperText('খালি রাখলে বর্তমান সিক্রেটই থাকবে।')
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                     ]),
             ]);
@@ -104,6 +106,6 @@ class CourierSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('Courier settings saved.')->success()->send();
+        Notification::make()->title('কুরিয়ার সেটিং সেভ হয়েছে।')->success()->send();
     }
 }

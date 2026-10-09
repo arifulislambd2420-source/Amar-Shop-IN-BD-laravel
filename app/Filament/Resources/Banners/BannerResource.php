@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Banners;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Banners\Pages\ManageBanners;
 use App\Filament\Support\ImageUpload;
 use App\Models\Banner;
@@ -26,13 +27,17 @@ use UnitEnum;
 
 class BannerResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Banner::class;
 
+    protected static ?string $modelLabel = 'ব্যানার';
+
+    protected static ?string $pluralModelLabel = 'ব্যানার';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
 
     protected static ?int $navigationSort = 1;
 
@@ -41,10 +46,10 @@ class BannerResource extends Resource
         return $schema
             ->components([
                 ImageUpload::make('image')
-                    ->label('Image')
+                    ->label('ছবি')
                     ->required(),
                 TextInput::make('link')
-                    ->label('Link URL')
+                    ->label('লিংক (URL)')
                     ->maxLength(2048),
                 Select::make('position')
                     ->options([
@@ -67,7 +72,7 @@ class BannerResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image')
-                    ->label('Image'),
+                    ->label('ছবি'),
                 TextColumn::make('position')
                     ->badge()
                     ->sortable(),

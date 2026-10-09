@@ -19,14 +19,14 @@ class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
-    protected static ?string $title = 'Order Items';
+    protected static ?string $title = 'অর্ডারের পণ্য';
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('product_id')
-                    ->label('Product')
+                    ->label('পণ্য')
                     ->options(fn (): array => Product::query()->orderBy('name')->pluck('name', 'id')->all())
                     ->searchable()
                     ->live()
@@ -55,11 +55,11 @@ class ItemsRelationManager extends RelationManager
                     ->prefix('৳')
                     ->default(0),
                 TextInput::make('line_total')
-                    ->label('Line total')
+                    ->label('লাইন মোট')
                     ->numeric()
                     ->prefix('৳')
                     ->required()
-                    ->helperText('quantity × unit price − discount'),
+                    ->helperText('পরিমাণ × একক দাম − ছাড়'),
             ]);
     }
 
@@ -69,7 +69,7 @@ class ItemsRelationManager extends RelationManager
             ->recordTitleAttribute('product_name')
             ->columns([
                 TextColumn::make('product_name')
-                    ->label('Product')
+                    ->label('পণ্য')
                     ->searchable(),
                 TextColumn::make('unit_price')
                     ->money('BDT')
@@ -80,7 +80,7 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('discount')
                     ->money('BDT'),
                 TextColumn::make('line_total')
-                    ->label('Line total')
+                    ->label('লাইন মোট')
                     ->money('BDT')
                     ->sortable(),
             ])

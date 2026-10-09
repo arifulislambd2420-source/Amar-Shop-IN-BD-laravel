@@ -4,7 +4,7 @@
 
         <div style="margin-top: 1rem;">
             <x-filament::button type="submit">
-                Upload
+                আপলোড করুন
             </x-filament::button>
         </div>
     </form>
@@ -25,7 +25,7 @@
         @php($files = $this->getFiles())
 
         @if ($files->isEmpty())
-            <p style="font-size: 0.875rem; opacity: 0.6;">No images uploaded yet.</p>
+            <p style="font-size: 0.875rem; opacity: 0.6;">এখনও কোনো ছবি আপলোড হয়নি।</p>
         @else
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">
                 @foreach ($files as $file)
@@ -67,9 +67,9 @@
                                     color="gray"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    onclick="navigator.clipboard.writeText('{{ url($file['url']) }}'); new FilamentNotification().title('Copied!').success().send();"
+                                    onclick="navigator.clipboard.writeText('{{ url($file['url']) }}'); new FilamentNotification().title('কপি হয়েছে!').success().send();"
                                 >
-                                    Copy
+                                    কপি
                                 </x-filament::button>
 
                                 <x-filament::button
@@ -78,9 +78,9 @@
                                     size="xs"
                                     style="flex: 1 1 0%;"
                                     wire:click="deleteFile('{{ $file['key'] }}')"
-                                    wire:confirm="Delete this image permanently? This cannot be undone."
+                                    wire:confirm="ছবিটি চিরতরে মুছবেন? এটা আর ফেরানো যাবে না।"
                                 >
-                                    Delete
+                                    মুছুন
                                 </x-filament::button>
                             </div>
                         </div>

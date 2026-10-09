@@ -34,13 +34,15 @@ class IncompleteOrderResource extends Resource
 
     protected static ?string $model = IncompleteOrder::class;
 
+    protected static ?string $pluralModelLabel = 'অসম্পূর্ণ অর্ডার';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sales';
+    protected static string|UnitEnum|null $navigationGroup = 'বিক্রয়';
 
-    protected static ?string $navigationLabel = 'Incomplete Orders';
+    protected static ?string $navigationLabel = 'অসম্পূর্ণ অর্ডার';
 
-    protected static ?string $modelLabel = 'Incomplete order';
+    protected static ?string $modelLabel = 'অসম্পূর্ণ অর্ডার';
 
     protected static ?int $navigationSort = 1;
 
@@ -71,7 +73,7 @@ class IncompleteOrderResource extends Resource
                 TextColumn::make('total')->label('মোট')->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2)),
                 TextColumn::make('source')
                     ->label('কোথা থেকে')
-                    ->state(fn (IncompleteOrder $r): string => $r->source === 'landing' ? 'Landing: '.($r->landingPage?->title ?? '—') : 'Checkout')
+                    ->state(fn (IncompleteOrder $r): string => $r->source === 'landing' ? 'ল্যান্ডিং: '.($r->landingPage?->title ?? '—') : 'চেকআউট')
                     ->badge()
                     ->color('gray'),
                 TextColumn::make('status')
@@ -140,7 +142,7 @@ class IncompleteOrderResource extends Resource
                     ->title('অর্ডার তৈরি হয়েছে: '.$order->invoice_no)
                     ->success()
                     ->actions([
-                        \Filament\Actions\Action::make('view')->label('দেখুন')->url(OrderResource::getUrl('view', ['record' => $order])),
+                        Action::make('view')->label('দেখুন')->url(OrderResource::getUrl('view', ['record' => $order])),
                     ])
                     ->send();
             });

@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Models\FraudApiConfig;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -21,19 +23,19 @@ use UnitEnum;
  */
 class FraudApiSettings extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldExclamation;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
-    protected static ?string $navigationLabel = 'Fraud API';
+    protected static ?string $navigationLabel = 'ফ্রড এপিআই';
 
-    protected static ?string $title = 'Fraud API';
+    protected static ?string $title = 'ফ্রড এপিআই';
 
     protected static ?int $navigationSort = 5;
 
@@ -62,27 +64,27 @@ class FraudApiSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Free fraud-check API')
+                Section::make('ফ্রি ফ্রড-চেক এপিআই')
                     ->schema([
                         TextInput::make('free_api_url')
-                            ->label('API URL')
+                            ->label('এপিআই URL')
                             ->placeholder('https://example.com/api/check'),
                         TextInput::make('free_api_key')
-                            ->label('API key')
+                            ->label('এপিআই কী')
                             ->password()
                             ->revealable(),
-                        Toggle::make('free_active')->label('Active'),
+                        Toggle::make('free_active')->label('চালু'),
                     ]),
-                Section::make('Paid fraud-check API')
+                Section::make('পেইড ফ্রড-চেক এপিআই')
                     ->schema([
                         TextInput::make('paid_api_url')
-                            ->label('API URL')
+                            ->label('এপিআই URL')
                             ->placeholder('https://example.com/api/check'),
                         TextInput::make('paid_api_key')
-                            ->label('API key')
+                            ->label('এপিআই কী')
                             ->password()
                             ->revealable(),
-                        Toggle::make('paid_active')->label('Active'),
+                        Toggle::make('paid_active')->label('চালু'),
                     ]),
             ]);
     }
@@ -109,6 +111,6 @@ class FraudApiSettings extends Page implements HasSchemas
             ],
         );
 
-        Notification::make()->title('Fraud API settings saved.')->success()->send();
+        Notification::make()->title('ফ্রড এপিআই সেটিং সেভ হয়েছে।')->success()->send();
     }
 }

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Order;
 use App\Observers\OrderObserver;
+use App\Services\CartService;
+use App\Support\AdminLang;
 use App\Support\Money;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -21,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // One CartService per request, so its memoized lines() is shared by
         // the cart page, drawer, badge and checkout within that request.
-        $this->app->scoped(\App\Services\CartService::class);
+        $this->app->scoped(CartService::class);
     }
 
     /**
@@ -29,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Bangla default labels for admin fields / columns / filters (see AdminLang).
+        AdminLang::register();
+
         // Behind the host's proxy the app can see the request as plain http
         // (X-Forwarded-Proto ignored — see TrustedProxies), which makes
         // asset()/@vite emit http:// CSS and JS links that browsers block as

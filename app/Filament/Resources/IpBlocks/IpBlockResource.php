@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\IpBlocks;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\IpBlocks\Pages\ManageIpBlocks;
 use App\Models\IpBlock;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -19,33 +21,37 @@ use UnitEnum;
 
 class IpBlockResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     protected static ?string $model = IpBlock::class;
 
+    protected static ?string $modelLabel = 'আইপি ব্লক';
+
+    protected static ?string $pluralModelLabel = 'আইপি ব্লক';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNoSymbol;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
     protected static ?int $navigationSort = 10;
 
-    protected static ?string $navigationLabel = 'IP Blocks';
+    protected static ?string $navigationLabel = 'আইপি ব্লক';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 TextInput::make('ip')
-                    ->label('IP address')
+                    ->label('আইপি ঠিকানা')
                     ->required()
                     ->maxLength(45)
                     ->unique(ignoreRecord: true)
                     ->placeholder('203.0.113.5'),
                 TextInput::make('reason')
                     ->maxLength(255)
-                    ->placeholder('Reason (optional)'),
+                    ->placeholder('কারণ (ঐচ্ছিক)'),
             ]);
     }
 
@@ -54,7 +60,7 @@ class IpBlockResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('ip')
-                    ->label('IP address')
+                    ->label('আইপি ঠিকানা')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('reason')

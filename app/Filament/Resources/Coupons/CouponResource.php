@@ -29,9 +29,13 @@ class CouponResource extends Resource
 
     protected static ?string $model = Coupon::class;
 
+    protected static ?string $modelLabel = 'কুপন';
+
+    protected static ?string $pluralModelLabel = 'কুপন';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'মার্কেটিং';
 
     protected static ?int $navigationSort = 1;
 
@@ -42,11 +46,11 @@ class CouponResource extends Resource
                 TextInput::make('code')
                     ->required()
                     ->maxLength(50)
-                    ->helperText('Customers can type it in upper or lower case.')
+                    ->helperText('গ্রাহক ছোট বা বড় হাতের অক্ষরে লিখতে পারবেন।')
                     ->unique(ignoreRecord: true),
                 Select::make('discount_type')
                     ->options([
-                        'percent' => 'Percent (%)',
+                        'percent' => 'শতকরা (%)',
                         'fixed' => 'Fixed (৳)',
                     ])
                     ->default('percent')
@@ -56,18 +60,18 @@ class CouponResource extends Resource
                     ->required()
                     ->minValue(0),
                 TextInput::make('min_spend')
-                    ->label('Minimum spend')
+                    ->label('ন্যূনতম কেনাকাটা')
                     ->numeric()
                     ->default(0)
                     ->minValue(0),
                 TextInput::make('max_uses')
-                    ->label('Max uses')
+                    ->label('সর্বোচ্চ ব্যবহার')
                     ->numeric()
                     ->minValue(0)
-                    ->helperText('Leave blank for unlimited.'),
+                    ->helperText('খালি = সীমাহীন।'),
                 DateTimePicker::make('valid_until'),
                 Toggle::make('is_active')
-                    ->label('Active')
+                    ->label('চালু')
                     ->default(true),
             ]);
     }
@@ -90,11 +94,11 @@ class CouponResource extends Resource
                     ->sortable(),
                 TextColumn::make('uses')
                     ->visibleFrom('md')
-                    ->label('Used')
+                    ->label('ব্যবহৃত')
                     ->sortable(),
                 TextColumn::make('max_uses')
                     ->visibleFrom('md')
-                    ->label('Max')
+                    ->label('সর্বোচ্চ')
                     ->placeholder('∞'),
                 TextColumn::make('valid_until')
                     ->visibleFrom('md')

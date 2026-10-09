@@ -33,7 +33,7 @@
 
     {{-- Phones: category chips, then filter + sort --}}
     @if($categories->isNotEmpty())
-        <div class="relative -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none md:hidden" aria-label="ক্যাটাগরি"
+        <div class="swipe-row relative -mx-4 mb-3 gap-2 px-4 pb-1 md:hidden" aria-label="ক্যাটাগরি"
             x-init="const a = $el.querySelector('[aria-current]'); if (a) $el.scrollLeft = a.offsetLeft - ($el.clientWidth - a.offsetWidth) / 2">
             <a href="{{ $with(['category' => null]) }}" class="{{ $chip }} {{ $activeCategory ? $chipOff : $chipOn }}">সব</a>
             @foreach($categories as $c)
@@ -154,7 +154,7 @@
     {{-- Phones: filter sheet --}}
     <div id="filter-sheet" x-show="filters" x-cloak class="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
         <div class="absolute inset-0 bg-black/50" @click="filters = false" x-show="filters" x-transition.opacity></div>
-        <div class="absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl"
+        <div class="absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl"
             x-show="filters" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0"
             x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
             <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3">

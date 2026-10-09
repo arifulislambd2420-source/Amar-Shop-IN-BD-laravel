@@ -44,39 +44,43 @@ class OrderResource extends Resource
 
     protected static ?string $model = Order::class;
 
+    protected static ?string $modelLabel = 'অর্ডার';
+
+    protected static ?string $pluralModelLabel = 'অর্ডার';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sales';
+    protected static string|UnitEnum|null $navigationGroup = 'বিক্রয়';
 
     protected static ?int $navigationSort = 0;
 
     protected static ?string $recordTitleAttribute = 'invoice_no';
 
     public const STATUS_OPTIONS = [
-        'pending' => 'Pending',
-        'processing' => 'Processing',
-        'shipped' => 'Shipped',
-        'out_for_delivery' => 'Out for delivery',
-        'delivered' => 'Delivered',
-        'completed' => 'Completed',
-        'cancelled' => 'Cancelled',
+        'pending' => 'অপেক্ষমাণ',
+        'processing' => 'কনফার্মড',
+        'shipped' => 'শিপড',
+        'out_for_delivery' => 'ডেলিভারির পথে',
+        'delivered' => 'ডেলিভারড',
+        'completed' => 'সম্পন্ন',
+        'cancelled' => 'বাতিল',
         // Set by OrderService::finalizeBkashPayment when bKash payment
         // succeeded but stock ran out in the meantime — needs manual review.
-        'on_hold' => 'On hold (needs review)',
+        'on_hold' => 'যাচাই চলছে (দেখা দরকার)',
     ];
 
     public const PAYMENT_METHOD_OPTIONS = [
-        'cod' => 'Cash on Delivery (COD)',
-        'advance' => 'Advance Delivery Charge',
-        'bkash' => 'bKash',
-        'sslcommerz' => 'SSLCommerz (Card/Bank)',
+        'cod' => 'ক্যাশ অন ডেলিভারি (COD)',
+        'advance' => 'অগ্রিম ডেলিভারি চার্জ',
+        'bkash' => 'বিকাশ',
+        'sslcommerz' => 'SSLCommerz (কার্ড/ব্যাংক)',
     ];
 
     public const PAYMENT_STATUS_OPTIONS = [
-        'unpaid' => 'Unpaid',
-        'advance_paid' => 'Advance Paid',
-        'paid' => 'Paid (Full)',
-        'failed' => 'Failed',
+        'unpaid' => 'অপরিশোধিত',
+        'advance_paid' => 'অগ্রিম পরিশোধিত',
+        'paid' => 'পুরো পরিশোধিত',
+        'failed' => 'ব্যর্থ',
     ];
 
     public const STATUS_COLORS = [
@@ -105,7 +109,7 @@ class OrderResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        return 'Flagged orders to review';
+        return 'যাচাই করার মতো সন্দেহজনক অর্ডার';
     }
 
     public static function canCreate(): bool
@@ -118,20 +122,20 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Order')
+                Section::make('অর্ডার')
                     ->columns(3)
                     ->schema([
                         TextInput::make('invoice_no')
-                            ->label('Invoice no')
+                            ->label('ইনভয়েস নম্বর')
                             ->disabled(),
                         TextInput::make('order_token')
-                            ->label('Order token')
+                            ->label('অর্ডার টোকেন')
                             ->disabled(),
                         TextInput::make('created_at')
-                            ->label('Created at')
+                            ->label('তৈরির সময়')
                             ->disabled(),
                     ]),
-                Section::make('Customer')
+                Section::make('গ্রাহক')
                     ->columns(2)
                     ->schema([
                         TextInput::make('customer_name')
@@ -153,7 +157,7 @@ class OrderResource extends Resource
                             ->rows(2)
                             ->columnSpanFull(),
                     ]),
-                Section::make('Payment & status')
+                Section::make('পেমেন্ট ও স্ট্যাটাস')
                     ->columns(2)
                     ->schema([
                         Select::make('payment_method')
@@ -168,27 +172,27 @@ class OrderResource extends Resource
                             ->prefix('৳')
                             ->default(0),
                         TextInput::make('transaction_id')
-                            ->label('Transaction ID (bKash)')
+                            ->label('ট্রানজাকশন আইডি (বিকাশ)')
                             ->disabled()
                             ->columnSpanFull(),
                     ]),
-                Section::make('Fraud review')
+                Section::make('সন্দেহজনক অর্ডার যাচাই')
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_flagged')
-                            ->label('Flagged for review')
-                            ->helperText('Turn off once you have checked this order (a COD order then gets its confirmation SMS).')
+                            ->label('যাচাইয়ের জন্য চিহ্নিত')
+                            ->helperText('অর্ডারটি যাচাই করা হলে বন্ধ করুন (COD অর্ডারে তখন কনফার্মেশন এসএমএস যাবে)।')
                             ->columnSpanFull(),
                         Textarea::make('flag_reason')
-                            ->label('Why it was flagged')
+                            ->label('কেন চিহ্নিত হলো')
                             ->disabled()
                             ->rows(3)
                             ->columnSpanFull(),
                         TextInput::make('ip_address')
-                            ->label('Customer IP')
+                            ->label('গ্রাহকের আইপি')
                             ->disabled(),
                     ]),
-                Section::make('Totals')
+                Section::make('মোট হিসাব')
                     ->columns(4)
                     ->schema([
                         TextInput::make('subtotal')
@@ -206,25 +210,25 @@ class OrderResource extends Resource
                             ->numeric()
                             ->prefix('৳'),
                     ]),
-                Section::make('Courier')
+                Section::make('কুরিয়ার')
                     ->columns(3)
                     ->schema([
                         TextInput::make('consignment_id')
-                            ->label('Consignment ID')
+                            ->label('কনসাইনমেন্ট আইডি')
                             ->maxLength(255),
                         TextInput::make('tracking_code')
                             ->maxLength(255),
                         TextInput::make('courier_status')
                             ->maxLength(255),
                         Textarea::make('courier_error')
-                            ->label('Last courier error')
+                            ->label('কুরিয়ারের সর্বশেষ ত্রুটি')
                             ->rows(2)
                             ->disabled()
                             ->dehydrated(false)
                             ->visible(fn (?Model $record): bool => filled($record?->courier_error))
                             ->columnSpanFull(),
                     ]),
-                Section::make('Notes')
+                Section::make('নোট')
                     ->schema([
                         Textarea::make('notes')
                             ->rows(3)
@@ -238,7 +242,7 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('invoice_no')
-                    ->label('Invoice')
+                    ->label('ইনভয়েস')
                     ->searchable()
                     ->sortable()
                     ->description(fn (Order $record): string => '#'.$record->id.' · '.$record->created_at?->format('d M, h:i A'))
@@ -246,9 +250,9 @@ class OrderResource extends Resource
                     ->weight(fn (Order $record): ?FontWeight => $record->is_flagged ? FontWeight::Bold : null),
                 TextColumn::make('is_flagged')
                     ->visibleFrom('md')
-                    ->label('Review')
+                    ->label('যাচাই')
                     ->badge()
-                    ->state(fn (Order $record): ?string => $record->is_flagged ? 'Flagged' : null)
+                    ->state(fn (Order $record): ?string => $record->is_flagged ? 'চিহ্নিত' : null)
                     ->color('danger')
                     ->icon(Heroicon::OutlinedFlag)
                     ->tooltip(fn (Order $record): ?string => $record->is_flagged ? $record->flag_reason : null)
@@ -291,14 +295,14 @@ class OrderResource extends Resource
                 SelectFilter::make('payment_status')
                     ->options(self::PAYMENT_STATUS_OPTIONS),
                 TernaryFilter::make('is_flagged')
-                    ->label('Fraud review')
-                    ->placeholder('All orders')
-                    ->trueLabel('Flagged only')
-                    ->falseLabel('Not flagged'),
+                    ->label('সন্দেহজনক অর্ডার যাচাই')
+                    ->placeholder('সব অর্ডার')
+                    ->trueLabel('শুধু চিহ্নিত')
+                    ->falseLabel('চিহ্নিত নয়'),
                 Filter::make('created_at')
                     ->schema([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
+                        DatePicker::make('from')->label('থেকে'),
+                        DatePicker::make('until')->label('পর্যন্ত'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -308,7 +312,7 @@ class OrderResource extends Resource
             ])
             ->recordActions([
                 Action::make('clearFlag')
-                    ->label('Mark reviewed')
+                    ->label('যাচাই হয়েছে')
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
                     ->visible(fn (Order $record): bool => $record->is_flagged)
@@ -322,12 +326,12 @@ class OrderResource extends Resource
             ])
             ->toolbarActions([
                 BulkAction::make('deleteCancelled')
-                    ->label('Delete cancelled orders')
+                    ->label('বাতিল অর্ডার মুছুন')
                     ->icon(Heroicon::OutlinedTrash)
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Delete the selected cancelled orders?')
-                    ->modalDescription('Only cancelled orders are deleted. Any other selected order is left as it is — cancel it first if it really should go.')
+                    ->modalHeading('বাছাই করা বাতিল অর্ডারগুলো মুছবেন?')
+                    ->modalDescription('শুধু বাতিল করা অর্ডার মোছা হয়। অন্য বাছাই করা অর্ডার যেমন আছে তেমনই থাকবে — মুছতে চাইলে আগে বাতিল করুন।')
                     ->deselectRecordsAfterCompletion()
                     ->action(function (Collection $records): void {
                         [$cancelled, $kept] = $records->partition(fn (Order $order): bool => $order->canBeDeleted());

@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Auth\Login;
 use App\Http\Middleware\EnsureAdminAreaAccess;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetAdminLocale;
 use App\Support\SiteSettingsHelper;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -81,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
             // Default AccountWidget / FilamentInfoWidget are intentionally not registered.
             ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => view('filament.admin-theme')->render())
             ->middleware([
+                SetAdminLocale::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
@@ -93,6 +95,7 @@ class AdminPanelProvider extends PanelProvider
                 SecurityHeaders::class,
             ])
             ->authMiddleware([
+                SetAdminLocale::class, // persistent: Livewire updates stay Bangla too
                 Authenticate::class,
                 EnsureAdminAreaAccess::class,
             ], isPersistent: true);

@@ -110,7 +110,7 @@ class PurchaseFlowTest extends TestCase
         $this->actingAs(AdminUser::create(['username' => 'boss', 'password' => 'secret-pass-1', 'role' => 'super_admin']), 'admin');
         if (extension_loaded('intl')) {
             $this->get('/admin/orders')->assertOk()->assertSee($order->invoice_no);
-            $this->get('/admin/orders/'.$order->id.'/edit')->assertOk()->assertSee('Edit '.$order->invoice_no);
+            $this->get('/admin/orders/'.$order->id.'/edit')->assertOk()->assertSee($order->invoice_no);
         } else {
             $this->assertTrue(OrderResource::canViewAny());
             $this->assertTrue(OrderResource::getEloquentQuery()->whereKey($order->id)->exists());

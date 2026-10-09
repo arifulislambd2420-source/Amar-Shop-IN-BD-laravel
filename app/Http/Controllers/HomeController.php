@@ -2,68 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Banner;
 use App\Models\Blog;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\FlashSale;
 use App\Models\Product;
+use App\Support\HomeSections;
+use App\Support\StorefrontCache;
+use Illuminate\Support\Collection;
 
+/**
+ * Home page. Which sections show, and in what order, is the shop owner's
+ * choice (Site Setting → হোমপেজের সেকশন, see HomeSections); data is only
+ * loaded for the sections that are switched on.
+ */
 class HomeController extends Controller
 {
-    // Same two category slugs the old app's homepage sectioned off — see
-    // src/app/page.tsx SECTION_CATEGORIES.
-    private const SECTION_CATEGORIES = ['honey', 'mustard-oil'];
-
     public function __invoke()
     {
-        $categories = \App\Support\StorefrontCache::categories();
-
-        $heroBanners = \App\Support\StorefrontCache::banners('hero');
-        $sideBanners = \App\Support\StorefrontCache::banners('side');
-        $promoBanners = \App\Support\StorefrontCache::banners('promo');
+        $sections = HomeSections::enabled();
+        $on = fn (string $key): bool => in_array($key, $sections, true);
 
         // ->with('variants')->withRating(): every product card's AddToCart reads the
         // product's variants; eager-loading here avoids a query per card.
-        $discounted = Product::storefront()->onSale()->with('variants')->withRating()->latest()->take(8)->get();
+        $cards = fn () => Product::storefront()->with('variants')->withRating();
 
-        $products = Product::storefront()->with('variants')->withRating()->latest()->take(8)->get();
+        $data = [
+            'sections' => $sections,
+            'categories' => $on('categories') ? StorefrontCache::categories() : collect(),
+            'heroBanners' => $on('hero') ? StorefrontCache::banners('hero') : collect(),
+            'sideBanners' => $on('hero') ? StorefrontCache::banners('side') : collect(),
+            'promoBanners' => $on('promo') ? StorefrontCache::banners('promo') : collect(),
+            'discounted' => $on('offers') ? $cards()->onSale()->latest()->take(8)->get() : collect(),
+            'products' => $on('new_products') ? $cards()->latest()->take(8)->get() : collect(),
+            'brands' => $on('brands') ? Brand::whereHas('products', fn ($q) => $q->storefront())->get() : collect(),
+            'blogs' => $on('blog')
+                ? Blog::whereNotNull('published_at')->where('published_at', '<=', now())->latest('published_at')->take(5)->get()
+                : collect(),
+            'activeFlashSale' => $on('flash_sale') ? $this->activeFlashSale() : null,
+            'showcase' => $on('showcase') ? $this->showcase($cards) : collect(),
+        ];
 
-        $brands = Brand::whereHas('products', fn ($q) => $q->storefront())->get();
+        return view('home.index', $data);
+    }
 
-        $blogs = Blog::whereNotNull('published_at')
-            ->where('published_at', '<=', now())
-            ->latest('published_at')
-            ->take(5)
-            ->get();
-
-        // Only storefront-visible products: a hidden/draft/inactive (or
-        // soft-deleted) product in a flash sale used to still show here,
-        // linking to a product page that 404s.
-        $activeFlashSale = FlashSale::with(['items.product' => fn ($q) => $q->storefront()->with('variants')->withRating()])
+    /** The running flash sale with only its storefront-visible products (a hidden one would link to a 404). */
+    private function activeFlashSale(): ?FlashSale
+    {
+        $sale = FlashSale::with(['items.product' => fn ($q) => $q->storefront()->with('variants')->withRating()])
             ->where('is_active', true)
             ->where('end_time', '>', now())
             ->first();
 
-        $activeFlashSale?->setRelation(
-            'items',
-            $activeFlashSale->items->filter(fn ($item) => $item->product !== null)->values(),
-        );
+        $sale?->setRelation('items', $sale->items->filter(fn ($item) => $item->product !== null)->values());
 
-        $sectionCategories = Category::whereIn('slug', self::SECTION_CATEGORIES)->get()->keyBy('slug');
-        $sectionProducts = collect(self::SECTION_CATEGORIES)
-            ->mapWithKeys(function ($slug) use ($sectionCategories) {
-                if (! $sectionCategories->has($slug)) {
-                    return [$slug => collect()];
-                }
+        return $sale;
+    }
 
-                return [$slug => Product::storefront()->with('variants')->withRating()->where('category_id', $sectionCategories[$slug]->id)->take(8)->get()];
-            });
-
-        return view('home.index', compact(
-            'categories', 'heroBanners', 'sideBanners', 'promoBanners',
-            'discounted', 'products', 'brands', 'blogs', 'activeFlashSale',
-            'sectionCategories', 'sectionProducts'
-        ));
+    /** @return Collection<int, array{category: Category, products: Collection}> */
+    private function showcase(callable $cards): Collection
+    {
+        return HomeSections::showcaseCategories()->map(fn ($category) => [
+            'category' => $category,
+            'products' => $cards()->where('category_id', $category->id)->latest()->take(8)->get(),
+        ]);
     }
 }

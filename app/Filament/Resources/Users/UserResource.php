@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\User;
 use BackedEnum;
@@ -20,13 +21,17 @@ use UnitEnum;
  */
 class UserResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = User::class;
 
+    protected static ?string $modelLabel = 'গ্রাহক';
+
+    protected static ?string $pluralModelLabel = 'গ্রাহক';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Customers';
+    protected static string|UnitEnum|null $navigationGroup = 'গ্রাহক';
 
     protected static ?int $navigationSort = 1;
 

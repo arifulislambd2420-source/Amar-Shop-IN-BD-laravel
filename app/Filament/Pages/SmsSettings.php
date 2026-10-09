@@ -2,9 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Models\SiteSetting;
 use App\Services\Sms\SmsService;
 use App\Services\Sms\SmsTemplates;
+use App\Support\AdminAccess;
+use App\Support\SiteSettingsHelper;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -28,19 +31,19 @@ use UnitEnum;
  */
 class SmsSettings extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
-    protected static ?string $navigationLabel = 'SMS';
+    protected static ?string $navigationLabel = 'এসএমএস';
 
-    protected static ?string $title = 'SMS Settings';
+    protected static ?string $title = 'এসএমএস সেটিং';
 
     protected static ?int $navigationSort = 6;
 
@@ -72,14 +75,14 @@ class SmsSettings extends Page implements HasSchemas
     {
         return [
             Action::make('testSms')
-                ->label('Send test SMS')
+                ->label('টেস্ট এসএমএস পাঠান')
                 ->icon(Heroicon::OutlinedPaperAirplane)
                 ->color('gray')
-                ->modalHeading('Send a test SMS')
-                ->modalDescription('Uses the saved settings (save first if you just changed them). Shows the gateway\'s raw answer.')
+                ->modalHeading('একটি টেস্ট এসএমএস পাঠান')
+                ->modalDescription('সেভ করা সেটিং দিয়ে পাঠানো হয় (এইমাত্র বদলালে আগে সেভ করুন)। গেটওয়ের আসল উত্তর দেখাবে।')
                 ->schema([
                     TextInput::make('number')
-                        ->label('Your mobile number')
+                        ->label('আপনার মোবাইল নম্বর')
                         ->placeholder('01XXXXXXXXX')
                         ->required(),
                 ])
@@ -88,21 +91,21 @@ class SmsSettings extends Page implements HasSchemas
                     $number = $sms->normalizeNumber($data['number']);
 
                     if (! $number) {
-                        Notification::make()->title('Not a valid Bangladeshi mobile number.')->danger()->send();
+                        Notification::make()->title('সঠিক বাংলাদেশি মোবাইল নম্বর নয়।')->danger()->send();
 
                         return;
                     }
 
                     if (! $sms->configured()) {
-                        Notification::make()->title('Save an API key and Sender ID first.')->danger()->send();
+                        Notification::make()->title('আগে এপিআই কী আর সেন্ডার আইডি সেভ করুন।')->danger()->send();
 
                         return;
                     }
 
-                    $result = $sms->send($number, \App\Support\SiteSettingsHelper::siteNameEn().': test SMS - it works!');
+                    $result = $sms->send($number, SiteSettingsHelper::siteNameEn().': test SMS - it works!');
 
                     Notification::make()
-                        ->title($result['ok'] ? 'Gateway accepted the test SMS' : 'Gateway did not accept the SMS')
+                        ->title($result['ok'] ? 'গেটওয়ে টেস্ট এসএমএস গ্রহণ করেছে' : 'গেটওয়ে এসএমএসটি গ্রহণ করেনি')
                         ->body(mb_substr($result['response'], 0, 300))
                         ->color($result['ok'] ? 'success' : 'danger')
                         ->persistent()
@@ -116,27 +119,27 @@ class SmsSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Customer SMS (BulkSMSBD)')
-                    ->description('Sent once per order: when it is confirmed, shipped and delivered. Leave the API key blank to keep the current one.')
+                Section::make('গ্রাহককে এসএমএস (BulkSMSBD)')
+                    ->description('প্রতি অর্ডারে কনফার্ম, শিপ আর ডেলিভারির সময় একবার করে যায়। এপিআই কী খালি রাখলে বর্তমানটাই থাকবে।')
                     ->columns(2)
                     ->schema([
                         Toggle::make('sms_enabled')
-                            ->label('Send SMS')
-                            ->helperText('Off by default — nothing is sent until you turn this on.')
+                            ->label('এসএমএস পাঠান')
+                            ->helperText('ডিফল্টে বন্ধ — চালু না করা পর্যন্ত কিছু পাঠানো হবে না।')
                             ->columnSpanFull(),
                         TextInput::make('sms_api_key')
-                            ->label('API key')
+                            ->label('এপিআই কী')
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         TextInput::make('sms_sender_id')
-                            ->label('Sender ID')
-                            ->placeholder('Your approved sender ID'),
+                            ->label('সেন্ডার আইডি')
+                            ->placeholder('আপনার অনুমোদিত সেন্ডার আইডি'),
                         Select::make('sms_language')
-                            ->label('Message language')
+                            ->label('বার্তার ভাষা')
                             ->options(SmsTemplates::LANGUAGES)
                             ->required()
-                            ->helperText('Bangla SMS is billed per 70 characters, English per 160.'),
+                            ->helperText('বাংলা এসএমএস ৭০ অক্ষরে, ইংরেজি ১৬০ অক্ষরে একটি হিসেবে চার্জ হয়।'),
                     ]),
             ]);
     }
@@ -165,6 +168,6 @@ class SmsSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('SMS settings saved.')->success()->send();
+        Notification::make()->title('এসএমএস সেটিং সেভ হয়েছে।')->success()->send();
     }
 }

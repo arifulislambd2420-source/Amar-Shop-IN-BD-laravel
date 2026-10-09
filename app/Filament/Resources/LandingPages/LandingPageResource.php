@@ -45,11 +45,15 @@ class LandingPageResource extends Resource
 
     protected static ?string $model = LandingPage::class;
 
+    protected static ?string $modelLabel = 'ল্যান্ডিং পেজ';
+
+    protected static ?string $pluralModelLabel = 'ল্যান্ডিং পেজ';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleGroup;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sales';
+    protected static string|UnitEnum|null $navigationGroup = 'বিক্রয়';
 
-    protected static ?string $navigationLabel = 'Landing Pages';
+    protected static ?string $navigationLabel = 'ল্যান্ডিং পেজ';
 
     protected static ?int $navigationSort = 5;
 
@@ -59,7 +63,7 @@ class LandingPageResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Page')
+                Section::make('পেজ')
                     ->columns(2)
                     ->schema([
                         TextInput::make('title')
@@ -75,30 +79,30 @@ class LandingPageResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
-                            ->helperText('Public URL: /lp/{slug}'),
+                            ->helperText('পাবলিক লিংক: /lp/{slug}'),
                         Select::make('template')
                             ->options(LandingPage::TEMPLATE_OPTIONS)
                             ->default('green')
                             ->required()
                             ->live()
-                            ->helperText('Green / Purple / Cream = ব্লক-বিল্ডার পেজ। Template 1–3 (পুরনো) আগের মতো নির্দিষ্ট ফিল্ড দিয়ে চলে।'),
+                            ->helperText('সবুজ / বেগুনি / ক্রিম = ব্লক-বিল্ডার পেজ। টেমপ্লেট ১–৩ (পুরনো) আগের মতো নির্দিষ্ট ফিল্ড দিয়ে চলে।'),
                         Select::make('product_id')
-                            ->label('Product')
+                            ->label('পণ্য')
                             ->relationship('product', 'name')
                             ->searchable()
                             ->preload()
-                            ->helperText('The order form on this page sells this product.'),
+                            ->helperText('এই পেজের অর্ডার ফর্ম থেকে এই পণ্যই বিক্রি হবে।'),
                         Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('চালু')
                             ->default(true)
-                            ->helperText('Only active pages are reachable at /lp/{slug}.'),
+                            ->helperText('শুধু চালু পেজ /lp/{slug} লিংকে খোলে।'),
                         ColorPicker::make('primary_color')
-                            ->label('মূল রং (Primary)')
+                            ->label('মূল রং')
                             ->visible(fn (Get $get): bool => ! LandingPage::isLegacyTemplate($get('template')))
                             ->helperText(fn (Get $get): string => 'খালি = টেমপ্লেটের ডিফল্ট ('.(LandingPage::TEMPLATE_COLORS[$get('template')]['primary'] ?? '—').')। সাইটের ব্র্যান্ড রংয়ের সাথে সম্পর্ক নেই।')
                             ->hintAction(fn (): Action => Action::make('resetPrimary')->label('ডিফল্ট')->action(fn (Set $set) => $set('primary_color', null))),
                         ColorPicker::make('secondary_color')
-                            ->label('দ্বিতীয় রং (Secondary)')
+                            ->label('দ্বিতীয় রং')
                             ->visible(fn (Get $get): bool => ! LandingPage::isLegacyTemplate($get('template')))
                             ->helperText(fn (Get $get): string => 'খালি = টেমপ্লেটের ডিফল্ট ('.(LandingPage::TEMPLATE_COLORS[$get('template')]['secondary'] ?? '—').')')
                             ->hintAction(fn (): Action => Action::make('resetSecondary')->label('ডিফল্ট')->action(fn (Set $set) => $set('secondary_color', null))),
@@ -112,17 +116,17 @@ class LandingPageResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull(),
                         TextInput::make('sub_headline')
-                            ->label('Sub-headline')
+                            ->label('উপশিরোনাম')
                             ->maxLength(255)
                             ->columnSpanFull(),
                         Textarea::make('description')
                             ->rows(4)
                             ->columnSpanFull(),
                         ImageUpload::make('hero_image')
-                            ->label('Hero image')
+                            ->label('হিরো ছবি')
                             ->columnSpanFull(),
                         ImageUpload::make('gallery')
-                            ->label('Gallery images')
+                            ->label('গ্যালারির ছবি')
                             ->multiple()
                             ->reorderable()
                             ->columnSpanFull(),
@@ -141,10 +145,10 @@ class LandingPageResource extends Resource
                             ])
                             ->columns(2)
                             ->reorderable()
-                            ->addActionLabel('Add feature')
+                            ->addActionLabel('বৈশিষ্ট্য যোগ করুন')
                             ->defaultItems(0),
                     ]),
-                Section::make('Blocks (ড্র্যাগ করে ক্রম বদলান)')
+                Section::make('ব্লক (তীর দিয়ে ক্রম বদলান)')
                     ->visible(fn (Get $get): bool => ! LandingPage::isLegacyTemplate($get('template')))
                     ->schema([
                         Builder::make('blocks')
@@ -157,7 +161,7 @@ class LandingPageResource extends Resource
                             ->blockPickerColumns(['default' => 2, 'md' => 3])
                             ->addActionLabel('ব্লক যোগ করুন'),
                     ]),
-                Section::make('Packages (প্যাকেজ)')
+                Section::make('প্যাকেজ')
                     ->description('অর্ডার ফর্মে দেখানো প্যাকেজ — যেমন ১ পিস, ২ পিস, ৩ পিস অফার।')
                     ->visible(fn (Get $get): bool => ! LandingPage::isLegacyTemplate($get('template')))
                     ->schema([
@@ -196,25 +200,25 @@ class LandingPageResource extends Resource
                             ->addActionLabel('প্যাকেজ যোগ করুন')
                             ->defaultItems(0),
                     ]),
-                Section::make('SEO')
+                Section::make('এসইও')
                     ->description('এই পেজের নিজস্ব সার্চ/শেয়ার তথ্য। খালি থাকলে শিরোনাম ও বিবরণ থেকে নেওয়া হয়।')
                     ->collapsible()
                     ->schema([
-                        TextInput::make('seo_title')->label('SEO title')->maxLength(120),
-                        Textarea::make('seo_description')->label('Meta description')->rows(2)->maxLength(300),
+                        TextInput::make('seo_title')->label('এসইও টাইটেল')->maxLength(120),
+                        Textarea::make('seo_description')->label('মেটা বিবরণ')->rows(2)->maxLength(300),
                         ImageUpload::make('og_image')->label('OG ছবি (শেয়ারের ছবি)')->helperText('খালি = হিরো ছবি, তারপর সাইটের ডিফল্ট OG ছবি।'),
                     ]),
-                Section::make('Order form')
+                Section::make('অর্ডার ফর্ম')
                     ->columns(2)
                     ->schema([
                         TextInput::make('price_override')
-                            ->label('Price override')
+                            ->label('আলাদা দাম')
                             ->numeric()
                             ->prefix('৳')
                             ->minValue(0)
-                            ->helperText('Leave blank to use the product\'s normal price.'),
+                            ->helperText('খালি রাখলে পণ্যের সাধারণ দামই ধরা হবে।'),
                         TextInput::make('button_text')
-                            ->label('Order button text')
+                            ->label('অর্ডার বাটনের লেখা')
                             ->required()
                             ->maxLength(255)
                             ->default('এখনই অর্ডার করুন'),
@@ -241,7 +245,7 @@ class LandingPageResource extends Resource
     public static function blockSchemas(): array
     {
         return [
-            self::block('hero', 'Hero', 'heroicon-o-star', [
+            self::block('hero', 'হিরো', 'heroicon-o-star', [
                 TextInput::make('headline')->label('শিরোনাম')->required()->maxLength(255)->columnSpanFull(),
                 TextInput::make('highlight')->label('হাইলাইট লাইন (ঐচ্ছিক)')->placeholder('এই সুযোগ সীমিত সময়ের জন্য এবং স্টক থাকা পর্যন্ত')->maxLength(255)->columnSpanFull(),
                 Textarea::make('description')->label('বর্ণনা (ঐচ্ছিক)')->rows(3)->columnSpanFull(),
@@ -255,7 +259,7 @@ class LandingPageResource extends Resource
                     ->simple(TextInput::make('text')->required()->maxLength(255))
                     ->reorderable()->addActionLabel('লাইন যোগ করুন')->defaultItems(0)->columnSpanFull(),
             ]),
-            self::block('features', 'Features', 'heroicon-o-sparkles', [
+            self::block('features', 'বৈশিষ্ট্য', 'heroicon-o-sparkles', [
                 TextInput::make('label')->label('ছোট লেবেল (ঐচ্ছিক)')->placeholder('PREMIUM COLLECTION')->maxLength(100),
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255),
                 TextInput::make('accent')->label('রঙিন দ্বিতীয় লাইন (ঐচ্ছিক)')->maxLength(255)->columnSpanFull(),
@@ -272,7 +276,7 @@ class LandingPageResource extends Resource
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->maxLength(100),
                 TextInput::make('phone')->label('ফোন নম্বর (ঐচ্ছিক)')->tel()->maxLength(30),
             ]),
-            self::block('checklist', 'Checklist', 'heroicon-o-check-circle', [
+            self::block('checklist', 'চেকলিস্ট', 'heroicon-o-check-circle', [
                 TextInput::make('heading')->label('শিরোনাম')->placeholder('ফ্রন্ট বাটন ব্রা ব্যবহারে যেসব সুবিধা পাবেন:')->maxLength(255)->columnSpanFull(),
                 Textarea::make('intro')->label('ভূমিকা')->rows(3)->columnSpanFull(),
                 Repeater::make('items')->label('তালিকা')
@@ -281,22 +285,22 @@ class LandingPageResource extends Resource
                 ImageUpload::make('image')->label('পাশের ছবি'),
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->maxLength(100),
             ]),
-            self::block('gallery', 'Gallery', 'heroicon-o-photo', [
+            self::block('gallery', 'গ্যালারি', 'heroicon-o-photo', [
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255)->columnSpanFull(),
                 ImageUpload::make('images')->label('ছবি')->multiple()->reorderable()->columnSpanFull(),
-                Select::make('layout')->label('লেআউট')->options(['carousel' => 'Carousel', 'grid' => 'Grid'])->default('carousel'),
+                Select::make('layout')->label('লেআউট')->options(['carousel' => 'ক্যারোসেল', 'grid' => 'গ্রিড'])->default('carousel'),
             ]),
-            self::block('reviews', 'Reviews', 'heroicon-o-chat-bubble-left-right', [
+            self::block('reviews', 'রিভিউ', 'heroicon-o-chat-bubble-left-right', [
                 TextInput::make('heading')->label('শিরোনাম')->default('সম্মানিত কাস্টমার রিভিউ')->maxLength(255)->columnSpanFull(),
                 ImageUpload::make('images')->label('রিভিউ স্ক্রিনশট')->multiple()->reorderable()->columnSpanFull(),
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->maxLength(100),
             ]),
-            self::block('video', 'Video', 'heroicon-o-play-circle', [
+            self::block('video', 'ভিডিও', 'heroicon-o-play-circle', [
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255)->columnSpanFull(),
                 TextInput::make('url')->label('ভিডিও লিংক (YouTube / MP4)')->url()->required()->maxLength(500)->columnSpanFull(),
                 ImageUpload::make('poster')->label('পোস্টার ছবি'),
             ]),
-            self::block('variants', 'Variants (সাইজ/কালার)', 'heroicon-o-swatch', [
+            self::block('variants', 'সাইজ / কালার', 'heroicon-o-swatch', [
                 TextInput::make('label')->label('ছোট লেবেল (ঐচ্ছিক)')->maxLength(100),
                 TextInput::make('heading')->label('শিরোনাম')->maxLength(255),
                 TextInput::make('accent')->label('রঙিন দ্বিতীয় লাইন (ঐচ্ছিক)')->maxLength(255)->columnSpanFull(),
@@ -318,19 +322,19 @@ class LandingPageResource extends Resource
                 TagsInput::make('colors')->label('কালারের অপশন (খালি = নিজে লিখবে; গ্রিডের নামও অপশন)'),
                 Toggle::make('color_required')->label('কালার আবশ্যক')->default(false),
             ]),
-            self::block('cta', 'CTA / কল', 'heroicon-o-phone', [
+            self::block('cta', 'কল-টু-অ্যাকশন (কল)', 'heroicon-o-phone', [
                 TextInput::make('heading')->label('লেখা')->placeholder('বিশেষ প্রয়োজনে কল করুনঃ')->maxLength(255)->columnSpanFull(),
                 Textarea::make('subtext')->label('ছোট বর্ণনা (ঐচ্ছিক)')->rows(2)->columnSpanFull(),
                 TextInput::make('phone')->label('ফোন নম্বর (ঐচ্ছিক)')->tel()->maxLength(30),
                 TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->default('অর্ডার করুন')->maxLength(100),
             ]),
-            self::block('notice', 'Notice (গুরুত্বপূর্ণ বিষয়)', 'heroicon-o-exclamation-circle', [
+            self::block('notice', 'গুরুত্বপূর্ণ বিষয়', 'heroicon-o-exclamation-circle', [
                 TextInput::make('heading')->label('শিরোনাম')->placeholder('২ টি গুরুত্বপূর্ণ বিষয়ঃ')->maxLength(255)->columnSpanFull(),
                 Repeater::make('items')->label('পয়েন্ট')
                     ->simple(TextInput::make('text')->required()->maxLength(500))
                     ->reorderable()->addActionLabel('পয়েন্ট যোগ করুন')->defaultItems(0)->columnSpanFull(),
             ]),
-            self::block('order_form', 'Order form', 'heroicon-o-shopping-bag', [
+            self::block('order_form', 'অর্ডার ফর্ম', 'heroicon-o-shopping-bag', [
                 TextInput::make('pill')->label('ছোট ব্যাজ (ঐচ্ছিক)')->placeholder('কোনো অগ্রিম টাকা লাগবে না')->maxLength(150)->columnSpanFull(),
                 TextInput::make('heading')->label('শিরোনাম')->placeholder('সঠিক তথ্য দিয়ে নিচের ফর্মটি পূরণ করুন')->maxLength(255)->columnSpanFull(),
                 Textarea::make('subtext')->label('বর্ণনা (ঐচ্ছিক)')->rows(2)->columnSpanFull(),
@@ -361,7 +365,7 @@ class LandingPageResource extends Resource
                     ->toggleable(),
                 TextColumn::make('product.name')
                     ->visibleFrom('md')
-                    ->label('Product')
+                    ->label('পণ্য')
                     ->limit(30)
                     ->toggleable(),
                 TextColumn::make('views')
@@ -387,7 +391,7 @@ class LandingPageResource extends Resource
                     ->label('বিক্রি')
                     ->state(fn (LandingPage $record): string => '৳ '.number_format((float) $record->orders()->counted()->sum('total'), 0)),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('চালু')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -403,7 +407,7 @@ class LandingPageResource extends Resource
             ])
             ->recordActions([
                 Action::make('preview')
-                    ->label('Preview')
+                    ->label('প্রিভিউ')
                     ->icon(Heroicon::OutlinedEye)
                     ->color('gray')
                     ->url(fn (LandingPage $record): string => route('landing.show', $record->slug))
@@ -422,7 +426,7 @@ class LandingPageResource extends Resource
     public static function duplicateAction(): Action
     {
         return Action::make('duplicate')
-            ->label('Duplicate')
+            ->label('কপি করুন')
             ->icon(Heroicon::OutlinedDocumentDuplicate)
             ->color('gray')
             ->requiresConfirmation()

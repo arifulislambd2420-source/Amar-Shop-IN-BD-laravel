@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Brands;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Brands\Pages\ManageBrands;
+use App\Filament\Support\ImageUpload;
 use App\Models\Brand;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -20,13 +22,17 @@ use UnitEnum;
 
 class BrandResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Brand::class;
 
+    protected static ?string $modelLabel = 'ব্র্যান্ড';
+
+    protected static ?string $pluralModelLabel = 'ব্র্যান্ড';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Catalog';
+    protected static string|UnitEnum|null $navigationGroup = 'ক্যাটালগ';
 
     protected static ?int $navigationSort = 2;
 
@@ -37,8 +43,8 @@ class BrandResource extends Resource
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                \App\Filament\Support\ImageUpload::make('logo')
-                    ->label('Logo'),
+                ImageUpload::make('logo')
+                    ->label('লোগো'),
             ]);
     }
 
@@ -47,13 +53,13 @@ class BrandResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('logo')
-                    ->label('Logo')
+                    ->label('লোগো')
                     ->circular(),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label('পণ্য')
                     ->counts('products')
                     ->badge(),
             ])

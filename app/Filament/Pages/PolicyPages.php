@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Concerns\HasAdminArea;
+use App\Filament\Support\ImageUpload;
 use App\Models\SiteSetting;
 use App\Support\SiteSettingsHelper;
 use BackedEnum;
@@ -39,11 +40,11 @@ class PolicyPages extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
 
-    protected static ?string $navigationLabel = 'Info Pages';
+    protected static ?string $navigationLabel = 'তথ্য পেজ';
 
-    protected static ?string $title = 'Info Pages (About, Delivery, Returns…)';
+    protected static ?string $title = 'তথ্য পেজ (আমাদের সম্পর্কে, ডেলিভারি, রিটার্ন…)';
 
     protected static ?int $navigationSort = 20;
 
@@ -76,7 +77,7 @@ class PolicyPages extends Page implements HasSchemas
                 Tabs::make('pages')
                     ->tabs(array_map(
                         fn (string $key, string $label): Tab => Tab::make($label)->schema([
-                            \App\Filament\Support\ImageUpload::configureRichEditor(RichEditor::make($key))
+                            ImageUpload::configureRichEditor(RichEditor::make($key))
                                 ->label($label)
                                 ->helperText('খালি রাখলে সাইটের বর্তমান (বিল্ট-ইন) লেখা দেখানো হবে। শিরোনাম পেজে নিজে থেকেই থাকে।')
                                 ->columnSpanFull(),

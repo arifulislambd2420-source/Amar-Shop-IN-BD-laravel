@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesStorefrontCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LandingPage extends Model
 {
-    use \App\Models\Concerns\FlushesStorefrontCache;
+    use FlushesStorefrontCache;
 
     /**
      * Block-builder templates: the page is its ordered $blocks, styled by
@@ -17,9 +18,9 @@ class LandingPage extends Model
      * once that design exists).
      */
     public const BLOCK_TEMPLATES = [
-        'green' => 'Green',
-        'purple' => 'Purple',
-        'cream' => 'Cream',
+        'green' => 'সবুজ (Green)',
+        'purple' => 'বেগুনি (Purple)',
+        'cream' => 'ক্রিম (Cream)',
     ];
 
     /** Default [primary, secondary] colors of each block template (overridable per page). */
@@ -31,9 +32,9 @@ class LandingPage extends Model
 
     /** Pre-builder templates: render the fixed headline/hero/gallery/features fields. */
     public const LEGACY_TEMPLATES = [
-        'template-1' => 'Template 1 — Warm/classic (পুরনো)',
-        'template-2' => 'Template 2 — Dark/premium (পুরনো)',
-        'template-3' => 'Template 3 — Minimal/clean (পুরনো)',
+        'template-1' => 'টেমপ্লেট ১ — উষ্ণ/ক্লাসিক (পুরনো)',
+        'template-2' => 'টেমপ্লেট ২ — গাঢ়/প্রিমিয়াম (পুরনো)',
+        'template-3' => 'টেমপ্লেট ৩ — সাদামাটা/পরিষ্কার (পুরনো)',
     ];
 
     /** resources/views/landing/templates/{key}.blade.php for each option. */

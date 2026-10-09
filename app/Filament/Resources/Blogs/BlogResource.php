@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Blogs;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Blogs\Pages\ManageBlogs;
+use App\Filament\Support\ImageUpload;
 use App\Models\Blog;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -24,13 +26,17 @@ use UnitEnum;
 
 class BlogResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = Blog::class;
 
+    protected static ?string $modelLabel = 'ব্লগ পোস্ট';
+
+    protected static ?string $pluralModelLabel = 'ব্লগ পোস্ট';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNewspaper;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
 
     protected static ?int $navigationSort = 2;
 
@@ -38,7 +44,7 @@ class BlogResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Post')
+                Section::make('পোস্ট')
                     ->columns(2)
                     ->schema([
                         TextInput::make('title')
@@ -57,17 +63,17 @@ class BlogResource extends Resource
                         TextInput::make('category')
                             ->maxLength(255),
                         TextInput::make('read_time')
-                            ->label('Read time (minutes)')
+                            ->label('পড়ার সময় (মিনিট)')
                             ->numeric()
                             ->minValue(1),
-                        \App\Filament\Support\ImageUpload::make('cover')
-                            ->label('Cover image')
+                        ImageUpload::make('cover')
+                            ->label('কভার ছবি')
                             ->columnSpanFull(),
                         DateTimePicker::make('published_at'),
                     ]),
-                Section::make('Content')
+                Section::make('লেখা')
                     ->schema([
-                        \App\Filament\Support\ImageUpload::configureRichEditor(RichEditor::make('content'))
+                        ImageUpload::configureRichEditor(RichEditor::make('content'))
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -78,7 +84,7 @@ class BlogResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('cover')
-                    ->label('Cover'),
+                    ->label('কভার'),
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
@@ -87,7 +93,7 @@ class BlogResource extends Resource
                     ->badge()
                     ->searchable(),
                 TextColumn::make('read_time')
-                    ->label('Read (min)')
+                    ->label('পড়া (মিনিট)')
                     ->sortable(),
                 TextColumn::make('published_at')
                     ->dateTime()

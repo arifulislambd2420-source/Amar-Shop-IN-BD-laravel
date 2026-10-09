@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FlashSales;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\FlashSales\Pages\CreateFlashSale;
 use App\Filament\Resources\FlashSales\Pages\EditFlashSale;
 use App\Filament\Resources\FlashSales\Pages\ListFlashSales;
@@ -26,13 +27,17 @@ use UnitEnum;
 
 class FlashSaleResource extends Resource
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
     protected static ?string $model = FlashSale::class;
 
+    protected static ?string $modelLabel = 'ফ্ল্যাশ সেল';
+
+    protected static ?string $pluralModelLabel = 'ফ্ল্যাশ সেল';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBolt;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'মার্কেটিং';
 
     protected static ?int $navigationSort = 2;
 
@@ -44,10 +49,10 @@ class FlashSaleResource extends Resource
                     ->required()
                     ->maxLength(255),
                 DateTimePicker::make('end_time')
-                    ->label('End time')
+                    ->label('শেষ হবে')
                     ->required(),
                 Toggle::make('is_active')
-                    ->label('Active')
+                    ->label('চালু')
                     ->default(true),
             ]);
     }
@@ -63,7 +68,7 @@ class FlashSaleResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('items_count')
-                    ->label('Items')
+                    ->label('পণ্যসমূহ')
                     ->counts('items')
                     ->badge(),
                 IconColumn::make('is_active')

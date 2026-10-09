@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     @php
         $seoTitle = trim($__env->yieldContent('title')) ?: (\App\Support\SiteSettingsHelper::get('seo_title') ?: \App\Support\SiteSettingsHelper::siteName().' — '.\App\Support\SiteSettingsHelper::siteNameEn());
         $seoDescription = trim($__env->yieldContent('description')) ?: (\App\Support\SiteSettingsHelper::get('seo_description') ?: 'খাঁটি ও প্রাকৃতিক পণ্যের অনলাইন দোকান — মধু, সরিষার তেল, ঘি, খেজুর।');

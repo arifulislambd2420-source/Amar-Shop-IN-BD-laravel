@@ -3,6 +3,7 @@
 namespace App\Services\Sms;
 
 use App\Models\Order;
+use App\Support\SiteSettingsHelper;
 
 /**
  * Customer SMS wording, Bangla and English. Deliberately short: a message
@@ -12,7 +13,7 @@ use App\Models\Order;
  */
 class SmsTemplates
 {
-    public const LANGUAGES = ['bn' => 'বাংলা (Bangla)', 'en' => 'English (cheaper, 160 chars/SMS)'];
+    public const LANGUAGES = ['bn' => 'বাংলা', 'en' => 'ইংরেজি (সস্তা — ১৬০ অক্ষর/এসএমএস)'];
 
     private const TEMPLATES = [
         'bn' => [
@@ -40,7 +41,7 @@ class SmsTemplates
             : '';
 
         return strtr($template, [
-            '{site}' => $language === 'en' ? \App\Support\SiteSettingsHelper::siteNameEn() : \App\Support\SiteSettingsHelper::siteName(),
+            '{site}' => $language === 'en' ? SiteSettingsHelper::siteNameEn() : SiteSettingsHelper::siteName(),
             '{invoice}' => (string) $order->invoice_no,
             '{total}' => number_format((float) $order->total),
             '{tracking}' => $tracking,

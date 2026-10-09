@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Models\SiteSetting;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -19,19 +21,19 @@ use UnitEnum;
  */
 class GtmSettings extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
-    protected static ?string $navigationLabel = 'GTM / Pixel';
+    protected static ?string $navigationLabel = 'জিটিএম / পিক্সেল';
 
-    protected static ?string $title = 'GTM / Pixel';
+    protected static ?string $title = 'জিটিএম / পিক্সেল';
 
     protected static ?int $navigationSort = 3;
 
@@ -53,13 +55,13 @@ class GtmSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Google Tag Manager / Meta Pixel')
+                Section::make('গুগল ট্যাগ ম্যানেজার / মেটা পিক্সেল')
                     ->schema([
                         TextInput::make('gtm_id')
-                            ->label('GTM container ID')
+                            ->label('জিটিএম কনটেইনার আইডি')
                             ->placeholder('GTM-XXXXXXX'),
                         TextInput::make('meta_pixel_id')
-                            ->label('Meta (Facebook) Pixel ID')
+                            ->label('মেটা (ফেসবুক) পিক্সেল আইডি')
                             ->placeholder('1234567890123456')
                             ->helperText('চালু থাকলে সারা সাইটে (ল্যান্ডিং পেজসহ) PageView, ViewContent, AddToCart, InitiateCheckout ও Purchase যায়। খালি = বন্ধ।'),
                     ]),
@@ -80,6 +82,6 @@ class GtmSettings extends Page implements HasSchemas
             ['setting_value' => preg_replace('/\D+/', '', (string) ($data['meta_pixel_id'] ?? ''))],
         );
 
-        Notification::make()->title('GTM / Pixel settings saved.')->success()->send();
+        Notification::make()->title('জিটিএম / পিক্সেল সেটিং সেভ হয়েছে।')->success()->send();
     }
 }

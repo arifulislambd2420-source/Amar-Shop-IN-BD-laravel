@@ -19,17 +19,17 @@ class ImagesRelationManager extends RelationManager
 {
     protected static string $relationship = 'images';
 
-    protected static ?string $title = 'Images';
+    protected static ?string $title = 'ছবি';
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 ImageUpload::make('url')
-                    ->label('Image')
+                    ->label('ছবি')
                     ->required(),
                 TextInput::make('alt')
-                    ->label('Alt text')
+                    ->label('ছবির বিবরণ (Alt)')
                     ->maxLength(255),
                 TextInput::make('sort_order')
                     ->numeric()
@@ -44,12 +44,12 @@ class ImagesRelationManager extends RelationManager
             ->defaultSort('sort_order')
             ->columns([
                 ImageColumn::make('url')
-                    ->label('Image'),
+                    ->label('ছবি'),
                 TextColumn::make('alt')
-                    ->label('Alt')
+                    ->label('বিবরণ')
                     ->limit(40),
                 TextColumn::make('sort_order')
-                    ->label('Order')
+                    ->label('ক্রম')
                     ->sortable(),
             ])
             ->headerActions([

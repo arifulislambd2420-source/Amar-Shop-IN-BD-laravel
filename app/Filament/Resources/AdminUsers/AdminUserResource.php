@@ -33,15 +33,17 @@ class AdminUserResource extends Resource
 
     protected static ?string $model = AdminUser::class;
 
+    protected static ?string $pluralModelLabel = 'অ্যাডমিন ব্যবহারকারী';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
     protected static ?int $navigationSort = 11;
 
-    protected static ?string $navigationLabel = 'Admin Users';
+    protected static ?string $navigationLabel = 'অ্যাডমিন ব্যবহারকারী';
 
-    protected static ?string $modelLabel = 'Admin user';
+    protected static ?string $modelLabel = 'অ্যাডমিন ব্যবহারকারী';
 
     protected static ?string $recordTitleAttribute = 'username';
 

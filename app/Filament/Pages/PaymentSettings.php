@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasAdminArea;
 use App\Models\SiteSetting;
+use App\Support\AdminAccess;
 use BackedEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -26,19 +28,19 @@ use UnitEnum;
  */
 class PaymentSettings extends Page implements HasSchemas
 {
-    use \App\Filament\Concerns\HasAdminArea;
+    use HasAdminArea;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_SETTINGS;
+    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
 
     use InteractsWithSchemas;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
 
-    protected static ?string $navigationLabel = 'Payment (bKash)';
+    protected static ?string $navigationLabel = 'পেমেন্ট (বিকাশ)';
 
-    protected static ?string $title = 'Payment Settings — bKash';
+    protected static ?string $title = 'পেমেন্ট সেটিং — বিকাশ';
 
     protected static ?int $navigationSort = 5;
 
@@ -73,30 +75,30 @@ class PaymentSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('bKash Tokenized Checkout')
-                    ->description('Leave App secret or Password blank to keep the current value.')
+                Section::make('বিকাশ টোকেনাইজড চেকআউট')
+                    ->description('অ্যাপ সিক্রেট বা পাসওয়ার্ড খালি রাখলে বর্তমান মানই থাকবে।')
                     ->columns(2)
                     ->schema([
                         Select::make('bkash_base_url')
-                            ->label('Environment')
+                            ->label('পরিবেশ')
                             ->columnSpanFull()
                             ->required()
                             ->options([
-                                'https://tokenized.sandbox.bka.sh/v1.2.0-beta' => 'Sandbox (testing)',
-                                'https://tokenized.pay.bka.sh/v1.2.0-beta' => 'Live (production)',
+                                'https://tokenized.sandbox.bka.sh/v1.2.0-beta' => 'স্যান্ডবক্স (পরীক্ষামূলক)',
+                                'https://tokenized.pay.bka.sh/v1.2.0-beta' => 'লাইভ (আসল)',
                             ]),
                         TextInput::make('bkash_app_key')
-                            ->label('App key')
-                            ->placeholder('Enter your bKash App Key'),
+                            ->label('অ্যাপ কী')
+                            ->placeholder('আপনার বিকাশ অ্যাপ কী লিখুন'),
                         TextInput::make('bkash_app_secret')
-                            ->label('App secret')
+                            ->label('অ্যাপ সিক্রেট')
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         TextInput::make('bkash_username')
-                            ->label('Username'),
+                            ->label('ইউজারনেম'),
                         TextInput::make('bkash_password')
-                            ->label('Password')
+                            ->label('পাসওয়ার্ড')
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
@@ -124,6 +126,6 @@ class PaymentSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('Payment settings saved.')->success()->send();
+        Notification::make()->title('পেমেন্ট সেটিং সেভ হয়েছে।')->success()->send();
     }
 }

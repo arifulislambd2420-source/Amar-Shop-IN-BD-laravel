@@ -15,8 +15,15 @@
 /*
  * Mobile bottom navigation (partials/mobile-nav): "floating active circle
  * with notch". A light bar with round corners, fixed --mnav-lift above the
- * screen edge (at least 0.75rem, more on iPhones with a home indicator —
- * env() needs viewport-fit=cover in the layout meta). The active item's icon
+ * screen edge (at least 0.75rem).
+ *
+ * IMPORTANT: the layout's viewport meta must NOT use viewport-fit=cover. On
+ * Android Chrome that lets the page run under the system bars while
+ * env(safe-area-inset-bottom) stays 0 — the bar sat below the visible area
+ * until the first scroll. Without it the browser keeps fixed UI above the
+ * system bars (and the iPhone home indicator) by itself.
+ *
+ * The active item's icon
  * sits in a brand-coloured circle that sticks half out of the bar's top edge,
  * resting in a round notch cut into the bar; the page shows through the gap
  * between circle and notch.
@@ -197,11 +204,6 @@
     }
 }
 
-/* viewport-fit=cover also lets the page run under the notch in landscape. */
-body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-}
 
 .line-clamp-2 {
     display: -webkit-box;
@@ -272,5 +274,58 @@ body {
 
     &::-webkit-scrollbar {
         display: none;
+    }
+}
+
+/*
+ * Swipe rows (category strip, filter chips): finger-driven horizontal scroll
+ * with momentum, no visible bar, no vertical drag or page back-swipe while
+ * the finger moves sideways, and cards that stop on their left edge.
+ * `.swipe-half` sizes the cards so the last visible one is cut in half —
+ * 3.5 cards on a phone (5.5 on a wide phone), a hint that there is more.
+ */
+@utility swipe-row {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 1rem;
+    touch-action: pan-x pan-y;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    & > * {
+        scroll-snap-align: start;
+    }
+}
+
+@utility swipe-half {
+    /* (screen − left padding − the gaps before the half card) / n: leaves the last visible card exactly half in view */
+    --swipe-n: 3.5;
+    flex: 0 0 calc((100vw - 1rem - (var(--swipe-n) - 0.5) * 0.75rem) / var(--swipe-n));
+    min-width: 5rem;
+}
+
+@media (min-width: 30rem) {
+    .swipe-half {
+        --swipe-n: 4.5;
+    }
+}
+
+@media (min-width: 40rem) {
+    .swipe-half {
+        --swipe-n: 5.5;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .swipe-row {
+        scroll-behavior: auto;
     }
 }

@@ -17,7 +17,7 @@ class VariantsRelationManager extends RelationManager
 {
     protected static string $relationship = 'variants';
 
-    protected static ?string $title = 'Variants';
+    protected static ?string $title = 'সাইজ / ভ্যারিয়েন্ট';
 
     public function form(Schema $schema): Schema
     {

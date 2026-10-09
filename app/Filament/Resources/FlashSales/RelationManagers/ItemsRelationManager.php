@@ -18,20 +18,20 @@ class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
-    protected static ?string $title = 'Flash Sale Items';
+    protected static ?string $title = 'ফ্ল্যাশ সেলের পণ্য';
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('product_id')
-                    ->label('Product')
+                    ->label('পণ্য')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 TextInput::make('flash_price')
-                    ->label('Flash price')
+                    ->label('ফ্ল্যাশ দাম')
                     ->numeric()
                     ->prefix('৳')
                     ->required()
@@ -45,7 +45,7 @@ class ItemsRelationManager extends RelationManager
             ->recordTitleAttribute('flash_price')
             ->columns([
                 TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('পণ্য')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('flash_price')
