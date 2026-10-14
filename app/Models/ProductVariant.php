@@ -15,6 +15,15 @@ class ProductVariant extends Model
     {
         $sync = fn (ProductVariant $variant) => Stock::syncProduct($variant->product_id);
 
+        // "Red / M": the one name carts, orders and SMS show, composed from colour + size.
+        static::saving(function (ProductVariant $variant) {
+            $parts = array_filter([trim((string) $variant->color), trim((string) $variant->size)], fn ($p) => $p !== '');
+
+            if ($parts) {
+                $variant->label = implode(' / ', $parts);
+            }
+        });
+
         static::saved($sync);
         static::deleted($sync);
     }
@@ -22,6 +31,10 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'label',
+        'color',
+        'color_hex',
+        'size',
+        'image',
         'price',
         'stock',
     ];

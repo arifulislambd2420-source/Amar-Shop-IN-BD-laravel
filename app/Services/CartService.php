@@ -139,7 +139,7 @@ class CartService
                 'product' => $product,
                 'variant' => $variant,
                 'name' => $product->name.($variant ? " ({$variant->label})" : ''),
-                'image' => $product->image,
+                'image' => $variant?->image ?: $product->image,
                 'price' => $price,
                 'quantity' => $quantity,
                 'stock' => $stock,

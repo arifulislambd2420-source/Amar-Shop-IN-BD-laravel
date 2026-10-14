@@ -13,6 +13,7 @@
     $price = $product->displayPrice();
     $gallery = collect([$product->image])
         ->concat($product->images->sortBy('sort_order')->pluck('url'))
+        ->concat($product->variants->pluck('image')) // one picture per colour
         ->filter()->unique()->values();
 
     $schema = [
@@ -75,9 +76,11 @@
         <div x-data="{
                 current: 0,
                 count: {{ $gallery->count() }},
+                urls: @js($gallery->values()),
+                showUrl(url) { const i = this.urls.indexOf(url); if (i >= 0) { this.go(i); } },
                 go(i) { i = (i + this.count) % this.count; this.$refs.track.scrollTo({ left: i * this.$refs.track.clientWidth, behavior: 'smooth' }); },
                 sync() { this.current = Math.round(this.$refs.track.scrollLeft / Math.max(1, this.$refs.track.clientWidth)); },
-            }" class="min-w-0 md:sticky md:top-32 md:self-start">
+            }" @variant-image.window="showUrl($event.detail.url)" class="min-w-0 md:sticky md:top-32 md:self-start">
             <div class="relative overflow-hidden rounded-2xl bg-surface">
                 <div x-ref="track" @scroll.debounce.60ms="sync()" class="flex snap-x snap-mandatory overflow-x-auto scrollbar-none" tabindex="0" aria-label="পণ্যের ছবি — পাশে সরিয়ে দেখুন">
                     @forelse($gallery as $i => $url)

@@ -34,16 +34,57 @@
             $variants = $product->variants;
             $isSize = $variants->isNotEmpty() && $variants->every(fn ($v) => preg_match('/^(X{0,3}S|M|X{0,4}L|\d{1,3})$/i', trim($v->label)));
             $choiceLabel = $isSize ? 'সাইজ' : 'ধরন';
-            $pricesDiffer = $variants->pluck('price')->map(fn ($p) => (float) $p)->unique()->count() > 1;
+            $hasColors = $variants->contains(fn ($v) => filled($v->color));
+            // With colours, the chips below are the sizes of the chosen colour only.
+            $colors = $hasColors ? $variants->filter(fn ($v) => filled($v->color))->groupBy('color') : collect();
+            $chipVariants = $hasColors && $variant ? $variants->filter(fn ($v) => (string) $v->color === (string) $variant->color)->values() : $variants;
+            $hasSizes = ! $hasColors || $chipVariants->contains(fn ($v) => filled($v->size));
+            if ($hasColors) { $choiceLabel = $hasSizes ? 'সাইজ' : 'রং'; }
+            $pricesDiffer = $chipVariants->pluck('price')->map(fn ($p) => (float) $p)->unique()->count() > 1;
         @endphp
         <div class="flex flex-col gap-5">
-            @if($variants->isNotEmpty())
+            @if($hasColors)
+                <fieldset>
+                    <legend class="mb-2.5 text-sm font-medium text-gray-700">
+                        রং বাছাই করুন@if($variant && filled($variant->color)): <span class="font-bold text-gray-900">{{ $variant->color }}</span>@endif
+                    </legend>
+                    <div class="flex flex-wrap gap-2.5" role="radiogroup" aria-label="রং">
+                        @foreach($colors as $colorName => $group)
+                            @php
+                                $none = $group->every(fn ($v) => $v->stock <= 0);
+                                $on = $variant && (string) $variant->color === (string) $colorName;
+                                $first = $group->first();
+                                $swatch = $group->first(fn ($v) => filled($v->image))?->image;
+                            @endphp
+                            <button type="button" role="radio" aria-checked="{{ $on ? 'true' : 'false' }}" wire:click="selectColor(@js($colorName))" @disabled($none)
+                                title="{{ $colorName }}{{ $none ? ' — স্টক নেই' : '' }}" aria-label="{{ $colorName }}{{ $none ? ' — স্টক নেই' : '' }}"
+                                @class([
+                                    'relative inline-flex min-h-11 items-center gap-2 rounded-xl border-2 py-1 pl-1 pr-3 text-sm font-semibold transition',
+                                    'border-brand-500 bg-brand-50 text-brand-600' => $on,
+                                    'border-gray-200 bg-white text-gray-800 hover:border-gray-400' => ! $on && ! $none,
+                                    'border-dashed border-gray-200 bg-gray-50 text-gray-300 line-through cursor-not-allowed' => $none,
+                                ])>
+                                @if($swatch)
+                                    <img src="{{ $swatch }}" alt="" width="36" height="36" loading="lazy" class="h-9 w-9 rounded-lg object-cover">
+                                @elseif(filled($first->color_hex))
+                                    <span class="h-9 w-9 rounded-lg border border-black/10" style="background: {{ $first->color_hex }}"></span>
+                                @else
+                                    <span class="w-1"></span>
+                                @endif
+                                <span>{{ $colorName }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </fieldset>
+            @endif
+
+            @if($hasSizes && $chipVariants->isNotEmpty())
                 <fieldset>
                     <legend class="mb-2.5 text-sm font-medium text-gray-700">
                         {{ $choiceLabel }} বাছাই করুন@if($variant && ! $soldOut): <span class="font-bold text-gray-900">{{ $variant->label }}</span>@endif
                     </legend>
                     <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="{{ $choiceLabel }}">
-                        @foreach($variants as $v)
+                        @foreach($chipVariants as $v)
                             @php $none = $v->stock <= 0; $on = ! $none && $variant && $variant->id === $v->id; @endphp
                             <button type="button" role="radio" aria-checked="{{ $on ? 'true' : 'false' }}"
                                 wire:click="selectVariant({{ $v->id }})" @disabled($none)
@@ -54,7 +95,7 @@
                                     'border-gray-200 bg-white text-gray-800 hover:border-gray-400' => ! $on && ! $none,
                                     'border-dashed border-gray-200 bg-gray-50 text-gray-300 line-through cursor-not-allowed' => $none,
                                 ])>
-                                <span>{{ $v->label }}</span>
+                                <span>{{ $hasColors ? ($v->size ?: $v->label) : $v->label }}</span>
                                 @if($pricesDiffer)
                                     <span class="text-[11px] font-normal no-underline">@taka($v->price)</span>
                                 @endif

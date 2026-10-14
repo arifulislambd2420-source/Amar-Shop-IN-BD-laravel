@@ -63,8 +63,36 @@ class AddToCart extends Component
         if ($product?->variants->contains('id', $variantId)) {
             $this->variantId = $variantId;
             $this->message = '';
+
+            // The gallery jumps to this colour's picture (if it has one).
+            if ($image = $product->variants->firstWhere('id', $variantId)->image) {
+                $this->dispatch('variant-image', url: $image);
+            }
             $this->quantity = max(1, min($this->quantity, $this->maxQuantity($product)));
         }
+    }
+
+    /**
+     * Pick a colour: switch to its first buyable size (keeping the current
+     * size when that colour has it) and show that colour's picture.
+     */
+    public function selectColor(string $color): void
+    {
+        $product = $this->product();
+        $current = $this->selectedVariant($product);
+        $options = $product?->variants->filter(fn ($v) => (string) $v->color === $color);
+
+        if (! $options || $options->isEmpty()) {
+            return;
+        }
+
+        $pick = ($current && $current->size !== null
+                ? $options->first(fn ($v) => $v->size === $current->size && $v->stock > 0)
+                : null)
+            ?? $options->first(fn ($v) => $v->stock > 0)
+            ?? $options->first();
+
+        $this->selectVariant($pick->id);
     }
 
     public function increment(): void
