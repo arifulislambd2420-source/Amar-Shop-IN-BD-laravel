@@ -4,7 +4,7 @@
 
         <div style="margin-top: 1rem;">
             <x-filament::button type="submit">
-                আপলোড করুন
+                {{ __('আপলোড করুন') }}
             </x-filament::button>
         </div>
     </form>
@@ -25,7 +25,7 @@
         @php($files = $this->getFiles())
 
         @if ($files->isEmpty())
-            <p style="font-size: 0.875rem; opacity: 0.6;">এখনও কোনো ছবি আপলোড হয়নি।</p>
+            <p style="font-size: 0.875rem; opacity: 0.6;">{{ __('এখনও কোনো ছবি আপলোড হয়নি।') }}</p>
         @else
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">
                 @foreach ($files as $file)
@@ -67,9 +67,9 @@
                                     color="gray"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    onclick="navigator.clipboard.writeText('{{ url($file['url']) }}'); new FilamentNotification().title('কপি হয়েছে!').success().send();"
+                                    onclick="navigator.clipboard.writeText('{{ url($file['url']) }}'); new FilamentNotification().title('{{ __('কপি হয়েছে!') }}').success().send();"
                                 >
-                                    কপি
+                                    {{ __('কপি') }}
                                 </x-filament::button>
 
                                 <x-filament::button
@@ -77,10 +77,9 @@
                                     color="danger"
                                     size="xs"
                                     style="flex: 1 1 0%;"
-                                    wire:click="deleteFile('{{ $file['key'] }}')"
-                                    wire:confirm="ছবিটি চিরতরে মুছবেন? এটা আর ফেরানো যাবে না।"
+                                    wire:click="askDelete('{{ $file['key'] }}')"
                                 >
-                                    মুছুন
+                                    {{ __('মুছুন') }}
                                 </x-filament::button>
                             </div>
                         </div>
@@ -89,4 +88,39 @@
             </div>
         @endif
     </div>
+    {{-- Delete dialog: says where the picture is used before it is deleted. --}}
+    @if ($pending)
+        <div style="position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.55);"
+            wire:key="delete-dialog" wire:keydown.escape="cancelDelete">
+            <div role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title"
+                style="width: 100%; max-width: 28rem; max-height: 90vh; overflow-y: auto; border-radius: 0.75rem; padding: 1.25rem; background: var(--fi-color-white, #fff); color: #111827; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);">
+                <h2 id="delete-dialog-title" style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.75rem;">
+                    {{ $pending['places'] ? __('এই ছবিটি ব্যবহার হচ্ছে — তবু মুছবেন?') : __('ছবিটি চিরতরে মুছবেন?') }}
+                </h2>
+
+                <img src="{{ \App\Support\Media::urlFor(config('media.directory').'/'.$pending['key']) }}" alt="" style="width: 6rem; height: 6rem; object-fit: cover; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+
+                @if ($pending['places'])
+                    <p style="font-size: 0.875rem; margin-bottom: 0.5rem;">{{ __('ছবিটি এই জায়গাগুলোতে ব্যবহার হচ্ছে:') }}</p>
+                    <ul style="font-size: 0.875rem; margin: 0 0 0.75rem 1.25rem; list-style: disc;">
+                        @foreach ($pending['places'] as $place)
+                            <li>{{ $place }}</li>
+                        @endforeach
+                    </ul>
+                    <p style="font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: #fef3c7; color: #78350f; margin-bottom: 1rem;">
+                        {{ __('মুছলে এই জায়গাগুলোর ছবির ঘর ফাঁকা হয়ে যাবে (কোনো পেজ ভাঙবে না)। পরে নতুন ছবি দিয়ে ভরে নিতে পারবেন। এটা আর ফেরানো যাবে না।') }}
+                    </p>
+                @else
+                    <p style="font-size: 0.875rem; margin-bottom: 1rem;">{{ __('ছবিটি কোথাও ব্যবহার হচ্ছে না। মুছলে আর ফেরানো যাবে না।') }}</p>
+                @endif
+
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <x-filament::button type="button" color="gray" wire:click="cancelDelete">{{ __('বাতিল করুন') }}</x-filament::button>
+                    <x-filament::button type="button" color="danger" wire:click="confirmDelete">
+                        {{ $pending['places'] ? __('তবু মুছুন') : __('মুছুন') }}
+                    </x-filament::button>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

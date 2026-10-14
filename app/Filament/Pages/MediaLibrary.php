@@ -6,7 +6,10 @@ use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Support\ImageUpload;
 use App\Models\MediaLibrary as MediaLibraryItem;
 use App\Support\Media;
+use App\Support\MediaDedupe;
+use App\Support\MediaReferences;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -15,8 +18,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Number;
 
 /**
  * General-purpose media manager — not tied to any model/table. Uploads go
@@ -115,17 +118,49 @@ class MediaLibrary extends Page implements HasSchemas
             });
     }
 
+    /** The picture the admin asked to delete and is being asked to confirm (null = no dialog open). */
+    public ?array $pending = null;
+
+    /** Step 1 of deleting: show what the picture is used in, and ask. */
+    public function askDelete(string $basename): void
+    {
+        $this->assertSafeBasename($basename);
+
+        if (! Storage::disk(config('media.disk'))->exists(config('media.directory').'/'.$basename)) {
+            Notification::make()->title(__('ফাইলটি পাওয়া যায়নি — হয়তো আগেই মোছা হয়েছে।'))->warning()->send();
+
+            return;
+        }
+
+        $this->pending = ['key' => $basename, 'places' => MediaReferences::labels($basename)];
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->pending = null;
+    }
+
+    /** Step 2: the admin confirmed — delete, leaving any place that used the picture empty. */
+    public function confirmDelete(): void
+    {
+        if ($this->pending) {
+            $this->deleteFile($this->pending['key'], force: true);
+        }
+
+        $this->pending = null;
+    }
+
     /**
      * $basename is a wire:click argument from the grid — untrusted input. Any
      * path separator or ".." is rejected, so the path that reaches
      * Storage::delete() can never leave the media directory.
+     *
+     * A picture that is still used is only deleted with $force (the confirmed
+     * dialog): the places that used it are then emptied, never left broken.
      */
-    public function deleteFile(string $basename): void
+    public function deleteFile(string $basename, bool $force = false): bool
     {
-        abort_if(
-            $basename === '' || $basename !== basename($basename) || str_contains($basename, '..'),
-            403,
-        );
+        $this->assertSafeBasename($basename);
 
         $path = config('media.directory').'/'.$basename;
         $disk = Storage::disk(config('media.disk'));
@@ -133,62 +168,81 @@ class MediaLibrary extends Page implements HasSchemas
         if (! $disk->exists($path)) {
             Notification::make()->title(__('ফাইলটি পাওয়া যায়নি — হয়তো আগেই মোছা হয়েছে।'))->warning()->send();
 
-            return;
+            return false;
         }
 
-        if ($usedBy = $this->findReferences($basename)) {
+        $places = MediaReferences::labels($basename);
+
+        if ($places && ! $force) {
             Notification::make()
                 ->title(__('মোছা হয়নি — ছবিটি এখনো ব্যবহার হচ্ছে'))
-                ->body(__('ব্যবহার হচ্ছে: :places। আগে সেখান থেকে বদলান, নইলে সাইটে ভাঙা ছবি দেখাবে।', ['places' => implode(', ', $usedBy)]))
+                ->body(__('ব্যবহার হচ্ছে: :places। আগে সেখান থেকে বদলান, নইলে সাইটে ভাঙা ছবি দেখাবে।', ['places' => implode(', ', $places)]))
                 ->danger()
                 ->persistent()
                 ->send();
 
-            return;
+            return false;
+        }
+
+        if ($places) {
+            MediaReferences::blank($basename);
         }
 
         $disk->delete($path);
         Media::unmirror($path);
         MediaLibraryItem::where('file_path', Media::urlFor($path))->delete();
 
-        Notification::make()->title(__('ছবি মোছা হয়েছে।'))->success()->send();
+        Notification::make()
+            ->title(__('ছবি মোছা হয়েছে।'))
+            ->body($places ? __('এই জায়গাগুলোর ছবির ঘর এখন ফাঁকা: :places', ['places' => implode(', ', $places)]) : null)
+            ->success()
+            ->send();
+
+        return true;
     }
 
-    /**
-     * Every column that can hold an uploaded image URL. Deleting a file that
-     * one of these still points to leaves a broken image on the live site,
-     * so deleteFile() refuses.
-     *
-     * @return list<string> human-readable "where it's used" labels
-     */
-    protected function findReferences(string $basename): array
+    private function assertSafeBasename(string $basename): void
     {
-        $needle = '%'.$basename.'%';
+        abort_if(
+            $basename === '' || $basename !== basename($basename) || str_contains($basename, '..'),
+            403,
+        );
+    }
 
-        $checks = [
-            __('পণ্য') => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
-            __('পণ্যের গ্যালারি') => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
-            __('ব্যানার') => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
-            __('ব্র্যান্ড') => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
-            __('ক্যাটাগরি') => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
-            __('ব্লগ') => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
-            __('ল্যান্ডিং পেজ') => fn () => DB::table('landing_pages')->where(fn ($q) => $q
-                ->where('hero_image', 'like', $needle)
-                ->orWhere('gallery', 'like', $needle)
-                ->orWhere('description', 'like', $needle)
-                ->orWhere('blocks', 'like', $needle)
-                ->orWhere('packages', 'like', $needle)
-                ->orWhere('og_image', 'like', $needle))->pluck('title'),
-            __('সাইট সেটিং') => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
+    /** Header button: merge identical pictures (one copy each, every link kept). */
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('mergeDuplicates')
+                ->label(__('ডুপ্লিকেট ছবি একত্র করুন'))
+                ->icon(Heroicon::OutlinedSquare2Stack)
+                ->color('gray')
+                ->modalHeading(__('ডুপ্লিকেট ছবি একত্র করবেন?'))
+                ->modalDescription(function (): string {
+                    MediaDedupe::hashPending(100000);
+                    $plan = MediaDedupe::plan();
+
+                    if ($plan === []) {
+                        return __('একই ছবির কোনো ডুপ্লিকেট নেই।');
+                    }
+
+                    return __(':groups টি ছবির :copies টি বাড়তি কপি আছে (:size)। প্রতিটির সবচেয়ে পুরনোটি রাখা হবে, যেখানে বাড়তি কপি ব্যবহার হচ্ছিল সেখানকার লিংক নিজে থেকেই ঠিক হবে, তারপর বাড়তি কপি মোছা হবে।', [
+                        'groups' => count($plan),
+                        'copies' => array_sum(array_map(fn ($g) => count($g['copies']), $plan)),
+                        'size' => Number::fileSize(array_sum(array_column($plan, 'bytes'))),
+                    ]);
+                })
+                ->modalSubmitActionLabel(__('একত্র করুন'))
+                ->requiresConfirmation()
+                ->action(function (): void {
+                    $stats = MediaDedupe::merge();
+
+                    Notification::make()
+                        ->title($stats['removed'] ? __(':n টি বাড়তি কপি একত্র করা হয়েছে।', ['n' => $stats['removed']]) : __('একত্র করার মতো কিছু ছিল না।'))
+                        ->body($stats['removed'] ? __(':n জায়গার লিংক ঠিক করা হয়েছে, :size জায়গা বাঁচল।', ['n' => $stats['updated'], 'size' => Number::fileSize($stats['bytes'])]) : null)
+                        ->success()
+                        ->send();
+                }),
         ];
-
-        $found = [];
-        foreach ($checks as $label => $query) {
-            foreach ($query() as $name) {
-                $found[] = "{$label} \"{$name}\"";
-            }
-        }
-
-        return $found;
     }
 }

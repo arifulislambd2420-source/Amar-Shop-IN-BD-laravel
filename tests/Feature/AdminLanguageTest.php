@@ -6,6 +6,7 @@ use App\Filament\Pages\SiteSettings;
 use App\Models\AdminUser;
 use App\Models\SiteSetting;
 use App\Support\SiteSettingsHelper;
+use Filament\Forms\Components\TextInput;
 use Livewire\Livewire;
 use Tests\Concerns\CreatesShopData;
 use Tests\TestCase;
@@ -93,10 +94,10 @@ class AdminLanguageTest extends TestCase
     public function test_field_labels_without_their_own_label_follow_the_language(): void
     {
         app()->setLocale('bn');
-        $this->assertSame('গ্রাহকের নাম', \Filament\Forms\Components\TextInput::make('customer_name')->getLabel());
+        $this->assertSame('গ্রাহকের নাম', TextInput::make('customer_name')->getLabel());
 
         app()->setLocale('en');
-        $this->assertSame('Customer name', \Filament\Forms\Components\TextInput::make('customer_name')->getLabel());
+        $this->assertSame('Customer name', TextInput::make('customer_name')->getLabel());
     }
 
     public function test_every_bangla_text_of_the_admin_has_an_english_translation(): void
@@ -106,7 +107,9 @@ class AdminLanguageTest extends TestCase
 
         $missing = [];
 
-        foreach ($this->filesUnder(app_path('Filament')) as $file) {
+        $files = array_merge($this->filesUnder(app_path('Filament')), [app_path('Support/MediaReferences.php')], glob(resource_path('views/filament/pages/*.blade.php')));
+
+        foreach ($files as $file) {
             preg_match_all('/__\(\s*\'((?:[^\'\\\\]|\\\\.)*)\'/u', file_get_contents($file), $m);
 
             foreach ($m[1] as $raw) {

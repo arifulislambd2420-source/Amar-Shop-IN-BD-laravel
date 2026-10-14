@@ -16,6 +16,7 @@ class MediaLibrary extends Model
         'file_path',
         'mime_type',
         'file_size',
+        'file_hash',
     ];
 
     protected function casts(): array

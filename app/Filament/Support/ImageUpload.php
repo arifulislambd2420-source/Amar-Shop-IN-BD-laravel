@@ -4,6 +4,7 @@ namespace App\Filament\Support;
 
 use App\Models\MediaLibrary;
 use App\Support\Media;
+use App\Support\MediaDedupe;
 use App\Support\RemoteImage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -291,6 +292,13 @@ class ImageUpload
     public static function store(UploadedFile $file): string
     {
         $ext = self::validatedExtension($file->getRealPath(), $file->getSize());
+
+        // The same picture is only stored once.
+        $hash = MediaDedupe::hash($file->getRealPath());
+        if ($hash && ($existing = MediaDedupe::existingFor($hash))) {
+            return $existing->file_path;
+        }
+
         $directory = config('media.directory');
         $name = Str::uuid()->toString().'.'.$ext;
 
@@ -308,6 +316,7 @@ class ImageUpload
             'file_path' => $url,
             'mime_type' => array_search($ext, config('media.mimes'), true) ?: null,
             'file_size' => $file->getSize(),
+            'file_hash' => $hash,
         ]);
 
         return $url;
@@ -322,6 +331,12 @@ class ImageUpload
     public static function storeFromPath(string $path, string $originalName): string
     {
         $ext = self::validatedExtension($path);
+
+        $hash = MediaDedupe::hash($path);
+        if ($hash && ($existing = MediaDedupe::existingFor($hash))) {
+            return $existing->file_path;
+        }
+
         $name = Str::uuid()->toString().'.'.$ext;
 
         $stored = Storage::disk(config('media.disk'))->putFileAs(config('media.directory'), new File($path), $name);
@@ -338,6 +353,7 @@ class ImageUpload
             'file_path' => $url,
             'mime_type' => array_search($ext, config('media.mimes'), true) ?: null,
             'file_size' => (int) @filesize($path),
+            'file_hash' => $hash,
         ]);
 
         return $url;

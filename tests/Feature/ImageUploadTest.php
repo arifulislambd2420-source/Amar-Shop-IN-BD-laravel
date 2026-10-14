@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Concerns\CreatesShopData;
 use Tests\TestCase;
 
@@ -178,14 +179,15 @@ class ImageUploadTest extends TestCase
         $this->actingAs(AdminUser::create(['username' => 'a', 'password' => 'secret-pass-1', 'role' => 'super_admin']), 'admin');
 
         $used = ImageUpload::store(UploadedFile::fake()->image('used.png', 20, 20));
-        $free = ImageUpload::store(UploadedFile::fake()->image('free.png', 20, 20));
+        $free = ImageUpload::store(UploadedFile::fake()->image('free.png', 30, 30)); // a different size: the same picture would be stored once
         Brand::create(['name' => 'B', 'logo' => $used]);
 
         $page = new MediaLibrary;
         $this->assertCount(2, $page->getFiles());
         $this->assertSame('used.png', $page->getFiles()->firstWhere('url', $used)['name']);
 
-        $page->deleteFile(basename($used));
+        // In use: the plain delete refuses (only the confirmed dialog may delete it — see MediaCleanupTest).
+        $this->assertFalse($page->deleteFile(basename($used)));
         Storage::disk('public')->assertExists('media/'.basename($used));
 
         $page->deleteFile(basename($free));
@@ -197,7 +199,7 @@ class ImageUploadTest extends TestCase
     {
         $this->actingAs(AdminUser::create(['username' => 'a', 'password' => 'secret-pass-1', 'role' => 'super_admin']), 'admin');
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
 
         (new MediaLibrary)->deleteFile('../.env');
     }
