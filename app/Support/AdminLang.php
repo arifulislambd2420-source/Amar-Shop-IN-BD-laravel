@@ -114,6 +114,11 @@ class AdminLang
     public static function register(): void
     {
         $label = function ($component): void {
+            // English: Filament's own label from the field name is already right.
+            if (app()->getLocale() !== 'bn') {
+                return;
+            }
+
             $name = method_exists($component, 'getName') ? (string) $component->getName() : '';
 
             if (isset(self::FIELDS[$name])) {

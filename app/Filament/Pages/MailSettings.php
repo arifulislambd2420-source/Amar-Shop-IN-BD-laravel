@@ -15,6 +15,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 /**
@@ -31,11 +32,26 @@ class MailSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'মেইল (SMTP)';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'মেইল (SMTP)';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('মেইল (SMTP)');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('মেইল (SMTP)');
+
+    }
 
     protected static ?int $navigationSort = 2;
 
@@ -81,22 +97,22 @@ class MailSettings extends Page implements HasSchemas
                 Section::make('SMTP')
                     ->columns(2)
                     ->schema([
-                        TextInput::make('mail_mailer')->label('মেইলার')->default('smtp'),
-                        TextInput::make('mail_host')->label('হোস্ট')->required(),
-                        TextInput::make('mail_port')->label('পোর্ট')->numeric()->required(),
+                        TextInput::make('mail_mailer')->label(__('মেইলার'))->default('smtp'),
+                        TextInput::make('mail_host')->label(__('হোস্ট'))->required(),
+                        TextInput::make('mail_port')->label(__('পোর্ট'))->numeric()->required(),
                         Select::make('mail_encryption')
-                            ->label('এনক্রিপশন')
+                            ->label(__('এনক্রিপশন'))
                             ->options(['tls' => 'tls', 'ssl' => 'ssl'])
                             ->default('tls'),
-                        TextInput::make('mail_username')->label('ইউজারনেম'),
+                        TextInput::make('mail_username')->label(__('ইউজারনেম')),
                         TextInput::make('mail_password')
-                            ->label('পাসওয়ার্ড')
+                            ->label(__('পাসওয়ার্ড'))
                             ->password()
                             ->revealable()
-                            ->helperText('খালি রাখলে বর্তমান পাসওয়ার্ডই থাকবে।')
+                            ->helperText(__('খালি রাখলে বর্তমান পাসওয়ার্ডই থাকবে।'))
                             ->dehydrated(fn (?string $state): bool => filled($state)),
-                        TextInput::make('mail_from_address')->label('প্রেরকের ইমেইল')->email()->required(),
-                        TextInput::make('mail_from_name')->label('প্রেরকের নাম')->required(),
+                        TextInput::make('mail_from_address')->label(__('প্রেরকের ইমেইল'))->email()->required(),
+                        TextInput::make('mail_from_name')->label(__('প্রেরকের নাম'))->required(),
                     ]),
             ]);
     }
@@ -117,6 +133,6 @@ class MailSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('মেইল সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('মেইল সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

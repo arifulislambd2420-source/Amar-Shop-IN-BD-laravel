@@ -20,13 +20,18 @@ class SalesChart extends ChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected ?string $heading = 'বিক্রির চার্ট';
+    public function getHeading(): ?string
+    {
+
+        return __('বিক্রির চার্ট');
+
+    }
 
     public ?string $filter = '30';
 
     protected function getFilters(): ?array
     {
-        return ['7' => 'গত ৭ দিন', '30' => 'গত ৩০ দিন', '90' => 'গত ৯০ দিন'];
+        return ['7' => __('গত ৭ দিন'), '30' => __('গত ৩০ দিন'), '90' => __('গত ৯০ দিন')];
     }
 
     protected ?string $maxHeight = '280px';
@@ -63,7 +68,7 @@ class SalesChart extends ChartWidget
 
         return [
             'datasets' => [[
-                'label' => 'বিক্রি (৳)',
+                'label' => __('বিক্রি (৳)'),
                 'data' => $data,
                 'borderColor' => $brand,
                 'backgroundColor' => $brand.'22',

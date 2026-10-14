@@ -27,25 +27,25 @@ class LatestOrders extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('সর্বশেষ অর্ডার')
+            ->heading(__('সর্বশেষ অর্ডার'))
             ->query(
                 fn (): Builder => Order::query()->latest('created_at')
             )
             ->defaultPaginationPageOption(5)
             ->columns([
                 TextColumn::make('invoice_no')
-                    ->label('ইনভয়েস')
+                    ->label(__('ইনভয়েস'))
                     ->searchable(),
                 TextColumn::make('customer_name')
-                    ->label('গ্রাহক')
+                    ->label(__('গ্রাহক'))
                     ->searchable(),
-                TextColumn::make('phone')->label('ফোন'),
+                TextColumn::make('phone')->label(__('ফোন')),
                 TextColumn::make('total')
                     ->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2))
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => OrderResource::STATUS_OPTIONS[$state] ?? (string) $state)
+                    ->formatStateUsing(fn (?string $state): string => OrderResource::statuses()[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => OrderResource::STATUS_COLORS[$state] ?? 'gray'),
                 TextColumn::make('created_at')
                     ->dateTime()

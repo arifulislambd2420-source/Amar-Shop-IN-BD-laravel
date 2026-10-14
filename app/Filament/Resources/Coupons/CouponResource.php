@@ -21,6 +21,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class CouponResource extends Resource
@@ -29,13 +30,28 @@ class CouponResource extends Resource
 
     protected static ?string $model = Coupon::class;
 
-    protected static ?string $modelLabel = 'কুপন';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'কুপন';
+        return Str::singular(__('কুপন'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('কুপন');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
-    protected static string|UnitEnum|null $navigationGroup = 'মার্কেটিং';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('মার্কেটিং');
+
+    }
 
     protected static ?int $navigationSort = 1;
 
@@ -46,12 +62,12 @@ class CouponResource extends Resource
                 TextInput::make('code')
                     ->required()
                     ->maxLength(50)
-                    ->helperText('গ্রাহক ছোট বা বড় হাতের অক্ষরে লিখতে পারবেন।')
+                    ->helperText(__('গ্রাহক ছোট বা বড় হাতের অক্ষরে লিখতে পারবেন।'))
                     ->unique(ignoreRecord: true),
                 Select::make('discount_type')
                     ->options([
-                        'percent' => 'শতকরা (%)',
-                        'fixed' => 'Fixed (৳)',
+                        'percent' => __('শতকরা (%)'),
+                        'fixed' => __('Fixed (৳)'),
                     ])
                     ->default('percent')
                     ->required(),
@@ -60,18 +76,18 @@ class CouponResource extends Resource
                     ->required()
                     ->minValue(0),
                 TextInput::make('min_spend')
-                    ->label('ন্যূনতম কেনাকাটা')
+                    ->label(__('ন্যূনতম কেনাকাটা'))
                     ->numeric()
                     ->default(0)
                     ->minValue(0),
                 TextInput::make('max_uses')
-                    ->label('সর্বোচ্চ ব্যবহার')
+                    ->label(__('সর্বোচ্চ ব্যবহার'))
                     ->numeric()
                     ->minValue(0)
-                    ->helperText('খালি = সীমাহীন।'),
+                    ->helperText(__('খালি = সীমাহীন।')),
                 DateTimePicker::make('valid_until'),
                 Toggle::make('is_active')
-                    ->label('চালু')
+                    ->label(__('চালু'))
                     ->default(true),
             ]);
     }
@@ -94,11 +110,11 @@ class CouponResource extends Resource
                     ->sortable(),
                 TextColumn::make('uses')
                     ->visibleFrom('md')
-                    ->label('ব্যবহৃত')
+                    ->label(__('ব্যবহৃত'))
                     ->sortable(),
                 TextColumn::make('max_uses')
                     ->visibleFrom('md')
-                    ->label('সর্বোচ্চ')
+                    ->label(__('সর্বোচ্চ'))
                     ->placeholder('∞'),
                 TextColumn::make('valid_until')
                     ->visibleFrom('md')

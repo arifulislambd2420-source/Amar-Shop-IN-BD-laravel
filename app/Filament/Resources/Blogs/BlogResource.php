@@ -30,13 +30,28 @@ class BlogResource extends Resource
 
     protected static ?string $model = Blog::class;
 
-    protected static ?string $modelLabel = 'ব্লগ পোস্ট';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'ব্লগ পোস্ট';
+        return Str::singular(__('ব্লগ পোস্ট'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('ব্লগ পোস্ট');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNewspaper;
 
-    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('কনটেন্ট');
+
+    }
 
     protected static ?int $navigationSort = 2;
 
@@ -44,7 +59,7 @@ class BlogResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('পোস্ট')
+                Section::make(__('পোস্ট'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('title')
@@ -63,15 +78,15 @@ class BlogResource extends Resource
                         TextInput::make('category')
                             ->maxLength(255),
                         TextInput::make('read_time')
-                            ->label('পড়ার সময় (মিনিট)')
+                            ->label(__('পড়ার সময় (মিনিট)'))
                             ->numeric()
                             ->minValue(1),
                         ImageUpload::make('cover')
-                            ->label('কভার ছবি')
+                            ->label(__('কভার ছবি'))
                             ->columnSpanFull(),
                         DateTimePicker::make('published_at'),
                     ]),
-                Section::make('লেখা')
+                Section::make(__('লেখা'))
                     ->schema([
                         ImageUpload::configureRichEditor(RichEditor::make('content'))
                             ->columnSpanFull(),
@@ -84,7 +99,7 @@ class BlogResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('cover')
-                    ->label('কভার'),
+                    ->label(__('কভার')),
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
@@ -93,7 +108,7 @@ class BlogResource extends Resource
                     ->badge()
                     ->searchable(),
                 TextColumn::make('read_time')
-                    ->label('পড়া (মিনিট)')
+                    ->label(__('পড়া (মিনিট)'))
                     ->sortable(),
                 TextColumn::make('published_at')
                     ->dateTime()

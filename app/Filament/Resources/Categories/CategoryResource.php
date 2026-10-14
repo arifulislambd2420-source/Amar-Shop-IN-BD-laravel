@@ -26,13 +26,28 @@ class CategoryResource extends Resource
 
     protected static ?string $model = Category::class;
 
-    protected static ?string $modelLabel = 'ক্যাটাগরি';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'ক্যাটাগরি';
+        return Str::singular(__('ক্যাটাগরি'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('ক্যাটাগরি');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'ক্যাটালগ';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('ক্যাটালগ');
+
+    }
 
     protected static ?int $navigationSort = 1;
 
@@ -54,11 +69,11 @@ class CategoryResource extends Resource
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
                 TextInput::make('icon')
-                    ->label('আইকন (ইমোজি)')
+                    ->label(__('আইকন (ইমোজি)'))
                     ->maxLength(2048)
-                    ->helperText('একটি ইমোজি, অথবা নিচে ছবি আপলোড করুন (ছবি দিলে সেটাই ব্যবহার হবে)।'),
+                    ->helperText(__('একটি ইমোজি, অথবা নিচে ছবি আপলোড করুন (ছবি দিলে সেটাই ব্যবহার হবে)।')),
                 ImageUpload::make('icon_image')
-                    ->label('আইকনের ছবি')
+                    ->label(__('আইকনের ছবি'))
                     ->afterStateHydrated(function ($component, $state, $record): void {
                         // Show an already-saved image icon here (emoji stays in the text box).
                         if (blank($state) && $record && self::isImageIcon($record->icon)) {
@@ -94,7 +109,7 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('icon')
-                    ->label('আইকন')
+                    ->label(__('আইকন'))
                     ->limit(30),
                 TextColumn::make('name')
                     ->searchable()
@@ -104,7 +119,7 @@ class CategoryResource extends Resource
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('products_count')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->counts('products')
                     ->badge(),
             ])

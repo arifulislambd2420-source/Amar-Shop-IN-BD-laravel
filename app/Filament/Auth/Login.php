@@ -23,7 +23,7 @@ class Login extends BaseLogin
     protected function getEmailFormComponent(): Component
     {
         return TextInput::make('username')
-            ->label('ইউজারনেম')
+            ->label(__('ইউজারনেম'))
             ->required()
             ->autocomplete('username')
             ->autofocus()

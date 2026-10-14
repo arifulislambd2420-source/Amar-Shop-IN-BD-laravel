@@ -17,6 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
@@ -28,13 +29,28 @@ class ContactMessageResource extends Resource
 
     protected static ?string $model = ContactMessage::class;
 
-    protected static ?string $modelLabel = 'যোগাযোগের বার্তা';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'যোগাযোগের বার্তা';
+        return Str::singular(__('যোগাযোগের বার্তা'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('যোগাযোগের বার্তা');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;
 
-    protected static string|UnitEnum|null $navigationGroup = 'গ্রাহক';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('গ্রাহক');
+
+    }
 
     protected static ?int $navigationSort = 2;
 

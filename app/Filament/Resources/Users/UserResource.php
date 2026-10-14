@@ -13,6 +13,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
@@ -25,13 +26,28 @@ class UserResource extends Resource
 
     protected static ?string $model = User::class;
 
-    protected static ?string $modelLabel = 'গ্রাহক';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'গ্রাহক';
+        return Str::singular(__('গ্রাহক'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('গ্রাহক');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static string|UnitEnum|null $navigationGroup = 'গ্রাহক';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('গ্রাহক');
+
+    }
 
     protected static ?int $navigationSort = 1;
 

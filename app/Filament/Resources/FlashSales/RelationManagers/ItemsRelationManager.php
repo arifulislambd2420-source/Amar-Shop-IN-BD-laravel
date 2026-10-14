@@ -13,27 +13,33 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
-    protected static ?string $title = 'ফ্ল্যাশ সেলের পণ্য';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+
+        return __('ফ্ল্যাশ সেলের পণ্য');
+
+    }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('product_id')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 TextInput::make('flash_price')
-                    ->label('ফ্ল্যাশ দাম')
+                    ->label(__('ফ্ল্যাশ দাম'))
                     ->numeric()
-                    ->prefix('৳')
+                    ->prefix(__('৳'))
                     ->required()
                     ->minValue(0),
             ]);
@@ -45,7 +51,7 @@ class ItemsRelationManager extends RelationManager
             ->recordTitleAttribute('flash_price')
             ->columns([
                 TextColumn::make('product.name')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('flash_price')

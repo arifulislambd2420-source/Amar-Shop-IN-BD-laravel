@@ -14,6 +14,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 /**
@@ -29,11 +30,26 @@ class GtmSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'জিটিএম / পিক্সেল';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'জিটিএম / পিক্সেল';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('জিটিএম / পিক্সেল');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('জিটিএম / পিক্সেল');
+
+    }
 
     protected static ?int $navigationSort = 3;
 
@@ -55,15 +71,15 @@ class GtmSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('গুগল ট্যাগ ম্যানেজার / মেটা পিক্সেল')
+                Section::make(__('গুগল ট্যাগ ম্যানেজার / মেটা পিক্সেল'))
                     ->schema([
                         TextInput::make('gtm_id')
-                            ->label('জিটিএম কনটেইনার আইডি')
+                            ->label(__('জিটিএম কনটেইনার আইডি'))
                             ->placeholder('GTM-XXXXXXX'),
                         TextInput::make('meta_pixel_id')
-                            ->label('মেটা (ফেসবুক) পিক্সেল আইডি')
+                            ->label(__('মেটা (ফেসবুক) পিক্সেল আইডি'))
                             ->placeholder('1234567890123456')
-                            ->helperText('চালু থাকলে সারা সাইটে (ল্যান্ডিং পেজসহ) PageView, ViewContent, AddToCart, InitiateCheckout ও Purchase যায়। খালি = বন্ধ।'),
+                            ->helperText(__('চালু থাকলে সারা সাইটে (ল্যান্ডিং পেজসহ) PageView, ViewContent, AddToCart, InitiateCheckout ও Purchase যায়। খালি = বন্ধ।')),
                     ]),
             ]);
     }
@@ -82,6 +98,6 @@ class GtmSettings extends Page implements HasSchemas
             ['setting_value' => preg_replace('/\D+/', '', (string) ($data['meta_pixel_id'] ?? ''))],
         );
 
-        Notification::make()->title('জিটিএম / পিক্সেল সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('জিটিএম / পিক্সেল সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

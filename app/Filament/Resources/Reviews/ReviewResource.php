@@ -23,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class ReviewResource extends Resource
@@ -31,13 +32,28 @@ class ReviewResource extends Resource
 
     protected static ?string $model = Review::class;
 
-    protected static ?string $modelLabel = 'রিভিউ';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'রিভিউ';
+        return Str::singular(__('রিভিউ'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('রিভিউ');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'ক্যাটালগ';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('ক্যাটালগ');
+
+    }
 
     protected static ?int $navigationSort = 3;
 
@@ -46,7 +62,7 @@ class ReviewResource extends Resource
         return $schema
             ->components([
                 Select::make('product_id')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
@@ -61,7 +77,7 @@ class ReviewResource extends Resource
                     ->rows(4)
                     ->columnSpanFull(),
                 Toggle::make('approved')
-                    ->label('অনুমোদিত'),
+                    ->label(__('অনুমোদিত')),
             ]);
     }
 
@@ -70,7 +86,7 @@ class ReviewResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('product.name')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('customer_name')
@@ -95,20 +111,20 @@ class ReviewResource extends Resource
             ->filters([
                 TernaryFilter::make('approved'),
                 SelectFilter::make('product_id')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload(),
             ])
             ->recordActions([
                 Action::make('approve')
-                    ->label('অনুমোদন করুন')
+                    ->label(__('অনুমোদন করুন'))
                     ->icon(Heroicon::OutlinedCheck)
                     ->color('success')
                     ->visible(fn (Review $record): bool => ! $record->approved)
                     ->action(fn (Review $record) => $record->update(['approved' => true])),
                 Action::make('unapprove')
-                    ->label('অনুমোদন তুলে নিন')
+                    ->label(__('অনুমোদন তুলে নিন'))
                     ->icon(Heroicon::OutlinedXMark)
                     ->color('warning')
                     ->visible(fn (Review $record): bool => (bool) $record->approved)

@@ -20,6 +20,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Crypt;
 use UnitEnum;
 
@@ -39,11 +40,26 @@ class SmsSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'এসএমএস';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'এসএমএস সেটিং';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('এসএমএস');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('এসএমএস সেটিং');
+
+    }
 
     protected static ?int $navigationSort = 6;
 
@@ -75,14 +91,14 @@ class SmsSettings extends Page implements HasSchemas
     {
         return [
             Action::make('testSms')
-                ->label('টেস্ট এসএমএস পাঠান')
+                ->label(__('টেস্ট এসএমএস পাঠান'))
                 ->icon(Heroicon::OutlinedPaperAirplane)
                 ->color('gray')
-                ->modalHeading('একটি টেস্ট এসএমএস পাঠান')
-                ->modalDescription('সেভ করা সেটিং দিয়ে পাঠানো হয় (এইমাত্র বদলালে আগে সেভ করুন)। গেটওয়ের আসল উত্তর দেখাবে।')
+                ->modalHeading(__('একটি টেস্ট এসএমএস পাঠান'))
+                ->modalDescription(__('সেভ করা সেটিং দিয়ে পাঠানো হয় (এইমাত্র বদলালে আগে সেভ করুন)। গেটওয়ের আসল উত্তর দেখাবে।'))
                 ->schema([
                     TextInput::make('number')
-                        ->label('আপনার মোবাইল নম্বর')
+                        ->label(__('আপনার মোবাইল নম্বর'))
                         ->placeholder('01XXXXXXXXX')
                         ->required(),
                 ])
@@ -91,13 +107,13 @@ class SmsSettings extends Page implements HasSchemas
                     $number = $sms->normalizeNumber($data['number']);
 
                     if (! $number) {
-                        Notification::make()->title('সঠিক বাংলাদেশি মোবাইল নম্বর নয়।')->danger()->send();
+                        Notification::make()->title(__('সঠিক বাংলাদেশি মোবাইল নম্বর নয়।'))->danger()->send();
 
                         return;
                     }
 
                     if (! $sms->configured()) {
-                        Notification::make()->title('আগে এপিআই কী আর সেন্ডার আইডি সেভ করুন।')->danger()->send();
+                        Notification::make()->title(__('আগে এপিআই কী আর সেন্ডার আইডি সেভ করুন।'))->danger()->send();
 
                         return;
                     }
@@ -105,7 +121,7 @@ class SmsSettings extends Page implements HasSchemas
                     $result = $sms->send($number, SiteSettingsHelper::siteNameEn().': test SMS - it works!');
 
                     Notification::make()
-                        ->title($result['ok'] ? 'গেটওয়ে টেস্ট এসএমএস গ্রহণ করেছে' : 'গেটওয়ে এসএমএসটি গ্রহণ করেনি')
+                        ->title($result['ok'] ? __('গেটওয়ে টেস্ট এসএমএস গ্রহণ করেছে') : __('গেটওয়ে এসএমএসটি গ্রহণ করেনি'))
                         ->body(mb_substr($result['response'], 0, 300))
                         ->color($result['ok'] ? 'success' : 'danger')
                         ->persistent()
@@ -119,27 +135,27 @@ class SmsSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('গ্রাহককে এসএমএস (BulkSMSBD)')
-                    ->description('প্রতি অর্ডারে কনফার্ম, শিপ আর ডেলিভারির সময় একবার করে যায়। এপিআই কী খালি রাখলে বর্তমানটাই থাকবে।')
+                Section::make(__('গ্রাহককে এসএমএস (BulkSMSBD)'))
+                    ->description(__('প্রতি অর্ডারে কনফার্ম, শিপ আর ডেলিভারির সময় একবার করে যায়। এপিআই কী খালি রাখলে বর্তমানটাই থাকবে।'))
                     ->columns(2)
                     ->schema([
                         Toggle::make('sms_enabled')
-                            ->label('এসএমএস পাঠান')
-                            ->helperText('ডিফল্টে বন্ধ — চালু না করা পর্যন্ত কিছু পাঠানো হবে না।')
+                            ->label(__('এসএমএস পাঠান'))
+                            ->helperText(__('ডিফল্টে বন্ধ — চালু না করা পর্যন্ত কিছু পাঠানো হবে না।'))
                             ->columnSpanFull(),
                         TextInput::make('sms_api_key')
-                            ->label('এপিআই কী')
+                            ->label(__('এপিআই কী'))
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         TextInput::make('sms_sender_id')
-                            ->label('সেন্ডার আইডি')
-                            ->placeholder('আপনার অনুমোদিত সেন্ডার আইডি'),
+                            ->label(__('সেন্ডার আইডি'))
+                            ->placeholder(__('আপনার অনুমোদিত সেন্ডার আইডি')),
                         Select::make('sms_language')
-                            ->label('বার্তার ভাষা')
-                            ->options(SmsTemplates::LANGUAGES)
+                            ->label(__('বার্তার ভাষা'))
+                            ->options(array_map('__', SmsTemplates::LANGUAGES))
                             ->required()
-                            ->helperText('বাংলা এসএমএস ৭০ অক্ষরে, ইংরেজি ১৬০ অক্ষরে একটি হিসেবে চার্জ হয়।'),
+                            ->helperText(__('বাংলা এসএমএস ৭০ অক্ষরে, ইংরেজি ১৬০ অক্ষরে একটি হিসেবে চার্জ হয়।')),
                     ]),
             ]);
     }
@@ -168,6 +184,6 @@ class SmsSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('এসএমএস সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('এসএমএস সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

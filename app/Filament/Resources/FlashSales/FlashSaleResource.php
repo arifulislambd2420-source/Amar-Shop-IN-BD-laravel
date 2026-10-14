@@ -23,6 +23,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class FlashSaleResource extends Resource
@@ -31,13 +32,28 @@ class FlashSaleResource extends Resource
 
     protected static ?string $model = FlashSale::class;
 
-    protected static ?string $modelLabel = 'ফ্ল্যাশ সেল';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'ফ্ল্যাশ সেল';
+        return Str::singular(__('ফ্ল্যাশ সেল'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('ফ্ল্যাশ সেল');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBolt;
 
-    protected static string|UnitEnum|null $navigationGroup = 'মার্কেটিং';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('মার্কেটিং');
+
+    }
 
     protected static ?int $navigationSort = 2;
 
@@ -49,10 +65,10 @@ class FlashSaleResource extends Resource
                     ->required()
                     ->maxLength(255),
                 DateTimePicker::make('end_time')
-                    ->label('শেষ হবে')
+                    ->label(__('শেষ হবে'))
                     ->required(),
                 Toggle::make('is_active')
-                    ->label('চালু')
+                    ->label(__('চালু'))
                     ->default(true),
             ]);
     }
@@ -68,7 +84,7 @@ class FlashSaleResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('items_count')
-                    ->label('পণ্যসমূহ')
+                    ->label(__('পণ্যসমূহ'))
                     ->counts('items')
                     ->badge(),
                 IconColumn::make('is_active')

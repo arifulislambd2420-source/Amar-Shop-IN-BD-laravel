@@ -36,6 +36,11 @@ class CustomizationTest extends TestCase
     {
         parent::setUp();
 
+        // These tests are about the Bangla admin: the language is a Site Setting (English by
+        // default), and Livewire component tests don't pass through the locale middleware.
+        $this->setting('admin_locale', 'bn');
+        app()->setLocale('bn');
+
         Storage::fake('public');
         $this->publicDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'pub-'.uniqid();
         config(['media.public_path' => $this->publicDir]);

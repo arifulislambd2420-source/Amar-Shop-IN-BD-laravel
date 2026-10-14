@@ -19,6 +19,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
@@ -33,17 +34,37 @@ class AdminUserResource extends Resource
 
     protected static ?string $model = AdminUser::class;
 
-    protected static ?string $pluralModelLabel = 'অ্যাডমিন ব্যবহারকারী';
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('অ্যাডমিন ব্যবহারকারী');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('সেটিংস');
+
+    }
 
     protected static ?int $navigationSort = 11;
 
-    protected static ?string $navigationLabel = 'অ্যাডমিন ব্যবহারকারী';
+    public static function getNavigationLabel(): string
+    {
 
-    protected static ?string $modelLabel = 'অ্যাডমিন ব্যবহারকারী';
+        return __('অ্যাডমিন ব্যবহারকারী');
+
+    }
+
+    public static function getModelLabel(): string
+    {
+
+        return Str::singular(__('অ্যাডমিন ব্যবহারকারী'));
+
+    }
 
     protected static ?string $recordTitleAttribute = 'username';
 
@@ -61,10 +82,10 @@ class AdminUserResource extends Resource
                     ->minLength(8)
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->dehydrated(fn (?string $state): bool => filled($state))
-                    ->helperText('এডিটের সময় খালি রাখলে পাসওয়ার্ড বদলাবে না।'),
+                    ->helperText(__('এডিটের সময় খালি রাখলে পাসওয়ার্ড বদলাবে না।')),
                 Select::make('role')
-                    ->label('রোল')
-                    ->options(AdminUser::ROLE_OPTIONS)
+                    ->label(__('রোল'))
+                    ->options(array_map('__', AdminUser::ROLE_OPTIONS))
                     ->default(AdminUser::ROLE_ORDER_STAFF)
                     ->required()
                     ->native(false),
@@ -79,9 +100,9 @@ class AdminUserResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('role')
-                    ->label('রোল')
+                    ->label(__('রোল'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => AdminUser::ROLE_OPTIONS[$state] ?? (string) $state)
+                    ->formatStateUsing(fn (?string $state): string => __(AdminUser::ROLE_OPTIONS[$state] ?? (string) $state))
                     ->color(fn (?string $state): string => match ($state) {
                         AdminUser::ROLE_SUPER_ADMIN => 'danger',
                         AdminUser::ROLE_MANAGER => 'warning',
@@ -92,7 +113,7 @@ class AdminUserResource extends Resource
                 EditAction::make()
                     ->using(function (Model $record, array $data): Model {
                         if (($data['role'] ?? $record->role) !== AdminUser::ROLE_SUPER_ADMIN && self::isLastSuperAdmin($record)) {
-                            Notification::make()->title('শেষ সুপার অ্যাডমিনের রোল বদলানো যাবে না।')->danger()->send();
+                            Notification::make()->title(__('শেষ সুপার অ্যাডমিনের রোল বদলানো যাবে না।'))->danger()->send();
 
                             return $record;
                         }

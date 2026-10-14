@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class BrandResource extends Resource
@@ -26,13 +27,28 @@ class BrandResource extends Resource
 
     protected static ?string $model = Brand::class;
 
-    protected static ?string $modelLabel = 'ব্র্যান্ড';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'ব্র্যান্ড';
+        return Str::singular(__('ব্র্যান্ড'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('ব্র্যান্ড');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static string|UnitEnum|null $navigationGroup = 'ক্যাটালগ';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('ক্যাটালগ');
+
+    }
 
     protected static ?int $navigationSort = 2;
 
@@ -44,7 +60,7 @@ class BrandResource extends Resource
                     ->required()
                     ->maxLength(255),
                 ImageUpload::make('logo')
-                    ->label('লোগো'),
+                    ->label(__('লোগো')),
             ]);
     }
 
@@ -53,13 +69,13 @@ class BrandResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('logo')
-                    ->label('লোগো')
+                    ->label(__('লোগো'))
                     ->circular(),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('products_count')
-                    ->label('পণ্য')
+                    ->label(__('পণ্য'))
                     ->counts('products')
                     ->badge(),
             ])

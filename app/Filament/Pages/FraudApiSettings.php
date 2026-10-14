@@ -15,6 +15,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 /**
@@ -31,11 +32,26 @@ class FraudApiSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldExclamation;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'ফ্রড এপিআই';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'ফ্রড এপিআই';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('ফ্রড এপিআই');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('ফ্রড এপিআই');
+
+    }
 
     protected static ?int $navigationSort = 5;
 
@@ -64,27 +80,27 @@ class FraudApiSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('ফ্রি ফ্রড-চেক এপিআই')
+                Section::make(__('ফ্রি ফ্রড-চেক এপিআই'))
                     ->schema([
                         TextInput::make('free_api_url')
-                            ->label('এপিআই URL')
+                            ->label(__('এপিআই URL'))
                             ->placeholder('https://example.com/api/check'),
                         TextInput::make('free_api_key')
-                            ->label('এপিআই কী')
+                            ->label(__('এপিআই কী'))
                             ->password()
                             ->revealable(),
-                        Toggle::make('free_active')->label('চালু'),
+                        Toggle::make('free_active')->label(__('চালু')),
                     ]),
-                Section::make('পেইড ফ্রড-চেক এপিআই')
+                Section::make(__('পেইড ফ্রড-চেক এপিআই'))
                     ->schema([
                         TextInput::make('paid_api_url')
-                            ->label('এপিআই URL')
+                            ->label(__('এপিআই URL'))
                             ->placeholder('https://example.com/api/check'),
                         TextInput::make('paid_api_key')
-                            ->label('এপিআই কী')
+                            ->label(__('এপিআই কী'))
                             ->password()
                             ->revealable(),
-                        Toggle::make('paid_active')->label('চালু'),
+                        Toggle::make('paid_active')->label(__('চালু')),
                     ]),
             ]);
     }
@@ -111,6 +127,6 @@ class FraudApiSettings extends Page implements HasSchemas
             ],
         );
 
-        Notification::make()->title('ফ্রড এপিআই সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('ফ্রড এপিআই সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

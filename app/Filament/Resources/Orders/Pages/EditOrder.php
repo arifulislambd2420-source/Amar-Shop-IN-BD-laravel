@@ -22,7 +22,7 @@ class EditOrder extends EditRecord
             // Opens the printable/downloadable invoice (token-gated route) in
             // a new tab; admin reaches it via the order's own token.
             Action::make('invoice')
-                ->label('ইনভয়েস ডাউনলোড')
+                ->label(__('ইনভয়েস ডাউনলোড'))
                 ->icon(Heroicon::OutlinedPrinter)
                 ->color('gray')
                 ->url(fn (Order $record): string => route('order.invoice', $record->order_token), shouldOpenInNewTab: true),
@@ -34,19 +34,19 @@ class EditOrder extends EditRecord
             // double-dispatch once a consignment_id is already set.
             ActionGroup::make([
                 Action::make('steadfast')
-                    ->label('স্টিডফাস্টে পাঠান')
+                    ->label(__('স্টিডফাস্টে পাঠান'))
                     ->requiresConfirmation()
                     ->action(fn (Order $record) => $this->sendToCourier($record, 'steadfast', 'Steadfast')),
                 Action::make('pathao')
-                    ->label('পাঠাওয়ে পাঠান (ডেমো)')
+                    ->label(__('পাঠাওয়ে পাঠান (ডেমো)'))
                     ->requiresConfirmation()
                     ->action(fn (Order $record) => $this->sendToCourier($record, 'pathao', 'Pathao')),
                 Action::make('redx')
-                    ->label('রেডএক্সে পাঠান (ডেমো)')
+                    ->label(__('রেডএক্সে পাঠান (ডেমো)'))
                     ->requiresConfirmation()
                     ->action(fn (Order $record) => $this->sendToCourier($record, 'redx', 'RedX')),
             ])
-                ->label('কুরিয়ারে পাঠান')
+                ->label(__('কুরিয়ারে পাঠান'))
                 ->icon(Heroicon::OutlinedTruck)
                 ->button(),
 
@@ -59,7 +59,7 @@ class EditOrder extends EditRecord
     protected function sendToCourier(Order $record, string $courierKey, string $courier): void
     {
         if ($record->consignment_id) {
-            Notification::make()->title('ইতিমধ্যে কুরিয়ারে পাঠানো হয়েছে')->body("কনসাইনমেন্ট আইডি: {$record->consignment_id}")->warning()->send();
+            Notification::make()->title(__('ইতিমধ্যে কুরিয়ারে পাঠানো হয়েছে'))->body(__('কনসাইনমেন্ট আইডি: :id', ['id' => $record->consignment_id]))->warning()->send();
 
             return;
         }
@@ -67,8 +67,8 @@ class EditOrder extends EditRecord
         SendOrderToCourier::dispatch($record->id, $courierKey);
 
         Notification::make()
-            ->title("{$courier}-এ পাঠানো কিউতে দেওয়া হয়েছে")
-            ->body('কিছুক্ষণ পর পেজ রিফ্রেশ করলে কনসাইনমেন্ট আইডি (অথবা ব্যর্থ হলে কারণ) দেখা যাবে।')
+            ->title(__(':courier-এ পাঠানো কিউতে দেওয়া হয়েছে', ['courier' => $courier]))
+            ->body(__('কিছুক্ষণ পর পেজ রিফ্রেশ করলে কনসাইনমেন্ট আইডি (অথবা ব্যর্থ হলে কারণ) দেখা যাবে।'))
             ->success()
             ->send();
     }

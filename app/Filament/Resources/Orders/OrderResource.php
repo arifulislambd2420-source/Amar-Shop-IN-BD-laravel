@@ -34,6 +34,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class OrderResource extends Resource
@@ -44,13 +45,28 @@ class OrderResource extends Resource
 
     protected static ?string $model = Order::class;
 
-    protected static ?string $modelLabel = 'অর্ডার';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'অর্ডার';
+        return Str::singular(__('অর্ডার'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('অর্ডার');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
 
-    protected static string|UnitEnum|null $navigationGroup = 'বিক্রয়';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('বিক্রয়');
+
+    }
 
     protected static ?int $navigationSort = 0;
 
@@ -83,6 +99,22 @@ class OrderResource extends Resource
         'failed' => 'ব্যর্থ',
     ];
 
+    /** Labels in the admin's language (the constants above are the Bangla source text). */
+    public static function statuses(): array
+    {
+        return array_map('__', self::STATUS_OPTIONS);
+    }
+
+    public static function paymentMethods(): array
+    {
+        return array_map('__', self::PAYMENT_METHOD_OPTIONS);
+    }
+
+    public static function paymentStatuses(): array
+    {
+        return array_map('__', self::PAYMENT_STATUS_OPTIONS);
+    }
+
     public const STATUS_COLORS = [
         'pending' => 'warning',
         'processing' => 'info',
@@ -109,7 +141,7 @@ class OrderResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        return 'যাচাই করার মতো সন্দেহজনক অর্ডার';
+        return __('যাচাই করার মতো সন্দেহজনক অর্ডার');
     }
 
     public static function canCreate(): bool
@@ -122,20 +154,20 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('অর্ডার')
+                Section::make(__('অর্ডার'))
                     ->columns(3)
                     ->schema([
                         TextInput::make('invoice_no')
-                            ->label('ইনভয়েস নম্বর')
+                            ->label(__('ইনভয়েস নম্বর'))
                             ->disabled(),
                         TextInput::make('order_token')
-                            ->label('অর্ডার টোকেন')
+                            ->label(__('অর্ডার টোকেন'))
                             ->disabled(),
                         TextInput::make('created_at')
-                            ->label('তৈরির সময়')
+                            ->label(__('তৈরির সময়'))
                             ->disabled(),
                     ]),
-                Section::make('গ্রাহক')
+                Section::make(__('গ্রাহক'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('customer_name')
@@ -157,78 +189,78 @@ class OrderResource extends Resource
                             ->rows(2)
                             ->columnSpanFull(),
                     ]),
-                Section::make('পেমেন্ট ও স্ট্যাটাস')
+                Section::make(__('পেমেন্ট ও স্ট্যাটাস'))
                     ->columns(2)
                     ->schema([
                         Select::make('payment_method')
-                            ->options(self::PAYMENT_METHOD_OPTIONS),
+                            ->options(self::paymentMethods()),
                         Select::make('payment_status')
-                            ->options(self::PAYMENT_STATUS_OPTIONS),
+                            ->options(self::paymentStatuses()),
                         Select::make('status')
-                            ->options(self::STATUS_OPTIONS)
+                            ->options(self::statuses())
                             ->required(),
                         TextInput::make('advance_amount')
                             ->numeric()
-                            ->prefix('৳')
+                            ->prefix(__('৳'))
                             ->default(0),
                         TextInput::make('transaction_id')
-                            ->label('ট্রানজাকশন আইডি (বিকাশ)')
+                            ->label(__('ট্রানজাকশন আইডি (বিকাশ)'))
                             ->disabled()
                             ->columnSpanFull(),
                     ]),
-                Section::make('সন্দেহজনক অর্ডার যাচাই')
+                Section::make(__('সন্দেহজনক অর্ডার যাচাই'))
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_flagged')
-                            ->label('যাচাইয়ের জন্য চিহ্নিত')
-                            ->helperText('অর্ডারটি যাচাই করা হলে বন্ধ করুন (COD অর্ডারে তখন কনফার্মেশন এসএমএস যাবে)।')
+                            ->label(__('যাচাইয়ের জন্য চিহ্নিত'))
+                            ->helperText(__('অর্ডারটি যাচাই করা হলে বন্ধ করুন (COD অর্ডারে তখন কনফার্মেশন এসএমএস যাবে)।'))
                             ->columnSpanFull(),
                         Textarea::make('flag_reason')
-                            ->label('কেন চিহ্নিত হলো')
+                            ->label(__('কেন চিহ্নিত হলো'))
                             ->disabled()
                             ->rows(3)
                             ->columnSpanFull(),
                         TextInput::make('ip_address')
-                            ->label('গ্রাহকের আইপি')
+                            ->label(__('গ্রাহকের আইপি'))
                             ->disabled(),
                     ]),
-                Section::make('মোট হিসাব')
+                Section::make(__('মোট হিসাব'))
                     ->columns(4)
                     ->schema([
                         TextInput::make('subtotal')
                             ->numeric()
-                            ->prefix('৳'),
+                            ->prefix(__('৳')),
                         TextInput::make('shipping_fee')
                             ->numeric()
-                            ->prefix('৳')
+                            ->prefix(__('৳'))
                             ->default(0),
                         TextInput::make('discount')
                             ->numeric()
-                            ->prefix('৳')
+                            ->prefix(__('৳'))
                             ->default(0),
                         TextInput::make('total')
                             ->numeric()
-                            ->prefix('৳'),
+                            ->prefix(__('৳')),
                     ]),
-                Section::make('কুরিয়ার')
+                Section::make(__('কুরিয়ার'))
                     ->columns(3)
                     ->schema([
                         TextInput::make('consignment_id')
-                            ->label('কনসাইনমেন্ট আইডি')
+                            ->label(__('কনসাইনমেন্ট আইডি'))
                             ->maxLength(255),
                         TextInput::make('tracking_code')
                             ->maxLength(255),
                         TextInput::make('courier_status')
                             ->maxLength(255),
                         Textarea::make('courier_error')
-                            ->label('কুরিয়ারের সর্বশেষ ত্রুটি')
+                            ->label(__('কুরিয়ারের সর্বশেষ ত্রুটি'))
                             ->rows(2)
                             ->disabled()
                             ->dehydrated(false)
                             ->visible(fn (?Model $record): bool => filled($record?->courier_error))
                             ->columnSpanFull(),
                     ]),
-                Section::make('নোট')
+                Section::make(__('নোট'))
                     ->schema([
                         Textarea::make('notes')
                             ->rows(3)
@@ -242,7 +274,7 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('invoice_no')
-                    ->label('ইনভয়েস')
+                    ->label(__('ইনভয়েস'))
                     ->searchable()
                     ->sortable()
                     ->description(fn (Order $record): string => '#'.$record->id.' · '.$record->created_at?->format('d M, h:i A'))
@@ -250,9 +282,9 @@ class OrderResource extends Resource
                     ->weight(fn (Order $record): ?FontWeight => $record->is_flagged ? FontWeight::Bold : null),
                 TextColumn::make('is_flagged')
                     ->visibleFrom('md')
-                    ->label('যাচাই')
+                    ->label(__('যাচাই'))
                     ->badge()
-                    ->state(fn (Order $record): ?string => $record->is_flagged ? 'চিহ্নিত' : null)
+                    ->state(fn (Order $record): ?string => $record->is_flagged ? __('চিহ্নিত') : null)
                     ->color('danger')
                     ->icon(Heroicon::OutlinedFlag)
                     ->tooltip(fn (Order $record): ?string => $record->is_flagged ? $record->flag_reason : null)
@@ -270,13 +302,13 @@ class OrderResource extends Resource
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::STATUS_OPTIONS[$state] ?? (string) $state)
+                    ->formatStateUsing(fn (?string $state): string => self::statuses()[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => self::STATUS_COLORS[$state] ?? 'gray')
                     ->sortable(),
                 TextColumn::make('payment_status')
                     ->visibleFrom('lg')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::PAYMENT_STATUS_OPTIONS[$state] ?? (string) $state)
+                    ->formatStateUsing(fn (?string $state): string => self::paymentStatuses()[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => match ($state) {
                         'paid' => 'success',
                         'advance_paid' => 'info',
@@ -291,18 +323,18 @@ class OrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('status')
-                    ->options(self::STATUS_OPTIONS),
+                    ->options(self::statuses()),
                 SelectFilter::make('payment_status')
-                    ->options(self::PAYMENT_STATUS_OPTIONS),
+                    ->options(self::paymentStatuses()),
                 TernaryFilter::make('is_flagged')
-                    ->label('সন্দেহজনক অর্ডার যাচাই')
-                    ->placeholder('সব অর্ডার')
-                    ->trueLabel('শুধু চিহ্নিত')
-                    ->falseLabel('চিহ্নিত নয়'),
+                    ->label(__('সন্দেহজনক অর্ডার যাচাই'))
+                    ->placeholder(__('সব অর্ডার'))
+                    ->trueLabel(__('শুধু চিহ্নিত'))
+                    ->falseLabel(__('চিহ্নিত নয়')),
                 Filter::make('created_at')
                     ->schema([
-                        DatePicker::make('from')->label('থেকে'),
-                        DatePicker::make('until')->label('পর্যন্ত'),
+                        DatePicker::make('from')->label(__('থেকে')),
+                        DatePicker::make('until')->label(__('পর্যন্ত')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -312,7 +344,7 @@ class OrderResource extends Resource
             ])
             ->recordActions([
                 Action::make('clearFlag')
-                    ->label('যাচাই হয়েছে')
+                    ->label(__('যাচাই হয়েছে'))
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
                     ->visible(fn (Order $record): bool => $record->is_flagged)
@@ -326,12 +358,12 @@ class OrderResource extends Resource
             ])
             ->toolbarActions([
                 BulkAction::make('deleteCancelled')
-                    ->label('বাতিল অর্ডার মুছুন')
+                    ->label(__('বাতিল অর্ডার মুছুন'))
                     ->icon(Heroicon::OutlinedTrash)
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('বাছাই করা বাতিল অর্ডারগুলো মুছবেন?')
-                    ->modalDescription('শুধু বাতিল করা অর্ডার মোছা হয়। অন্য বাছাই করা অর্ডার যেমন আছে তেমনই থাকবে — মুছতে চাইলে আগে বাতিল করুন।')
+                    ->modalHeading(__('বাছাই করা বাতিল অর্ডারগুলো মুছবেন?'))
+                    ->modalDescription(__('শুধু বাতিল করা অর্ডার মোছা হয়। অন্য বাছাই করা অর্ডার যেমন আছে তেমনই থাকবে — মুছতে চাইলে আগে বাতিল করুন।'))
                     ->deselectRecordsAfterCompletion()
                     ->action(function (Collection $records): void {
                         [$cancelled, $kept] = $records->partition(fn (Order $order): bool => $order->canBeDeleted());

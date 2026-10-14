@@ -23,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class BannerResource extends Resource
@@ -31,13 +32,28 @@ class BannerResource extends Resource
 
     protected static ?string $model = Banner::class;
 
-    protected static ?string $modelLabel = 'ব্যানার';
+    public static function getModelLabel(): string
+    {
 
-    protected static ?string $pluralModelLabel = 'ব্যানার';
+        return Str::singular(__('ব্যানার'));
+
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+
+        return __('ব্যানার');
+
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+
+        return __('কনটেন্ট');
+
+    }
 
     protected static ?int $navigationSort = 1;
 
@@ -46,10 +62,10 @@ class BannerResource extends Resource
         return $schema
             ->components([
                 ImageUpload::make('image')
-                    ->label('ছবি')
+                    ->label(__('ছবি'))
                     ->required(),
                 TextInput::make('link')
-                    ->label('লিংক (URL)')
+                    ->label(__('লিংক (URL)'))
                     ->maxLength(2048),
                 Select::make('position')
                     ->options([
@@ -72,7 +88,7 @@ class BannerResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image')
-                    ->label('ছবি'),
+                    ->label(__('ছবি')),
                 TextColumn::make('position')
                     ->badge()
                     ->sortable(),

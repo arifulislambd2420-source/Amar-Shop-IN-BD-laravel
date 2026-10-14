@@ -1,11 +1,11 @@
 @php
     $navLinks = [
-        ['href' => url('/'), 'label' => 'হোম', 'is' => ['/']],
-        ['href' => route('offers'), 'label' => 'অফার', 'is' => ['offers']],
-        ['href' => route('shop'), 'label' => 'শপ', 'is' => ['shop', 'shop/*']],
-        ['href' => route('brands'), 'label' => 'ব্র্যান্ড', 'is' => ['brands', 'brands/*']],
-        ...(\App\Models\Blog::hasPublished() ? [['href' => route('blog.index'), 'label' => 'ব্লগ', 'is' => ['blog', 'blog/*']]] : []),
-        ['href' => route('contact'), 'label' => 'যোগাযোগ', 'is' => ['contact']],
+        ['href' => url('/'), 'label' => 'Home', 'is' => ['/']],
+        ['href' => route('offers'), 'label' => 'Offers', 'is' => ['offers']],
+        ['href' => route('shop'), 'label' => 'Shop', 'is' => ['shop', 'shop/*']],
+        ['href' => route('brands'), 'label' => 'Brands', 'is' => ['brands', 'brands/*']],
+        ...(\App\Models\Blog::hasPublished() ? [['href' => route('blog.index'), 'label' => 'Blog', 'is' => ['blog', 'blog/*']]] : []),
+        ['href' => route('contact'), 'label' => 'Contact', 'is' => ['contact']],
     ];
     // Round 40px icon buttons in the brand colour (tracking, cart).
     $iconBtn = 'relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-500 transition-colors hover:bg-brand-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500';
@@ -75,7 +75,7 @@
             <div class="relative group mr-3">
                 <button type="button" aria-haspopup="true" class="flex items-center gap-2 rounded-lg bg-brand-500 text-white px-4 h-9 font-semibold">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    সব ক্যাটাগরি
+                    Categories
                 </button>
                 <div class="absolute left-0 top-full pt-2 w-64 z-50 hidden group-hover:block group-focus-within:block">
                     <ul class="py-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-[70vh] overflow-y-auto">
@@ -146,14 +146,7 @@
                 <a href="{{ $l['href'] }}" @if($on) aria-current="page" @endif
                     @class(['flex items-center min-h-11 px-3 rounded-xl font-medium', 'bg-brand-50 text-brand-600' => $on, 'text-gray-700 hover:bg-gray-50' => ! $on])>{{ $l['label'] }}</a>
             @endforeach
-            <a href="{{ route('track') }}" class="flex items-center min-h-11 px-3 rounded-xl font-medium text-gray-700 hover:bg-gray-50">অর্ডার ট্র্যাক করুন</a>
-
-            @if(($cats = \App\Support\StorefrontCache::categories())->isNotEmpty())
-                <p class="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">ক্যাটাগরি</p>
-                @foreach($cats as $c)
-                    <a href="{{ route('shop', ['category' => $c->slug]) }}" class="flex items-center min-h-11 px-3 rounded-xl text-gray-700 hover:bg-gray-50">{{ $c->name }}</a>
-                @endforeach
-            @endif
+            <a href="{{ route('track') }}" class="flex items-center min-h-11 px-3 rounded-xl font-medium text-gray-700 hover:bg-gray-50">Track order</a>
         </nav>
 
         <div class="mt-4 space-y-1 border-t border-gray-100 p-3 text-sm">

@@ -56,7 +56,7 @@ class ImageUpload
             // The state is a URL, not a disk path, so skip Filament's own
             // exists/size/mime lookups and preview the stored URL directly.
             ->fetchFileInformation(false)
-            ->placeholder(self::DROP_LABEL)
+            ->placeholder(__(self::DROP_LABEL))
             ->getUploadedFileUsing(fn (?string $file): ?array => filled($file) ? [
                 'name' => basename(parse_url($file, PHP_URL_PATH) ?: $file),
                 'size' => 0,
@@ -68,7 +68,7 @@ class ImageUpload
                     return self::store($file);
                 } catch (Throwable $e) {
                     Notification::make()
-                        ->title('ছবি আপলোড হয়নি')
+                        ->title(__('ছবি আপলোড হয়নি'))
                         ->body($e->getMessage())
                         ->danger()
                         ->send();
@@ -77,7 +77,7 @@ class ImageUpload
                 }
             })
             ->hintActions([self::libraryAction(), self::linkAction()])
-            ->helperText('কম্পিউটার থেকে আপলোড করুন, অথবা উপরের বাটনে লাইব্রেরি থেকে বাছুন / লিংক দিন। JPG, PNG বা WEBP — সর্বোচ্চ '.self::maxLabel().'।');
+            ->helperText(__('কম্পিউটার থেকে আপলোড করুন, অথবা উপরের বাটনে লাইব্রেরি থেকে বাছুন / লিংক দিন। JPG, PNG বা WEBP — সর্বোচ্চ :max।', ['max' => self::maxLabel()]));
     }
 
     /** The drop zone's text (FilePond has no Bangla pack of its own, so it is set here). */
@@ -113,8 +113,8 @@ class ImageUpload
             ->options(fn () => self::libraryOptions())
             ->allowHtml()
             ->searchable()
-            ->searchPrompt('ফাইলের নাম লিখে খুঁজুন')
-            ->noSearchResultsMessage('এই নামে কোনো ছবি নেই')
+            ->searchPrompt(__('ফাইলের নাম লিখে খুঁজুন'))
+            ->noSearchResultsMessage(__('এই নামে কোনো ছবি নেই'))
             ->columns(['default' => 2, 'sm' => 3, 'md' => 4])
             ->bulkToggleable(false);
     }
@@ -122,12 +122,12 @@ class ImageUpload
     public static function libraryAction(): Action
     {
         return Action::make('pickFromLibrary')
-            ->label('লাইব্রেরি থেকে বাছুন')
+            ->label(__('লাইব্রেরি থেকে বাছুন'))
             ->icon('heroicon-o-photo')
             ->link()
-            ->modalHeading('মিডিয়া লাইব্রেরি থেকে ছবি বাছুন')
-            ->modalSubmitActionLabel('এই ছবি ব্যবহার করুন')
-            ->modalCancelActionLabel('বন্ধ করুন')
+            ->modalHeading(__('মিডিয়া লাইব্রেরি থেকে ছবি বাছুন'))
+            ->modalSubmitActionLabel(__('এই ছবি ব্যবহার করুন'))
+            ->modalCancelActionLabel(__('বন্ধ করুন'))
             ->modalWidth('4xl')
             ->schema(fn (FileUpload $component) => [
                 self::libraryPicker()->required()->maxItems($component->isMultiple() ? null : 1),
@@ -136,7 +136,7 @@ class ImageUpload
                 $urls = self::onlyLibraryUrls($data['urls'] ?? []);
 
                 if ($urls === []) {
-                    Notification::make()->title('কোনো ছবি বাছা হয়নি')->warning()->send();
+                    Notification::make()->title(__('কোনো ছবি বাছা হয়নি'))->warning()->send();
 
                     return;
                 }
@@ -150,19 +150,19 @@ class ImageUpload
     public static function linkAction(): Action
     {
         return Action::make('pasteLink')
-            ->label('লিংক থেকে নিন')
+            ->label(__('লিংক থেকে নিন'))
             ->icon('heroicon-o-link')
             ->link()
-            ->modalHeading('ছবির লিংক বসান')
-            ->modalDescription('ছবিটি আমাদের সার্ভারে কপি হয়ে যাবে, তাই অন্য সাইট বন্ধ হলেও ছবি থাকবে।')
-            ->modalSubmitActionLabel('ছবি আনুন')
-            ->modalCancelActionLabel('বন্ধ করুন')
+            ->modalHeading(__('ছবির লিংক বসান'))
+            ->modalDescription(__('ছবিটি আমাদের সার্ভারে কপি হয়ে যাবে, তাই অন্য সাইট বন্ধ হলেও ছবি থাকবে।'))
+            ->modalSubmitActionLabel(__('ছবি আনুন'))
+            ->modalCancelActionLabel(__('বন্ধ করুন'))
             ->schema([self::linkInput()->required()])
             ->action(function (array $data, FileUpload $component): void {
                 try {
                     $url = self::storeFromUrl((string) ($data['url'] ?? ''));
                 } catch (RuntimeException $e) {
-                    Notification::make()->title('ছবি আনা যায়নি')->body($e->getMessage())->danger()->send();
+                    Notification::make()->title(__('ছবি আনা যায়নি'))->body($e->getMessage())->danger()->send();
 
                     return;
                 }
@@ -174,7 +174,7 @@ class ImageUpload
     public static function linkInput(string $name = 'url'): TextInput
     {
         return TextInput::make($name)
-            ->label('ছবির লিংক')
+            ->label(__('ছবির লিংক'))
             ->placeholder('https://example.com/photo.jpg')
             ->url()
             ->maxLength(1000);
@@ -216,30 +216,30 @@ class ImageUpload
     public static function insertImageAction(): Action
     {
         return Action::make('insertImage')
-            ->label('ছবি যোগ করুন')
+            ->label(__('ছবি যোগ করুন'))
             ->icon('heroicon-o-photo')
             ->link()
-            ->modalHeading('লেখায় ছবি যোগ করুন')
-            ->modalSubmitActionLabel('ছবি যোগ করুন')
-            ->modalCancelActionLabel('বন্ধ করুন')
+            ->modalHeading(__('লেখায় ছবি যোগ করুন'))
+            ->modalSubmitActionLabel(__('ছবি যোগ করুন'))
+            ->modalCancelActionLabel(__('বন্ধ করুন'))
             ->modalWidth('4xl')
             ->schema([
                 Tabs::make('source')->tabs([
-                    Tab::make('কম্পিউটার থেকে')->icon('heroicon-o-arrow-up-tray')->schema([
+                    Tab::make(__('কম্পিউটার থেকে'))->icon('heroicon-o-arrow-up-tray')->schema([
                         FileUpload::make('upload')
                             ->hiddenLabel()
                             ->image()
                             ->acceptedFileTypes(array_keys(config('media.mimes')))
                             ->maxSize((int) config('media.max_kb'))
                             ->fetchFileInformation(false)
-                            ->placeholder(self::DROP_LABEL)
+                            ->placeholder(__(self::DROP_LABEL))
                             ->saveUploadedFileUsing(fn ($file) => self::storeOrNotify($file))
-                            ->helperText('JPG, PNG বা WEBP — সর্বোচ্চ '.self::maxLabel().'।'),
+                            ->helperText(__('JPG, PNG বা WEBP — সর্বোচ্চ :max।', ['max' => self::maxLabel()])),
                     ]),
-                    Tab::make('লাইব্রেরি থেকে')->icon('heroicon-o-photo')->schema([
+                    Tab::make(__('লাইব্রেরি থেকে'))->icon('heroicon-o-photo')->schema([
                         self::libraryPicker('library')->maxItems(1),
                     ]),
-                    Tab::make('লিংক থেকে')->icon('heroicon-o-link')->schema([
+                    Tab::make(__('লিংক থেকে'))->icon('heroicon-o-link')->schema([
                         self::linkInput('link'),
                     ]),
                 ]),
@@ -256,13 +256,13 @@ class ImageUpload
                         $url = self::storeFromUrl((string) $data['link']);
                     }
                 } catch (RuntimeException $e) {
-                    Notification::make()->title('ছবি আনা যায়নি')->body($e->getMessage())->danger()->send();
+                    Notification::make()->title(__('ছবি আনা যায়নি'))->body($e->getMessage())->danger()->send();
 
                     return;
                 }
 
                 if (! $url) {
-                    Notification::make()->title('কোনো ছবি বাছা হয়নি')->warning()->send();
+                    Notification::make()->title(__('কোনো ছবি বাছা হয়নি'))->warning()->send();
 
                     return;
                 }
@@ -277,7 +277,7 @@ class ImageUpload
         try {
             return self::store($file);
         } catch (Throwable $e) {
-            Notification::make()->title('ছবি আপলোড হয়নি')->body($e->getMessage())->danger()->send();
+            Notification::make()->title(__('ছবি আপলোড হয়নি'))->body($e->getMessage())->danger()->send();
 
             return null;
         }
@@ -297,7 +297,7 @@ class ImageUpload
         $path = Storage::disk(config('media.disk'))->putFileAs($directory, $file, $name);
 
         if (! $path) {
-            throw new RuntimeException('ফাইলটি সার্ভারে লেখা যায়নি (storage ফোল্ডারের permission দেখুন)।');
+            throw new RuntimeException(__('ফাইলটি সার্ভারে লেখা যায়নি (storage ফোল্ডারের permission দেখুন)।'));
         }
 
         Media::mirror($path);
@@ -327,7 +327,7 @@ class ImageUpload
         $stored = Storage::disk(config('media.disk'))->putFileAs(config('media.directory'), new File($path), $name);
 
         if (! $stored) {
-            throw new RuntimeException('ফাইলটি সার্ভারে লেখা যায়নি (storage ফোল্ডারের permission দেখুন)।');
+            throw new RuntimeException(__('ফাইলটি সার্ভারে লেখা যায়নি (storage ফোল্ডারের permission দেখুন)।'));
         }
 
         Media::mirror($stored);
@@ -354,7 +354,7 @@ class ImageUpload
         $bytes ??= (int) @filesize($path);
 
         if ($bytes > config('media.max_kb') * 1024) {
-            throw new RuntimeException('ছবিটি অনেক বড় — সর্বোচ্চ '.self::maxLabel().'।');
+            throw new RuntimeException(__('ছবিটি অনেক বড় — সর্বোচ্চ :max।', ['max' => self::maxLabel()]));
         }
 
         $info = @getimagesize($path);
@@ -362,7 +362,7 @@ class ImageUpload
         $mimes = config('media.mimes');
 
         if (! $mime || ! isset($mimes[$mime])) {
-            throw new RuntimeException('শুধু JPG, PNG বা WEBP ছবি আপলোড করা যায়।');
+            throw new RuntimeException(__('শুধু JPG, PNG বা WEBP ছবি আপলোড করা যায়।'));
         }
 
         return $mimes[$mime];

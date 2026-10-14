@@ -61,36 +61,36 @@ class StatsOverview extends StatsOverviewWidget
 
         $versus = function (float $now, float $before): string {
             if ($before <= 0) {
-                return $now > 0 ? 'গতকাল কিছু ছিল না' : 'গতকালও শূন্য';
+                return $now > 0 ? __('গতকাল কিছু ছিল না') : __('গতকালও শূন্য');
             }
             $pct = (int) round(($now - $before) / $before * 100);
 
-            return ($pct >= 0 ? '▲ ' : '▼ ').abs($pct).'% গতকালের তুলনায়';
+            return ($pct >= 0 ? '▲ ' : '▼ ').abs($pct).'% '.__('গতকালের তুলনায়');
         };
 
         return [
-            $card(Stat::make('আজকের অর্ডার', number_format($todayOrders))
-                ->description('গতকাল '.number_format($yesterdayOrders).'টি')
+            $card(Stat::make(__('আজকের অর্ডার'), number_format($todayOrders))
+                ->description(__('গতকাল :countটি', ['count' => number_format($yesterdayOrders)]))
                 ->url(OrderResource::getUrl('index')), 'heroicon-o-shopping-bag', 'primary'),
 
-            $card(Stat::make('আজকের বিক্রি', Money::taka($todaySales))
+            $card(Stat::make(__('আজকের বিক্রি'), Money::taka($todaySales))
                 ->description($versus($todaySales, $yesterdaySales))
                 ->chart($week)
                 ->color($todaySales >= $yesterdaySales ? 'success' : 'danger'), 'heroicon-o-banknotes', 'success'),
 
-            $card(Stat::make('পেন্ডিং অর্ডার', number_format($pending))
-                ->description($pending ? 'কনফার্ম করা বাকি'.($flagged ? " · {$flagged}টি সন্দেহজনক" : '') : 'সব অর্ডার কনফার্ম হয়ে গেছে')
+            $card(Stat::make(__('পেন্ডিং অর্ডার'), number_format($pending))
+                ->description($pending ? __('কনফার্ম করা বাকি').($flagged ? ' · '.__(':countটি সন্দেহজনক', ['count' => $flagged]) : '') : __('সব অর্ডার কনফার্ম হয়ে গেছে'))
                 ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]])), 'heroicon-o-clock', 'warning'),
 
-            $card(Stat::make('কম স্টকের প্রোডাক্ট', number_format($lowStock))
-                ->description($outOfStock ? "{$outOfStock}টি একদম শেষ · স্টক {$threshold} বা কম" : "স্টক {$threshold} বা কম")
+            $card(Stat::make(__('কম স্টকের প্রোডাক্ট'), number_format($lowStock))
+                ->description($outOfStock ? __(':countটি একদম শেষ · স্টক :limit বা কম', ['count' => $outOfStock, 'limit' => $threshold]) : __('স্টক :limit বা কম', ['limit' => $threshold]))
                 ->url(ProductResource::getUrl('index')), 'heroicon-o-archive-box', $lowStock ? 'danger' : 'info'),
 
-            $card(Stat::make('এই মাসের বিক্রি', Money::taka($monthSales))
-                ->description(number_format($monthOrders).'টি অর্ডার'), 'heroicon-o-calendar-days', 'success'),
+            $card(Stat::make(__('এই মাসের বিক্রি'), Money::taka($monthSales))
+                ->description(__(':countটি অর্ডার', ['count' => number_format($monthOrders)])), 'heroicon-o-calendar-days', 'success'),
 
-            $card(Stat::make('গ্রাহক', number_format(User::count()))
-                ->description('রেজিস্টার করা অ্যাকাউন্ট'), 'heroicon-o-users', 'info'),
+            $card(Stat::make(__('গ্রাহক'), number_format(User::count()))
+                ->description(__('রেজিস্টার করা অ্যাকাউন্ট')), 'heroicon-o-users', 'info'),
         ];
     }
 }

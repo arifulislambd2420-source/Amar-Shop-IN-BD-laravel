@@ -55,6 +55,11 @@ class AdminPagesTest extends TestCase
         if (! extension_loaded('intl')) {
             $this->markTestSkipped('Filament needs the intl PHP extension.');
         }
+
+        // These tests are about the Bangla admin: the language is a Site Setting (English by
+        // default), and Livewire component tests don't pass through the locale middleware.
+        $this->setting('admin_locale', 'bn');
+        app()->setLocale('bn');
     }
 
     private function admin(): AdminUser

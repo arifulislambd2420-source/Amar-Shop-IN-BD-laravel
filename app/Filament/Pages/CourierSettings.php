@@ -14,6 +14,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Crypt;
 use UnitEnum;
 
@@ -36,11 +37,26 @@ class CourierSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'কুরিয়ার';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'কুরিয়ার (স্টিডফাস্ট)';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('কুরিয়ার');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('কুরিয়ার (স্টিডফাস্ট)');
+
+    }
 
     protected static ?int $navigationSort = 4;
 
@@ -71,16 +87,16 @@ class CourierSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('স্টিডফাস্ট কুরিয়ার')
+                Section::make(__('স্টিডফাস্ট কুরিয়ার'))
                     ->schema([
                         TextInput::make('steadfast_api_key')
-                            ->label('এপিআই কী')
-                            ->placeholder('আপনার স্টিডফাস্ট এপিআই কী লিখুন'),
+                            ->label(__('এপিআই কী'))
+                            ->placeholder(__('আপনার স্টিডফাস্ট এপিআই কী লিখুন')),
                         TextInput::make('steadfast_secret_key')
-                            ->label('সিক্রেট কী')
+                            ->label(__('সিক্রেট কী'))
                             ->password()
                             ->revealable()
-                            ->helperText('খালি রাখলে বর্তমান সিক্রেটই থাকবে।')
+                            ->helperText(__('খালি রাখলে বর্তমান সিক্রেটই থাকবে।'))
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                     ]),
             ]);
@@ -106,6 +122,6 @@ class CourierSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('কুরিয়ার সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('কুরিয়ার সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

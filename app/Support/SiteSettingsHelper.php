@@ -29,6 +29,21 @@ class SiteSettingsHelper
         Cache::forget("site_setting:{$key}");
     }
 
+    /** Languages the admin panel can be shown in (Site Setting → admin language). */
+    public const ADMIN_LOCALES = ['en' => 'English', 'bn' => 'বাংলা'];
+
+    /** The admin panel's language: the saved choice, English by default (and when the DB can't be read). */
+    public static function adminLocale(): string
+    {
+        try {
+            $locale = self::get('admin_locale', 'en');
+        } catch (\Throwable) {
+            return 'en';
+        }
+
+        return array_key_exists((string) $locale, self::ADMIN_LOCALES) ? (string) $locale : 'en';
+    }
+
     // Contact / social details: the Site Setting value wins, config/site.php
     // (env) is the fallback when the setting is empty.
 

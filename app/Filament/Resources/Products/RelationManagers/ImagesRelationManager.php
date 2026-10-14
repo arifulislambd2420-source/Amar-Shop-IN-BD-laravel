@@ -14,22 +14,28 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ImagesRelationManager extends RelationManager
 {
     protected static string $relationship = 'images';
 
-    protected static ?string $title = 'ছবি';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+
+        return __('ছবি');
+
+    }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 ImageUpload::make('url')
-                    ->label('ছবি')
+                    ->label(__('ছবি'))
                     ->required(),
                 TextInput::make('alt')
-                    ->label('ছবির বিবরণ (Alt)')
+                    ->label(__('ছবির বিবরণ (Alt)'))
                     ->maxLength(255),
                 TextInput::make('sort_order')
                     ->numeric()
@@ -44,12 +50,12 @@ class ImagesRelationManager extends RelationManager
             ->defaultSort('sort_order')
             ->columns([
                 ImageColumn::make('url')
-                    ->label('ছবি'),
+                    ->label(__('ছবি')),
                 TextColumn::make('alt')
-                    ->label('বিবরণ')
+                    ->label(__('বিবরণ'))
                     ->limit(40),
                 TextColumn::make('sort_order')
-                    ->label('ক্রম')
+                    ->label(__('ক্রম'))
                     ->sortable(),
             ])
             ->headerActions([

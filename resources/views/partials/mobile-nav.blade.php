@@ -10,15 +10,15 @@
 --}}
 @php
     $items = [
-        ['href' => url('/'), 'is' => ['/'], 'label' => 'হোম',
+        ['href' => url('/'), 'is' => ['/'], 'label' => 'Home',
             'icon' => '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>'],
-        ['href' => route('shop'), 'is' => ['shop', 'shop/*', 'product/*', 'offers'], 'label' => 'শপ',
+        ['href' => route('shop'), 'is' => ['shop', 'shop/*', 'product/*', 'offers'], 'label' => 'Shop',
             'icon' => '<path d="M6 7h12l1 13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1L6 7z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/>'],
-        ['href' => route('cart.index'), 'is' => ['cart', 'checkout', 'checkout/*'], 'label' => 'কার্ট', 'cart' => true,
+        ['href' => route('cart.index'), 'is' => ['cart', 'checkout', 'checkout/*'], 'label' => 'Cart', 'cart' => true,
             'icon' => '<circle cx="9" cy="20" r="1.25"/><circle cx="18" cy="20" r="1.25"/><path d="M2 3h3l2.6 12.1a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.2L21 7H6.2"/>'],
-        ['href' => route('track'), 'is' => ['track', 'track/*', 'order/*'], 'label' => 'ট্র্যাকিং',
+        ['href' => route('track'), 'is' => ['track', 'track/*', 'order/*'], 'label' => 'Track',
             'icon' => '<path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="1.75"/><circle cx="17" cy="18" r="1.75"/>'],
-        ['href' => auth()->check() ? route('customer.account') : route('customer.login'), 'is' => ['customer', 'customer/*'], 'label' => 'অ্যাকাউন্ট',
+        ['href' => auth()->check() ? route('customer.account') : route('customer.login'), 'is' => ['customer', 'customer/*'], 'label' => 'Account',
             'icon' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
     ];
     $activeIndex = collect($items)->search(fn ($item) => request()->is(...$item['is']));

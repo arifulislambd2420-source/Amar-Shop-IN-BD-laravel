@@ -2,22 +2,29 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\HasAdminAreaWidget;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
+use App\Support\AdminAccess;
 use Filament\Widgets\ChartWidget;
 
 /** Dashboard: orders grouped by status (doughnut). */
 class OrdersByStatusChart extends ChartWidget
 {
-    use \App\Filament\Concerns\HasAdminAreaWidget;
+    use HasAdminAreaWidget;
 
-    protected static string $adminArea = \App\Support\AdminAccess::AREA_ORDERS;
+    protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
     protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 1;
 
-    protected ?string $heading = 'স্ট্যাটাস অনুযায়ী অর্ডার';
+    public function getHeading(): ?string
+    {
+
+        return __('স্ট্যাটাস অনুযায়ী অর্ডার');
+
+    }
 
     protected ?string $maxHeight = '260px';
 
@@ -54,7 +61,7 @@ class OrdersByStatusChart extends ChartWidget
                 'backgroundColor' => array_map(fn ($s) => self::COLORS[$s] ?? '#9ca3af', $statuses),
                 'borderWidth' => 0,
             ]],
-            'labels' => array_map(fn ($s) => OrderResource::STATUS_OPTIONS[$s] ?? (string) $s, $statuses),
+            'labels' => array_map(fn ($s) => OrderResource::statuses()[$s] ?? (string) $s, $statuses),
         ];
     }
 

@@ -15,6 +15,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Crypt;
 use UnitEnum;
 
@@ -36,11 +37,26 @@ class PaymentSettings extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
-    protected static string|UnitEnum|null $navigationGroup = 'সেটিংস';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'পেমেন্ট (বিকাশ)';
+        return __('সেটিংস');
 
-    protected static ?string $title = 'পেমেন্ট সেটিং — বিকাশ';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('পেমেন্ট (বিকাশ)');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('পেমেন্ট সেটিং — বিকাশ');
+
+    }
 
     protected static ?int $navigationSort = 5;
 
@@ -75,30 +91,30 @@ class PaymentSettings extends Page implements HasSchemas
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('বিকাশ টোকেনাইজড চেকআউট')
-                    ->description('অ্যাপ সিক্রেট বা পাসওয়ার্ড খালি রাখলে বর্তমান মানই থাকবে।')
+                Section::make(__('বিকাশ টোকেনাইজড চেকআউট'))
+                    ->description(__('অ্যাপ সিক্রেট বা পাসওয়ার্ড খালি রাখলে বর্তমান মানই থাকবে।'))
                     ->columns(2)
                     ->schema([
                         Select::make('bkash_base_url')
-                            ->label('পরিবেশ')
+                            ->label(__('পরিবেশ'))
                             ->columnSpanFull()
                             ->required()
                             ->options([
-                                'https://tokenized.sandbox.bka.sh/v1.2.0-beta' => 'স্যান্ডবক্স (পরীক্ষামূলক)',
-                                'https://tokenized.pay.bka.sh/v1.2.0-beta' => 'লাইভ (আসল)',
+                                'https://tokenized.sandbox.bka.sh/v1.2.0-beta' => __('স্যান্ডবক্স (পরীক্ষামূলক)'),
+                                'https://tokenized.pay.bka.sh/v1.2.0-beta' => __('লাইভ (আসল)'),
                             ]),
                         TextInput::make('bkash_app_key')
-                            ->label('অ্যাপ কী')
-                            ->placeholder('আপনার বিকাশ অ্যাপ কী লিখুন'),
+                            ->label(__('অ্যাপ কী'))
+                            ->placeholder(__('আপনার বিকাশ অ্যাপ কী লিখুন')),
                         TextInput::make('bkash_app_secret')
-                            ->label('অ্যাপ সিক্রেট')
+                            ->label(__('অ্যাপ সিক্রেট'))
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         TextInput::make('bkash_username')
-                            ->label('ইউজারনেম'),
+                            ->label(__('ইউজারনেম')),
                         TextInput::make('bkash_password')
-                            ->label('পাসওয়ার্ড')
+                            ->label(__('পাসওয়ার্ড'))
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state)),
@@ -126,6 +142,6 @@ class PaymentSettings extends Page implements HasSchemas
             );
         }
 
-        Notification::make()->title('পেমেন্ট সেটিং সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('পেমেন্ট সেটিং সেভ হয়েছে।'))->success()->send();
     }
 }

@@ -16,6 +16,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 /**
@@ -40,11 +41,26 @@ class PolicyPages extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static string|UnitEnum|null $navigationGroup = 'কনটেন্ট';
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
 
-    protected static ?string $navigationLabel = 'তথ্য পেজ';
+        return __('কনটেন্ট');
 
-    protected static ?string $title = 'তথ্য পেজ (আমাদের সম্পর্কে, ডেলিভারি, রিটার্ন…)';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+
+        return __('তথ্য পেজ');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('তথ্য পেজ (আমাদের সম্পর্কে, ডেলিভারি, রিটার্ন…)');
+
+    }
 
     protected static ?int $navigationSort = 20;
 
@@ -79,11 +95,11 @@ class PolicyPages extends Page implements HasSchemas
                         fn (string $key, string $label): Tab => Tab::make($label)->schema([
                             ImageUpload::configureRichEditor(RichEditor::make($key))
                                 ->label($label)
-                                ->helperText('খালি রাখলে সাইটের বর্তমান (বিল্ট-ইন) লেখা দেখানো হবে। শিরোনাম পেজে নিজে থেকেই থাকে।')
+                                ->helperText(__('খালি রাখলে সাইটের বর্তমান (বিল্ট-ইন) লেখা দেখানো হবে। শিরোনাম পেজে নিজে থেকেই থাকে।'))
                                 ->columnSpanFull(),
                         ]),
                         array_keys(self::PAGES),
-                        array_values(self::PAGES),
+                        array_map('__', array_values(self::PAGES)),
                     )),
             ]);
     }
@@ -105,6 +121,6 @@ class PolicyPages extends Page implements HasSchemas
             SiteSettingsHelper::forget($key);
         }
 
-        Notification::make()->title('পেজগুলো সেভ হয়েছে।')->success()->send();
+        Notification::make()->title(__('পেজগুলো সেভ হয়েছে।'))->success()->send();
     }
 }

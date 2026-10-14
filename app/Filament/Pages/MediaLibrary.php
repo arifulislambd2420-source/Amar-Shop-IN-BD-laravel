@@ -13,6 +13,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -36,9 +37,19 @@ class MediaLibrary extends Page implements HasSchemas
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static ?string $navigationLabel = 'মিডিয়া লাইব্রেরি';
+    public static function getNavigationLabel(): string
+    {
 
-    protected static ?string $title = 'মিডিয়া লাইব্রেরি';
+        return __('মিডিয়া লাইব্রেরি');
+
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+
+        return __('মিডিয়া লাইব্রেরি');
+
+    }
 
     protected static ?int $navigationSort = 6;
 
@@ -73,7 +84,7 @@ class MediaLibrary extends Page implements HasSchemas
         $this->form->getState();
         $this->form->fill();
 
-        Notification::make()->title('ছবি আপলোড হয়েছে।')->success()->send();
+        Notification::make()->title(__('ছবি আপলোড হয়েছে।'))->success()->send();
     }
 
     /**
@@ -120,15 +131,15 @@ class MediaLibrary extends Page implements HasSchemas
         $disk = Storage::disk(config('media.disk'));
 
         if (! $disk->exists($path)) {
-            Notification::make()->title('ফাইলটি পাওয়া যায়নি — হয়তো আগেই মোছা হয়েছে।')->warning()->send();
+            Notification::make()->title(__('ফাইলটি পাওয়া যায়নি — হয়তো আগেই মোছা হয়েছে।'))->warning()->send();
 
             return;
         }
 
         if ($usedBy = $this->findReferences($basename)) {
             Notification::make()
-                ->title('মোছা হয়নি — ছবিটি এখনো ব্যবহার হচ্ছে')
-                ->body('ব্যবহার হচ্ছে: '.implode(', ', $usedBy).'। আগে সেখান থেকে বদলান, নইলে সাইটে ভাঙা ছবি দেখাবে।')
+                ->title(__('মোছা হয়নি — ছবিটি এখনো ব্যবহার হচ্ছে'))
+                ->body(__('ব্যবহার হচ্ছে: :places। আগে সেখান থেকে বদলান, নইলে সাইটে ভাঙা ছবি দেখাবে।', ['places' => implode(', ', $usedBy)]))
                 ->danger()
                 ->persistent()
                 ->send();
@@ -140,7 +151,7 @@ class MediaLibrary extends Page implements HasSchemas
         Media::unmirror($path);
         MediaLibraryItem::where('file_path', Media::urlFor($path))->delete();
 
-        Notification::make()->title('ছবি মোছা হয়েছে।')->success()->send();
+        Notification::make()->title(__('ছবি মোছা হয়েছে।'))->success()->send();
     }
 
     /**
@@ -155,20 +166,20 @@ class MediaLibrary extends Page implements HasSchemas
         $needle = '%'.$basename.'%';
 
         $checks = [
-            'পণ্য' => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
-            'পণ্যের গ্যালারি' => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
-            'ব্যানার' => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
-            'ব্র্যান্ড' => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
-            'ক্যাটাগরি' => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
-            'ব্লগ' => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
-            'ল্যান্ডিং পেজ' => fn () => DB::table('landing_pages')->where(fn ($q) => $q
+            __('পণ্য') => fn () => DB::table('products')->where(fn ($q) => $q->where('image', 'like', $needle)->orWhere('description', 'like', $needle))->pluck('name'),
+            __('পণ্যের গ্যালারি') => fn () => DB::table('product_images')->join('products', 'products.id', '=', 'product_images.product_id')->where('product_images.url', 'like', $needle)->pluck('products.name'),
+            __('ব্যানার') => fn () => DB::table('banners')->where('image', 'like', $needle)->pluck('position'),
+            __('ব্র্যান্ড') => fn () => DB::table('brands')->where('logo', 'like', $needle)->pluck('name'),
+            __('ক্যাটাগরি') => fn () => DB::table('categories')->where('icon', 'like', $needle)->pluck('name'),
+            __('ব্লগ') => fn () => DB::table('blogs')->where('cover', 'like', $needle)->orWhere('content', 'like', $needle)->pluck('title'),
+            __('ল্যান্ডিং পেজ') => fn () => DB::table('landing_pages')->where(fn ($q) => $q
                 ->where('hero_image', 'like', $needle)
                 ->orWhere('gallery', 'like', $needle)
                 ->orWhere('description', 'like', $needle)
                 ->orWhere('blocks', 'like', $needle)
                 ->orWhere('packages', 'like', $needle)
                 ->orWhere('og_image', 'like', $needle))->pluck('title'),
-            'সাইট সেটিং' => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
+            __('সাইট সেটিং') => fn () => DB::table('site_settings')->where('setting_value', 'like', $needle)->pluck('setting_key'),
         ];
 
         $found = [];
