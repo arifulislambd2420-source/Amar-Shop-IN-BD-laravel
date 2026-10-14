@@ -13,7 +13,7 @@ class LandingPageController extends Controller
     public function show(string $slug)
     {
         $landingPage = LandingPage::active()
-            ->with('product')
+            ->with('product.variants')
             ->where('slug', $slug)
             ->first();
 

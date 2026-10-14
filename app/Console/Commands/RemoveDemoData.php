@@ -3,9 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Models\Category;
+use App\Models\LandingPage;
 use App\Models\MediaLibrary;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Support\Media;
 use App\Support\StorefrontCache;
 use Illuminate\Console\Command;
@@ -14,15 +17,17 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Deletes the sample data added by DemoClothingSeeder — and only that:
+ * Deletes the sample data added by DemoClothingSeeder and DemoLandingSeeder — and only that:
  *  - products and categories marked is_demo (variants, reviews, flash-sale
  *    rows go with their product),
+ *  - demo landing pages (is_demo),
  *  - the placeholder pictures stored as media/demo-*.png.
  * Real products, real categories and uploads (uuid-named files) are never touched.
  *
  * A demo product that a customer actually ordered is kept (hidden from the
  * shop instead of deleted) so order history stays intact; the same goes for
- * a demo category that still holds a real product.
+ * a demo category that still holds a real product. A demo landing page that
+ * received an order is switched off instead of deleted, for the same reason.
  */
 class RemoveDemoData extends Command
 {
@@ -45,6 +50,12 @@ class RemoveDemoData extends Command
 
         $dry = (bool) $this->option('dry-run');
 
+        $hasLanding = Schema::hasColumn('landing_pages', 'is_demo');
+        $pages = $hasLanding ? LandingPage::where('is_demo', true)->get() : collect();
+        $orderedPages = Order::whereIn('landing_page_id', $pages->pluck('id'))->distinct()->pluck('landing_page_id')->all();
+        $deletablePages = $pages->reject(fn ($p) => in_array($p->id, $orderedPages, true));
+        $keptPages = $pages->filter(fn ($p) => in_array($p->id, $orderedPages, true));
+
         $products = Product::withTrashed()->where('is_demo', true)->get();
         $ordered = OrderItem::whereIn('product_id', $products->pluck('id'))->distinct()->pluck('product_id')->all();
         $deletable = $products->reject(fn ($p) => in_array($p->id, $ordered, true));
@@ -53,16 +64,20 @@ class RemoveDemoData extends Command
         $pictures = MediaLibrary::where('file_path', 'like', '/storage/media/demo-%')->get()
             ->filter(fn ($m) => preg_match(self::PICTURE, $m->file_path));
 
-        if ($products->isEmpty() && $categories->isEmpty() && $pictures->isEmpty()) {
+        if ($products->isEmpty() && $categories->isEmpty() && $pictures->isEmpty() && $pages->isEmpty()) {
             $this->info('কোনো ডেমো ডাটা পাওয়া যায়নি। কিছু করার নেই।');
 
             return self::SUCCESS;
         }
 
-        $this->line('মোছা হবে: '.$deletable->count().' টি প্রোডাক্ট (সাইজ-সহ), ডেমো ক্যাটাগরি (যেগুলোতে আর প্রোডাক্ট থাকবে না), ও ডেমো ছবি।');
+        $this->line('মোছা হবে: '.$deletable->count().' টি প্রোডাক্ট (রং/সাইজ-সহ), '.$deletablePages->count().' টি ল্যান্ডিং পেজ, ডেমো ক্যাটাগরি (যেগুলোতে আর প্রোডাক্ট থাকবে না), ও ডেমো ছবি।');
 
         if ($kept->isNotEmpty()) {
             $this->warn($kept->count().' টি ডেমো প্রোডাক্ট কোনো অর্ডারে আছে — মোছা হবে না, শুধু শপ থেকে লুকানো হবে: '.$kept->pluck('name')->implode(', '));
+        }
+
+        if ($keptPages->isNotEmpty()) {
+            $this->warn($keptPages->count().' টি ডেমো ল্যান্ডিং পেজে অর্ডার এসেছে — মোছা হবে না, শুধু বন্ধ করা হবে: '.$keptPages->pluck('slug')->implode(', '));
         }
 
         if ($dry) {
@@ -77,7 +92,15 @@ class RemoveDemoData extends Command
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($deletable, $kept) {
+        DB::transaction(function () use ($deletable, $kept, $deletablePages, $keptPages) {
+            foreach ($deletablePages as $page) {
+                $page->delete();
+            }
+
+            foreach ($keptPages as $page) {
+                $page->forceFill(['is_active' => false])->save();
+            }
+
             foreach ($deletable as $product) {
                 // Explicit deletes first so it also works where FK cascades are off.
                 $product->variants()->delete();
@@ -103,7 +126,9 @@ class RemoveDemoData extends Command
 
         foreach ($pictures as $picture) {
             // A picture still used by a kept product must stay.
-            if (Product::withTrashed()->where('image', $picture->file_path)->exists()) {
+            if (Product::withTrashed()->where('image', $picture->file_path)->exists()
+                || ProductVariant::where('image', $picture->file_path)->exists()
+                || ($hasLanding && LandingPage::where('is_demo', true)->where(fn ($q) => $q->where('hero_image', $picture->file_path)->orWhere('blocks', 'like', '%'.substr(json_encode($picture->file_path), 1, -1).'%')->orWhere('gallery', 'like', '%'.substr(json_encode($picture->file_path), 1, -1).'%'))->exists())) {
                 continue;
             }
 

@@ -74,7 +74,11 @@ class AdminPagesTest extends TestCase
         Coupon::create(['code' => 'EID', 'discount_type' => 'percent', 'discount_value' => 10, 'min_spend' => 0, 'is_active' => true]);
         $sale = FlashSale::create(['title' => 'ফ্ল্যাশ', 'start_time' => now(), 'end_time' => now()->addDay(), 'is_active' => true]);
         $sale->items()->create(['product_id' => $product->id, 'flash_price' => 400]);
-        LandingPage::create(['title' => 'ল্যান্ডিং', 'headline' => 'অফার', 'slug' => 'landing-1', 'product_id' => $product->id, 'is_active' => true]);
+        LandingPage::create(['title' => 'ল্যান্ডিং', 'headline' => 'অফার', 'slug' => 'landing-1', 'product_id' => $product->id, 'is_active' => true, 'template' => 'green', 'blocks' => [
+            ['type' => 'models', 'data' => ['heading' => 'মডেল']],
+            ['type' => 'price', 'data' => ['label' => 'অফার']],
+            ['type' => 'trust', 'data' => ['heading' => 'ভরসা', 'items' => [['icon' => '🛡️', 'title' => 'গ্যারান্টি']]]],
+        ]]);
         Review::create(['product_id' => $product->id, 'customer_name' => 'ক', 'rating' => 5, 'comment' => 'ভালো', 'approved' => false]);
         User::create(['name' => 'গ্রাহক', 'phone' => '01712345678', 'password' => 'secret123']);
         ContactMessage::create(['name' => 'ক', 'phone' => '01712345678', 'email' => 'a@example.com', 'subject' => 'প্রশ্ন', 'message' => 'প্রশ্ন']);

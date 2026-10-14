@@ -96,7 +96,7 @@ class LandingOrderForm extends Component
 
     private function page(): LandingPage
     {
-        return LandingPage::with('product')->findOrFail($this->landingPageId);
+        return LandingPage::with('product.variants')->findOrFail($this->landingPageId);
     }
 
     private function isBlockPage(LandingPage $page): bool
@@ -174,6 +174,11 @@ class LandingOrderForm extends Component
             return [];
         }
 
+        // A product with colours / models: one card per variant (own picture, price, stock).
+        if ($models = $page->modelCards()) {
+            return array_map(fn ($m) => $m + ['quantity' => 1], $models);
+        }
+
         $price = $page->effectivePrice();
         $regular = (float) $page->product->price;
 
@@ -184,6 +189,18 @@ class LandingOrderForm extends Component
             'compare_price' => $regular > $price ? $regular : null,
             'quantity' => 1,
         ]];
+    }
+
+    /** The chosen model/colour of a page without packages, or null (plain product, or packages in use). */
+    private function selectedModel(LandingPage $page, array $packages): ?array
+    {
+        if ($packages) {
+            return null;
+        }
+
+        $models = $page->modelCards();
+
+        return $models ? ($models[$this->packageIndex] ?? $models[0]) : null;
     }
 
     /** The chosen package, or the first one when the index is out of range. */
@@ -264,6 +281,18 @@ class LandingOrderForm extends Component
         }
     }
 
+    /** Fired by a card's order button in the models block (browser event). */
+    #[On('select-model')]
+    public function selectModel(int $index = 0): void
+    {
+        $page = $this->page();
+        $count = $this->packages($page) ? count($this->packages($page)) : count($page->modelCards());
+
+        if ($index >= 0 && $index < $count) {
+            $this->selectPackage($index);
+        }
+    }
+
     public function placeOrder(OrderService $orderService, BkashService $bkash)
     {
         $this->error = '';
@@ -325,7 +354,17 @@ class LandingOrderForm extends Component
             // anything read from the request.
             $unitPrice = $landingPage->price_override !== null ? (float) $landingPage->price_override : null;
             $packageNote = '';
+
+            // Colour / model chosen from the product's variants: that variant's
+            // own price and stock apply (the page's override still wins).
+            if ($model = $this->selectedModel($landingPage, $packages)) {
+                $variantId = $model['variant_id'];
+                $unitPrice ??= $model['price'];
+                $packageNote = ' | মডেল: '.$model['label'];
+            }
         }
+
+        $variantId ??= null;
 
         RateLimiter::hit($key, 600); // 10 minutes
 
@@ -338,7 +377,7 @@ class LandingOrderForm extends Component
         try {
             $order = $orderService->createOrder([[
                 'product_id' => $productId,
-                'variant_id' => null,
+                'variant_id' => $variantId,
                 'quantity' => $quantity,
                 'unit_price_override' => $unitPrice,
             ]], [
@@ -393,7 +432,7 @@ class LandingOrderForm extends Component
 
         // Legacy compact form keeps its original single-price display.
         if (! $block) {
-            $subtotal = $page->effectivePrice() * max(1, $this->quantity);
+            $subtotal = ($card && ! $packages ? $card['price'] : $page->effectivePrice()) * max(1, $this->quantity);
         }
 
         $zoneFee = fn (string $zone): float => Delivery::fee($zone === 'dhaka' ? Delivery::DHAKA : 'ঢাকার বাইরে', $subtotal);

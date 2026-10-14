@@ -35,6 +35,31 @@
             @error('packageIndex') <span class="text-error-500 text-xs">{{ $message }}</span> @enderror
         @endif
 
+        {{-- Models / colours of the product (its variants): own picture, price and stock. --}}
+        @if (! $packages && count($cards) > 1)
+            <div class="grid gap-2 sm:grid-cols-2">
+                @foreach ($cards as $i => $c)
+                    @php($gone = isset($c['stock']) && $c['stock'] <= 0)
+                    <label class="relative flex items-center gap-3 rounded-xl border-2 p-3 transition {{ $gone ? 'cursor-not-allowed border-dashed border-gray-200 bg-gray-50 opacity-60' : 'cursor-pointer '.($packageIndex === $i ? 'border-brand-500 bg-brand-50' : 'border-gray-200 bg-white') }}">
+                        <input type="radio" wire:model.live="packageIndex" value="{{ $i }}" @disabled($gone) class="accent-brand-500">
+                        @if (! empty($c['image']))
+                            <img src="{{ $c['image'] }}" alt="" width="56" height="56" loading="lazy" class="h-12 w-12 shrink-0 rounded-lg object-cover">
+                        @endif
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-semibold leading-snug">{{ $c['label'] }}</span>
+                            <span class="block text-sm">
+                                <span class="font-bold text-brand-600">@taka($c['price'])</span>
+                                @if ($c['compare_price'] && $c['compare_price'] > $c['price'])
+                                    <span class="ml-1 text-xs text-gray-400 line-through">@taka($c['compare_price'])</span>
+                                @endif
+                                @if ($gone) <span class="ml-1 text-xs font-semibold text-error-500">স্টক নেই</span> @endif
+                            </span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
+
         <label class="flex flex-col gap-1 text-sm">
             <span class="font-medium text-gray-700">পূর্ণ নাম <span class="text-brand-500">*</span></span>
             <input type="text" wire:model="customer_name" autocomplete="name"

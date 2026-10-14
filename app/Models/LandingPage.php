@@ -41,7 +41,7 @@ class LandingPage extends Model
     public const TEMPLATE_OPTIONS = self::BLOCK_TEMPLATES + self::LEGACY_TEMPLATES;
 
     /** Block types of the page builder (see LandingPageResource::blockSchemas()). */
-    public const BLOCK_TYPES = ['hero', 'features', 'checklist', 'gallery', 'reviews', 'video', 'variants', 'cta', 'notice', 'order_form'];
+    public const BLOCK_TYPES = ['hero', 'features', 'checklist', 'gallery', 'reviews', 'video', 'variants', 'models', 'price', 'trust', 'cta', 'notice', 'order_form'];
 
     protected $fillable = [
         'title',
@@ -106,6 +106,14 @@ class LandingPage extends Model
             return (float) $this->price_override;
         }
 
+        // A product sold in colours/models: "from" its cheapest one that is in stock.
+        $variants = $this->product?->variants ?? collect();
+        if ($variants->isNotEmpty()) {
+            $buyable = $variants->where('stock', '>', 0);
+
+            return (float) ($buyable->isNotEmpty() ? $buyable : $variants)->min('price');
+        }
+
         return $this->product?->displayPrice() ?? 0.0;
     }
 
@@ -129,6 +137,38 @@ class LandingPage extends Model
     public static function isLegacyTemplate(?string $template): bool
     {
         return array_key_exists((string) $template, self::LEGACY_TEMPLATES);
+    }
+
+    /**
+     * The models / colours a customer can pick on this page: one card per
+     * variant of the linked product (its own picture, price and stock).
+     * Empty when the product has no variants. A page-level price override
+     * wins over the variants' own prices, as it does for a plain product.
+     *
+     * @return list<array{variant_id: int, label: string, image: ?string, price: float, compare_price: ?float, stock: int}>
+     */
+    public function modelCards(): array
+    {
+        $product = $this->product;
+
+        if (! $product) {
+            return [];
+        }
+
+        $regular = (float) $product->price;
+
+        return $product->variants->sortBy('id')->values()->map(function (ProductVariant $v) use ($product, $regular) {
+            $price = $this->price_override !== null ? (float) $this->price_override : (float) $v->price;
+
+            return [
+                'variant_id' => $v->id,
+                'label' => (string) $v->label,
+                'image' => $v->image ?: ($product->image ?: null),
+                'price' => $price,
+                'compare_price' => $regular > $price ? $regular : null,
+                'stock' => (int) $v->stock,
+            ];
+        })->all();
     }
 
     /** Blocks in saved order, without the ones switched off with "লুকাও". */

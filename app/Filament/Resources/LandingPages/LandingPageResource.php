@@ -27,6 +27,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -321,6 +322,35 @@ class LandingPageResource extends Resource
                 TextInput::make('color_label')->label('কালারের লেবেল')->default('কালার নির্বাচন করুন')->maxLength(100),
                 TagsInput::make('colors')->label('কালারের অপশন (খালি = নিজে লিখবে; গ্রিডের নামও অপশন)'),
                 Toggle::make('color_required')->label('কালার আবশ্যক')->default(false),
+            ]),
+            self::block('models', 'মডেল / রঙের ছবি-গ্রিড', 'heroicon-o-squares-2x2', [
+                TextInput::make('label')->label('ছোট লেবেল (ঐচ্ছিক)')->placeholder('MODELS')->maxLength(100),
+                TextInput::make('heading')->label('শিরোনাম')->placeholder('আপনার পছন্দের মডেল বেছে নিন')->maxLength(255),
+                TextInput::make('accent')->label('রঙিন দ্বিতীয় লাইন (ঐচ্ছিক)')->maxLength(255)->columnSpanFull(),
+                Textarea::make('description')->label('বর্ণনা (ঐচ্ছিক)')->rows(2)->columnSpanFull(),
+                TextInput::make('button_text')->label('প্রতিটি কার্ডের বাটনের লেখা')->default('অর্ডার করুন')->maxLength(100),
+                Text::make('কার্ডগুলো আসে পণ্যের রং/সাইজ (variant) থেকে — প্রতিটির নিজের ছবি, দাম ও স্টক। প্যাকেজ দিলে প্যাকেজই দেখাবে।')->columnSpanFull(),
+            ]),
+            self::block('price', 'দাম ও ছাড়', 'heroicon-o-tag', [
+                TextInput::make('label')->label('ছোট ব্যাজ (ঐচ্ছিক)')->placeholder('সীমিত সময়ের অফার')->maxLength(100),
+                TextInput::make('heading')->label('শিরোনাম (ঐচ্ছিক)')->maxLength(255),
+                TextInput::make('note')->label('নিচের ছোট লেখা (ঐচ্ছিক)')->placeholder('ক্যাশ অন ডেলিভারি — আগে টাকা লাগবে না')->maxLength(255)->columnSpanFull(),
+                TextInput::make('button_text')->label('বাটনের লেখা (খালি = বাটন নেই)')->default('অর্ডার করুন')->maxLength(100),
+                Text::make('দাম, আগের দাম আর ছাড় নিজে থেকেই পণ্য/পেজের দাম থেকে হিসাব হয়।')->columnSpanFull(),
+            ]),
+            self::block('trust', 'গ্যারান্টি / বিশ্বাস', 'heroicon-o-shield-check', [
+                TextInput::make('heading')->label('শিরোনাম')->placeholder('কেন আমাদের উপর ভরসা করবেন?')->maxLength(255)->columnSpanFull(),
+                Repeater::make('items')->label('কার্ড')
+                    ->schema([
+                        Select::make('icon')->label('আইকন')->options([
+                            '🛡️' => '🛡️ গ্যারান্টি', '🚚' => '🚚 ডেলিভারি', '🔄' => '🔄 রিটার্ন/এক্সচেঞ্জ',
+                            '📞' => '📞 সাপোর্ট', '💵' => '💵 ক্যাশ অন ডেলিভারি', '⭐' => '⭐ মান', '✅' => '✅ আসল পণ্য', '🎁' => '🎁 উপহার',
+                        ])->default('🛡️')->required(),
+                        TextInput::make('title')->label('শিরোনাম')->required()->maxLength(255),
+                        TextInput::make('description')->label('বিবরণ')->maxLength(500)->columnSpanFull(),
+                    ])->columns(2)->reorderable()->collapsible()
+                    ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
+                    ->addActionLabel('কার্ড যোগ করুন')->defaultItems(0)->columnSpanFull(),
             ]),
             self::block('cta', 'কল-টু-অ্যাকশন (কল)', 'heroicon-o-phone', [
                 TextInput::make('heading')->label('লেখা')->placeholder('বিশেষ প্রয়োজনে কল করুনঃ')->maxLength(255)->columnSpanFull(),

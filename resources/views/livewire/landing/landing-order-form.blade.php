@@ -25,14 +25,15 @@
                 <div class="space-y-2.5">
                     @foreach ($cards as $i => $c)
                         @php($selected = $packageIndex === $i)
-                        <div wire:key="pkg-{{ $i }}" wire:click="selectPackage({{ $i }})"
-                             class="relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-lg border-2 p-3 transition
-                                    {{ $selected ? 'border-brand-500 bg-brand-50' : 'border-gray-200 bg-white hover:border-brand-200' }}">
+                        @php($gone = isset($c['stock']) && $c['stock'] <= 0)
+                        <div wire:key="pkg-{{ $i }}" @unless($gone) wire:click="selectPackage({{ $i }})" @endunless
+                             class="relative flex items-center gap-3 overflow-hidden rounded-lg border-2 p-3 transition
+                                    {{ $gone ? 'cursor-not-allowed border-dashed border-gray-200 bg-gray-50 opacity-60' : 'cursor-pointer '.($selected ? 'border-brand-500 bg-brand-50' : 'border-gray-200 bg-white hover:border-brand-200') }}">
                             @if ($c['compare_price'] && $c['compare_price'] > $c['price'])
                                 <span class="absolute right-0 top-0 rounded-bl-lg bg-brand-600 px-2.5 py-0.5 text-[10px] font-bold text-white">অফার</span>
                             @endif
 
-                            <input type="radio" name="package" value="{{ $i }}" @checked($selected) class="accent-brand-500"
+                            <input type="radio" name="package" value="{{ $i }}" @checked($selected) @disabled($gone) class="accent-brand-500"
                                    aria-label="{{ $c['label'] }}" tabindex="-1">
 
                             @if (! empty($c['image']))
@@ -46,6 +47,7 @@
                                     @if ($c['compare_price'] && $c['compare_price'] > $c['price'])
                                         <span class="ml-1 text-xs text-gray-400 line-through">@taka($c['compare_price'])</span>
                                     @endif
+                                    @if ($gone) <span class="ml-1 text-xs font-semibold text-error-500">স্টক নেই</span> @endif
                                 </p>
                             </div>
 
