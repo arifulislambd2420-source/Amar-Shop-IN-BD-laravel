@@ -597,5 +597,14 @@
     "\"ভিডিও\" বাছলে উপরের ভিডিও লিংকটি ছবির জায়গায় বসবে (মোবাইলে পুরো চওড়া, 16:9)। ছবি না দিয়ে শুধু ভিডিও লিংক দিলেও ভিডিওই দেখাবে।": "Choosing \"Video\" puts the video link above in place of the picture (full width on a phone, 16:9). A video link with no picture shows the video too.",
     "ভিডিও লিংক (YouTube / Facebook / MP4)": "Video link (YouTube / Facebook / MP4)",
     "এই লিংক চলবে না। YouTube বা Facebook ভিডিওর লিংক (বা সরাসরি .mp4 ফাইলের লিংক) দিন।": "This link will not work. Give a YouTube or Facebook video link (or a direct .mp4 file link).",
-    "YouTube বা Facebook ভিডিওর লিংক বসান। ভিডিও চাপলে তবেই লোড হয়, তাই পেজ ধীর হয় না।": "Paste a YouTube or Facebook video link. The video only loads when tapped, so the page stays fast."
+    "YouTube বা Facebook ভিডিওর লিংক বসান। ভিডিও চাপলে তবেই লোড হয়, তাই পেজ ধীর হয় না।": "Paste a YouTube or Facebook video link. The video only loads when tapped, so the page stays fast.",
+    "হোমপেজ": "Homepage",
+    "হেডার ও ফুটার": "Header & Footer",
+    "যোগাযোগ ও সোশ্যাল": "Contact & Social",
+    "ডেলিভারি ও অর্ডার": "Delivery & Orders",
+    "সাইট সেটিং — সাধারণ": "Site settings — General",
+    "হেডার": "Header",
+    "হেডারের লোগো ও দোকানের নাম \"সাইট সেটিং\" (সাধারণ) পেজে বদলান; ফোন ও হোয়াটসঅ্যাপ \"যোগাযোগ ও সোশ্যাল\" পেজে।": "Change the header logo and the shop name on the \"Site settings\" (General) page; the phone and WhatsApp on the \"Contact & Social\" page.",
+    "দোকানের নাম আর লোগো। লোগো না দিলে নামটাই লেখা আকারে দেখাবে। ফুটারের লোগো \"হেডার ও ফুটার\" পেজে।": "The shop name and logo. Without a logo the name is shown as text. The footer logo is on the \"Header & Footer\" page.",
+    "সেভ হয়েছে।": "Saved."
 }

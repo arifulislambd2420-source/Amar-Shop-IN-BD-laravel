@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\SiteSettings;
+use App\Filament\Pages\Settings\ContactSocialSettings;
+use App\Filament\Pages\Settings\HeaderFooterSettings;
+use App\Filament\Pages\Settings\HomepageSettings;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Support\ImageUpload;
 use App\Models\AdminUser;
@@ -178,7 +180,8 @@ class CustomizationTest extends TestCase
         $this->admin();
         $category = Category::create(['name' => 'জামা', 'slug' => 'jama']);
 
-        $page = Livewire::test(SiteSettings::class)->assertSee('হোমপেজের সেকশন')->assertSee('ফুটারের লোগো');
+        Livewire::test(HeaderFooterSettings::class)->assertSee('ফুটারের লোগো');
+        $page = Livewire::test(HomepageSettings::class)->assertSee('হোমপেজের সেকশন');
 
         $sections = $page->get('data.home_sections');
         $this->assertCount(count(HomeSections::SECTIONS), $sections);
@@ -187,7 +190,11 @@ class CustomizationTest extends TestCase
         $first = array_key_first($sections);
         $page->set("data.home_sections.{$first}.on", false)
             ->set('data.home_showcase_categories', [$category->id])
-            ->set('data.footer_copyright', 'আমার কপিরাইট')
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        Livewire::test(HeaderFooterSettings::class)->set('data.footer_copyright', 'আমার কপিরাইট')->call('save')->assertHasNoFormErrors();
+        Livewire::test(ContactSocialSettings::class)
             ->set('data.contact_hours', 'সকাল ১০টা')
             ->set('data.social_linkedin', 'https://linkedin.com/company/shop')
             ->call('save')

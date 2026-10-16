@@ -2,373 +2,97 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Support\ImageUpload;
-use App\Models\Category;
-use App\Models\SiteSetting;
-use App\Support\AdminAccess;
-use App\Support\HomeSections;
+use App\Filament\Support\SettingsPage;
 use App\Support\SiteSettingsHelper;
-use App\Support\StorefrontCache;
 use BackedEnum;
-use Filament\Actions\Action;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use UnitEnum;
 
 /**
- * সাইট সেটিং — everything a shop owner changes without touching code:
- * identity (name, logo, footer logo, favicon), colours, which home-page
- * sections show and in what order, texts, footer, contact details, social
- * links, orders/stock, delivery and SEO. Stored in the site_settings
- * key/value table.
+ * সাইট সেটিং — General: the admin panel's language and the shop's identity (name, logo,
+ * favicon). The rest of the site settings live on their own screens under this one
+ * (see App\Filament\Support\SettingsPage and App\Filament\Pages\Settings\*).
  */
-class SiteSettings extends Page implements HasSchemas
+class SiteSettings extends SettingsPage
 {
-    use HasAdminArea;
+    protected static ?string $slug = 'site-settings';
 
-    protected static string $adminArea = AdminAccess::AREA_SETTINGS;
+    protected static ?int $navigationSort = 1;
 
-    use InteractsWithSchemas;
-
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
-
-    public static function getNavigationGroup(): string|UnitEnum|null
+    protected static function label(): string
     {
-
-        return __('সেটিংস');
-
-    }
-
-    public static function getNavigationLabel(): string
-    {
-
-        return __('সাইট সেটিং');
-
+        return 'সাইট সেটিং';
     }
 
     public function getTitle(): string|Htmlable
     {
-
-        return __('সাইট সেটিং');
-
+        return __('সাইট সেটিং — সাধারণ');
     }
 
-    protected static ?int $navigationSort = 1;
-
-    protected string $view = 'filament.pages.settings-form';
-
-    /** @var array<string, mixed> */
-    public ?array $data = [];
-
-    /** Settings stored as JSON (lists), handled separately from plain text values. */
-    private const JSON_KEYS = ['home_sections', 'home_showcase_categories'];
-
-    /** Keys managed by this page. */
-    protected array $keys = [
-        'site_logo', 'footer_logo', 'site_favicon', 'site_name', 'site_name_en',
-        'footer_description', 'footer_copyright',
-        'hero_title', 'hero_subtitle',
-        'side_card_1_title', 'side_card_1_text', 'side_card_2_title', 'side_card_2_text',
-        'seo_title', 'seo_description', 'og_image',
-        'order_cooldown_minutes', 'low_stock_threshold',
-        'delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min',
-        'color_brand', 'color_secondary', 'color_accent', 'color_background', 'color_text', 'color_success', 'color_error',
-        'contact_phone', 'contact_whatsapp', 'contact_email', 'contact_address', 'contact_hours',
-        'social_facebook', 'social_youtube', 'social_instagram', 'social_tiktok', 'social_twitter', 'social_linkedin', 'social_telegram',
-        'home_sections', 'home_showcase_categories',
-        'admin_locale',
-    ];
-
-    public function mount(): void
+    protected static function icon(): string|BackedEnum|null
     {
-        $values = SiteSetting::whereIn('setting_key', $this->keys)
-            ->pluck('setting_value', 'setting_key')
-            ->all();
+        return Heroicon::OutlinedCog6Tooth;
+    }
 
-        $state = collect($this->keys)->mapWithKeys(fn ($key) => [$key => $values[$key] ?? ''])->all();
+    protected function keys(): array
+    {
+        return ['admin_locale', 'site_name', 'site_name_en', 'site_logo', 'site_favicon'];
+    }
 
-        // Colors always show the color currently in use (the default when unset).
-        foreach (array_keys(SiteSettingsHelper::COLOR_VARS) as $name) {
-            $state["color_{$name}"] = SiteSettingsHelper::color($name);
-        }
-
-        // The sections list always shows every section, in the saved order.
-        $state['home_sections'] = HomeSections::all();
-        $state['home_showcase_categories'] = HomeSections::showcaseCategoryIds();
+    protected function fillState(array $state): array
+    {
         $state['admin_locale'] = SiteSettingsHelper::adminLocale();
 
-        $this->form->fill($state);
+        return $state;
     }
 
-    public function form(Schema $schema): Schema
+    protected function sections(): array
     {
-        return $schema
-            ->statePath('data')
-            ->components([
-                Section::make(__('অ্যাডমিন প্যানেলের ভাষা'))
-                    ->description(__('এই অ্যাডমিন প্যানেল কোন ভাষায় দেখাবে। সাইটের (গ্রাহকের) ভাষা এতে বদলায় না।'))
-                    ->schema([
-                        Select::make('admin_locale')
-                            ->label(__('ভাষা'))
-                            ->options(SiteSettingsHelper::ADMIN_LOCALES)
-                            ->native(false)
-                            ->selectablePlaceholder(false)
-                            ->required(),
-                    ]),
-                Section::make(__('সাইটের পরিচয়'))
-                    ->description(__('দোকানের নাম আর লোগো। লোগো না দিলে নামটাই লেখা আকারে দেখাবে।'))
-                    ->columns(['default' => 1, 'md' => 2])
-                    ->schema([
-                        TextInput::make('site_name')
-                            ->label(__('দোকানের নাম (বাংলা)'))
-                            ->placeholder(__('আমারশপ'))
-                            ->helperText(__('হেডার ও ফুটারে লোগোর বদলে দেখায় (লোগো না থাকলে)।')),
-                        TextInput::make('site_name_en')
-                            ->label(__('দোকানের নাম (ইংরেজি)'))
-                            ->placeholder('Amar Shop in BD')
-                            ->helperText(__('ব্রাউজারের টাইটেল ও ফুটারের কপিরাইট লাইনে ব্যবহার হয়।')),
-                        ImageUpload::make('site_logo')
-                            ->label(__('সাইটের লোগো (হেডার)'))
-                            ->helperText(__('সাদা/হালকা পটভূমিতে মানানসই লোগো। ছবি: JPG, PNG বা WEBP।')),
-                        ImageUpload::make('footer_logo')
-                            ->label(__('ফুটারের লোগো'))
-                            ->helperText(__('ফুটারের পটভূমি গাঢ়, তাই এখানে সাদা/হালকা রঙের লোগো দিন। খালি থাকলে দোকানের নাম লেখা দেখাবে।')),
-                        ImageUpload::make('site_favicon')
-                            ->label(__('ফেভিকন (ব্রাউজার ট্যাবের ছোট আইকন)'))
-                            ->helperText(__('খালি থাকলে হেডারের লোগো ব্যবহার হবে। বর্গাকার ছবি ভালো।')),
-                    ]),
-                Section::make(__('রং'))
-                    ->description(__('সাইটের রং। ডিফল্ট রং বদলাতে না চাইলে অপরিবর্তিত রাখুন। অ্যাডমিন প্যানেলের মূল রংও ব্র্যান্ড রং থেকে আসে।'))
-                    ->headerActions([
-                        Action::make('resetColors')
-                            ->label(__('ডিফল্টে ফেরত'))
-                            ->color('gray')
-                            ->requiresConfirmation()
-                            ->modalHeading(__('রং ডিফল্টে ফেরত নেবেন?'))
-                            ->modalDescription(__('সব রং আগের ডিফল্ট রঙে ফিরে যাবে।'))
-                            ->modalSubmitActionLabel(__('হ্যাঁ, ফেরত নিন'))
-                            ->modalCancelActionLabel(__('বাতিল'))
-                            ->action(fn () => $this->resetColors()),
-                    ])
-                    ->columns(['default' => 1, 'md' => 2, 'xl' => 4])
-                    ->schema([
-                        ColorPicker::make('color_brand')->label(__('প্রাইমারি / ব্র্যান্ড (বাটন, লিংক, হাইলাইট)')),
-                        ColorPicker::make('color_secondary')->label(__('সেকেন্ডারি (ফুটার, গাঢ় অংশ)')),
-                        ColorPicker::make('color_accent')->label(__('অ্যাকসেন্ট (রেটিং তারা ইত্যাদি)')),
-                        ColorPicker::make('color_background')->label(__('ব্যাকগ্রাউন্ড')),
-                        ColorPicker::make('color_text')->label(__('লেখা')),
-                        ColorPicker::make('color_success')->label(__('সফল')),
-                        ColorPicker::make('color_error')->label(__('ত্রুটি')),
-                    ]),
-                Section::make(__('হোমপেজের সেকশন'))
-                    ->description(__('কোন সেকশন হোমপেজে দেখাবে আর কোনটার পর কোনটা — সুইচ দিয়ে চালু/বন্ধ করুন, তীর দিয়ে ওঠানামা করান।'))
-                    ->schema([
-                        Repeater::make('home_sections')
-                            ->hiddenLabel()
-                            ->addable(false)
-                            ->deletable(false)
-                            ->reorderableWithButtons()
-                            ->schema([
-                                Hidden::make('key'),
-                                Hidden::make('label'),
-                                Toggle::make('on')
-                                    ->label(fn (Get $get): string => __((string) $get('label')))
-                                    ->default(true),
-                            ]),
-                        Select::make('home_showcase_categories')
-                            ->label(__('"ক্যাটাগরি অনুযায়ী পণ্য" সেকশনে কোন ক্যাটাগরি দেখাবে'))
-                            ->multiple()
-                            ->options(fn () => Category::orderBy('name')->pluck('name', 'id')->all())
-                            ->helperText(__('যে ক্রমে বাছবেন সেই ক্রমে দেখাবে। কিছু না বাছলে পণ্য আছে এমন প্রথম দুটি ক্যাটাগরি দেখাবে।')),
-                    ]),
-                Section::make(__('হোমপেজের লেখা'))
-                    ->description(__('হিরো ব্যানার বা সাইড ব্যানার না থাকলে হোমপেজে এই লেখাগুলো দেখায়। খালি রাখলে বিল্ট-ইন লেখাই থাকবে।'))
-                    ->columns(['default' => 1, 'md' => 2])
-                    ->schema([
-                        TextInput::make('hero_title')->label(__('হিরো শিরোনাম'))->maxLength(200),
-                        TextInput::make('hero_subtitle')->label(__('হিরো উপশিরোনাম'))->maxLength(300),
-                        TextInput::make('side_card_1_title')->label(__('সাইড কার্ড ১ — শিরোনাম'))->maxLength(120),
-                        TextInput::make('side_card_1_text')->label(__('সাইড কার্ড ১ — লেখা'))->maxLength(200),
-                        TextInput::make('side_card_2_title')->label(__('সাইড কার্ড ২ — শিরোনাম'))->maxLength(120),
-                        TextInput::make('side_card_2_text')->label(__('সাইড কার্ড ২ — লেখা'))->maxLength(200),
-                    ]),
-                Section::make(__('ফুটার'))
-                    ->description(__('খালি রাখলে বিল্ট-ইন লেখাই থাকবে।'))
-                    ->schema([
-                        Textarea::make('footer_description')
-                            ->label(__('ফুটারের বিবরণ (দোকানের পরিচিতি)'))
-                            ->rows(3)
-                            ->maxLength(500),
-                        TextInput::make('footer_copyright')
-                            ->label(__('কপিরাইট লাইন'))
-                            ->placeholder(__('© ২০২৬ আমারশপ — সব অধিকার সংরক্ষিত'))
-                            ->helperText(__('খালি থাকলে দোকানের নাম দিয়ে নিজে থেকে তৈরি হবে।'))
-                            ->maxLength(300),
-                    ]),
-                Section::make(__('যোগাযোগের তথ্য'))
-                    ->description(__('হেডার, ফুটার, আমাদের সম্পর্কে পেজ আর ইনভয়েসে দেখায়। খালি রাখলে ডিফল্ট তথ্য থাকবে।'))
-                    ->columns(['default' => 1, 'md' => 2])
-                    ->schema([
-                        TextInput::make('contact_phone')
-                            ->label(__('ফোন'))
-                            ->placeholder('+880 1874-783819')
-                            ->maxLength(30),
-                        TextInput::make('contact_whatsapp')
-                            ->label(__('হোয়াটসঅ্যাপ নম্বর'))
-                            ->placeholder('8801874783819')
-                            ->helperText(__('দেশের কোডসহ, যেমন 8801XXXXXXXXX। খালি রাখলে হোয়াটসঅ্যাপ বাটন দেখাবে না।'))
-                            ->maxLength(30),
-                        TextInput::make('contact_email')
-                            ->label(__('ইমেইল'))
-                            ->email()
-                            ->maxLength(255),
-                        TextInput::make('contact_address')
-                            ->label(__('ঠিকানা'))
-                            ->maxLength(500),
-                        TextInput::make('contact_hours')
-                            ->label(__('খোলার সময়'))
-                            ->placeholder(__('শনি–বৃহস্পতি, সকাল ১০টা – রাত ৯টা'))
-                            ->helperText(__('ফুটারে দেখায়। খালি রাখলে দেখাবে না।'))
-                            ->maxLength(200)
-                            ->columnSpanFull(),
-                    ]),
-                Section::make(__('সোশ্যাল লিংক'))
-                    ->description(__('যে ঘর খালি থাকবে, ফুটারে তার লিংক দেখাবে না।'))
-                    ->columns(['default' => 1, 'md' => 2])
-                    ->schema(collect(SiteSettingsHelper::SOCIALS)
-                        ->map(fn (string $label, string $network) => TextInput::make("social_{$network}")
-                            ->label($label)
-                            ->url()
-                            ->placeholder('https://')
-                            ->maxLength(500))
-                        ->values()
-                        ->all()),
-                Section::make(__('অর্ডার ও স্টক'))
-                    ->columns(['default' => 1, 'md' => 2])
-                    ->schema([
-                        TextInput::make('order_cooldown_minutes')
-                            ->label(__('একই ফোন থেকে পরপর অর্ডারের বিরতি (মিনিট)'))
-                            ->numeric()->minValue(0)->maxValue(1440)
-                            ->placeholder('10')
-                            ->helperText(__('এই সময়ের মধ্যে একই ফোন থেকে আরেকটি অর্ডার নেওয়া হবে না। খালি = ১০ মিনিট, ০ = বন্ধ।')),
-                        TextInput::make('low_stock_threshold')
-                            ->label(__('কম স্টকের সীমা (পিস)'))
-                            ->numeric()->minValue(0)->maxValue(100000)
-                            ->placeholder('5')
-                            ->helperText(__('স্টক এর সমান বা কম হলে ড্যাশবোর্ডে সতর্কতা আসবে। খালি = ৫।')),
-                    ]),
-                Section::make(__('ডেলিভারি'))
-                    ->description(__('চেকআউটে জেলা অনুযায়ী ডেলিভারি চার্জ বসে। চার্জ খালি রাখলে ডিফল্ট (:dhaka / :outside টাকা) প্রযোজ্য।', ['dhaka' => config('site.delivery.dhaka'), 'outside' => config('site.delivery.outside')]))
-                    ->columns(['default' => 1, 'md' => 3])
-                    ->schema([
-                        TextInput::make('delivery_fee_dhaka')
-                            ->label(__('ঢাকার ভেতরে চার্জ (৳)'))
-                            ->numeric()->minValue(0)->maxValue(100000)
-                            ->placeholder((string) config('site.delivery.dhaka')),
-                        TextInput::make('delivery_fee_outside')
-                            ->label(__('ঢাকার বাইরে চার্জ (৳)'))
-                            ->numeric()->minValue(0)->maxValue(100000)
-                            ->placeholder((string) config('site.delivery.outside')),
-                        TextInput::make('delivery_free_min')
-                            ->label(__('ফ্রি ডেলিভারির ন্যূনতম অর্ডার (৳)'))
-                            ->numeric()->minValue(0)->maxValue(10000000)
-                            ->helperText(__('খালি = ফ্রি ডেলিভারি বন্ধ। কুপন ছাড়ের আগের সাবটোটাল ধরা হয়।')),
-                    ]),
-                Section::make(__('এসইও (সার্চ ইঞ্জিন)'))
-                    ->description(__('যে পেজ নিজের টাইটেল/বিবরণ দেয়নি তার ডিফল্ট। খালি রাখলে বিল্ট-ইন লেখাই থাকবে।'))
-                    ->schema([
-                        TextInput::make('seo_title')
-                            ->label(__('এসইও টাইটেল'))
-                            ->maxLength(70),
-                        Textarea::make('seo_description')
-                            ->label(__('মেটা বিবরণ'))
-                            ->rows(3)
-                            ->maxLength(300),
-                        ImageUpload::make('og_image')
-                            ->label(__('শেয়ারের ছবি (ফেসবুক ইত্যাদিতে)'))
-                            ->helperText(__('১২০০×৬৩০ আকারের ছবি ভালো।')),
-                    ]),
-            ]);
+        return [
+            Section::make(__('অ্যাডমিন প্যানেলের ভাষা'))
+                ->description(__('এই অ্যাডমিন প্যানেল কোন ভাষায় দেখাবে। সাইটের (গ্রাহকের) ভাষা এতে বদলায় না।'))
+                ->schema([
+                    Select::make('admin_locale')
+                        ->label(__('ভাষা'))
+                        ->options(SiteSettingsHelper::ADMIN_LOCALES)
+                        ->native(false)
+                        ->selectablePlaceholder(false)
+                        ->required(),
+                ]),
+            Section::make(__('সাইটের পরিচয়'))
+                ->description(__('দোকানের নাম আর লোগো। লোগো না দিলে নামটাই লেখা আকারে দেখাবে। ফুটারের লোগো "হেডার ও ফুটার" পেজে।'))
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    TextInput::make('site_name')
+                        ->label(__('দোকানের নাম (বাংলা)'))
+                        ->placeholder(__('আমারশপ'))
+                        ->helperText(__('হেডার ও ফুটারে লোগোর বদলে দেখায় (লোগো না থাকলে)।')),
+                    TextInput::make('site_name_en')
+                        ->label(__('দোকানের নাম (ইংরেজি)'))
+                        ->placeholder('Amar Shop in BD')
+                        ->helperText(__('ব্রাউজারের টাইটেল ও ফুটারের কপিরাইট লাইনে ব্যবহার হয়।')),
+                    ImageUpload::make('site_logo')
+                        ->label(__('সাইটের লোগো (হেডার)'))
+                        ->helperText(__('সাদা/হালকা পটভূমিতে মানানসই লোগো। ছবি: JPG, PNG বা WEBP।')),
+                    ImageUpload::make('site_favicon')
+                        ->label(__('ফেভিকন (ব্রাউজার ট্যাবের ছোট আইকন)'))
+                        ->helperText(__('খালি থাকলে হেডারের লোগো ব্যবহার হবে। বর্গাকার ছবি ভালো।')),
+                ]),
+        ];
     }
 
-    public function save(): void
+    protected function afterSave(array $data): void
     {
-        $data = $this->form->getState();
-
-        foreach ($data as $key => $value) {
-            // A color equal to its default is stored empty, so the site keeps
-            // following the default if it ever changes.
-            if (str_starts_with($key, 'color_')) {
-                $name = substr($key, 6);
-                $value = strtolower((string) $value) === strtolower(SiteSettingsHelper::colorDefaults()[$name] ?? '') ? '' : $value;
-            }
-
-            $value = in_array($key, self::JSON_KEYS, true) ? $this->encodeList($key, $value) : (string) $value;
-
-            SiteSetting::updateOrCreate(
-                ['setting_key' => $key],
-                ['setting_value' => $value],
-            );
-
-            SiteSettingsHelper::forget($key);
-        }
-
-        StorefrontCache::flush();
-
-        // The admin language applies from the next page load, so reload now.
+        // The admin language applies from the next page load, so reload now if it changed.
         $switched = ($data['admin_locale'] ?? null) !== app()->getLocale();
         app()->setLocale(SiteSettingsHelper::adminLocale());
-
-        Notification::make()->title(__('সাইট সেটিং সেভ হয়েছে।'))->success()->send();
 
         if ($switched) {
             $this->redirect(static::getUrl());
         }
-    }
-
-    /** JSON for a list setting; '' (= default behaviour) when there is nothing to store. */
-    private function encodeList(string $key, mixed $value): string
-    {
-        $value = is_array($value) ? array_values($value) : [];
-
-        if ($key === 'home_sections') {
-            $value = array_values(array_filter(array_map(
-                fn ($row) => is_array($row) && isset(HomeSections::SECTIONS[$row['key'] ?? ''])
-                    ? ['key' => $row['key'], 'on' => (bool) ($row['on'] ?? false)]
-                    : null,
-                $value,
-            )));
-        } else {
-            $value = array_values(array_unique(array_map('intval', $value)));
-        }
-
-        return $value === [] ? '' : (string) json_encode($value);
-    }
-
-    /** Drop every saved color and show the defaults in the form. */
-    public function resetColors(): void
-    {
-        foreach (SiteSettingsHelper::colorDefaults() as $name => $default) {
-            SiteSetting::where('setting_key', "color_{$name}")->delete();
-            SiteSettingsHelper::forget("color_{$name}");
-            $this->data["color_{$name}"] = $default;
-        }
-
-        Notification::make()->title(__('রং ডিফল্টে ফিরেছে।'))->success()->send();
     }
 }

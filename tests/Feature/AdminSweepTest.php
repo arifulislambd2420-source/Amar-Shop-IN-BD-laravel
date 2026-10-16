@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Settings\ContactSocialSettings;
 use App\Filament\Pages\SiteSettings;
 use App\Filament\Resources\Brands\Pages\ManageBrands;
 use App\Filament\Resources\Categories\Pages\ManageCategories;
@@ -165,10 +166,9 @@ class AdminSweepTest extends TestCase
 
     public function test_site_setting_saves_and_the_storefront_follows(): void
     {
-        Livewire::test(SiteSettings::class)
-            ->set('data.site_name', 'Sweep Shop')
-            ->set('data.contact_phone', '01712345678')
-            ->call('save');
+        Livewire::test(SiteSettings::class)->set('data.site_name', 'Sweep Shop')->call('save');
+        Livewire::test(ContactSocialSettings::class)->set('data.contact_phone', '01712345678')->call('save');
+        $this->assertSame('01712345678', SiteSetting::where('setting_key', 'contact_phone')->value('setting_value'));
 
         $this->assertSame('Sweep Shop', SiteSetting::where('setting_key', 'site_name')->value('setting_value'));
         $this->get('/')->assertOk()->assertSee('Sweep Shop');
