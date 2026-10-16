@@ -50,8 +50,8 @@ class EditOrder extends EditRecord
                 ->icon(Heroicon::OutlinedTruck)
                 ->button(),
 
-            // Shown only for a cancelled order (OrderResource::canDelete).
-            DeleteAction::make(),
+            // Any order, super admins only (OrderResource::canDelete).
+            OrderResource::configureDelete(DeleteAction::make()),
         ];
     }
 

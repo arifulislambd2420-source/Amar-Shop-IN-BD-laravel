@@ -9,6 +9,7 @@ use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Models\Order;
 use App\Support\AdminAccess;
+use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -34,6 +35,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use UnitEnum;
 
@@ -353,35 +355,105 @@ class OrderResource extends Resource
                     ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
                 ViewAction::make()->iconButton(),
                 EditAction::make()->iconButton(),
-                // Only a cancelled order can be deleted (see Order::canBeDeleted).
-                DeleteAction::make()->iconButton()->visible(fn (Order $record): bool => $record->canBeDeleted()),
+                // Any order, super admins only; the popup spells out what deleting does.
+                self::configureDelete(DeleteAction::make()->iconButton()),
             ])
             ->toolbarActions([
-                BulkAction::make('deleteCancelled')
-                    ->label(__('বাতিল অর্ডার মুছুন'))
+                BulkAction::make('deleteOrders')
+                    ->label(__('অর্ডার মুছুন'))
                     ->icon(Heroicon::OutlinedTrash)
                     ->color('danger')
+                    ->visible(fn (): bool => self::canDeleteAny())
+                    ->authorize(fn (): bool => self::canDeleteAny())
                     ->requiresConfirmation()
-                    ->modalHeading(__('বাছাই করা বাতিল অর্ডারগুলো মুছবেন?'))
-                    ->modalDescription(__('শুধু বাতিল করা অর্ডার মোছা হয়। অন্য বাছাই করা অর্ডার যেমন আছে তেমনই থাকবে — মুছতে চাইলে আগে বাতিল করুন।'))
+                    ->modalHeading(__('বাছাই করা অর্ডারগুলো মুছবেন?'))
+                    ->modalDescription(fn (Collection $records): HtmlString => self::bulkDeleteDescription($records))
+                    ->modalSubmitActionLabel(__('হ্যাঁ, মুছুন'))
                     ->deselectRecordsAfterCompletion()
                     ->action(function (Collection $records): void {
-                        [$cancelled, $kept] = $records->partition(fn (Order $order): bool => $order->canBeDeleted());
-                        $cancelled->each->delete();
+                        abort_unless(self::canDeleteAny(), 403);
+
+                        $records->each->delete();
 
                         Notification::make()
-                            ->title($cancelled->count().' cancelled order(s) deleted')
-                            ->body($kept->isNotEmpty() ? $kept->count().' order(s) were not cancelled, so they were kept.' : null)
+                            ->title(__(':count টি অর্ডার মোছা হয়েছে', ['count' => $records->count()]))
                             ->success()
                             ->send();
                     }),
             ]);
     }
 
-    /** Deleting is only for cancelled orders; a live order must be cancelled first. */
+    /** Any order can be deleted, but only by a super admin. */
     public static function canDelete(Model $record): bool
     {
-        return $record instanceof Order && $record->canBeDeleted() && parent::canDelete($record);
+        return $record instanceof Order && self::canDeleteAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return (bool) auth('admin')->user()?->isSuperAdmin();
+    }
+
+    /** The delete popup: order number, customer, total, status — and what else deleting does. */
+    public static function configureDelete(DeleteAction $action): DeleteAction
+    {
+        return $action
+            ->modalHeading(__('অর্ডার মুছবেন?'))
+            ->modalDescription(fn (Order $record): HtmlString => self::deleteDescription($record))
+            ->modalSubmitActionLabel(__('হ্যাঁ, মুছুন'));
+    }
+
+    public static function deleteDescription(Order $order): HtmlString
+    {
+        $lines = [
+            '<strong>'.e(__('অর্ডার নম্বর')).':</strong> '.e($order->invoice_no ?: '#'.$order->id),
+            '<strong>'.e(__('গ্রাহক')).':</strong> '.e($order->customer_name.' ('.$order->phone.')'),
+            '<strong>'.e(__('মোট টাকা')).':</strong> '.e(Money::taka($order->total)),
+            '<strong>'.e(__('স্ট্যাটাস')).':</strong> '.e(self::statuses()[$order->status] ?? $order->status),
+        ];
+
+        $notes = [];
+
+        if ($order->status !== 'cancelled') {
+            $notes[] = __('এই অর্ডার বাতিল হয়নি: মুছলে এর স্টক ফেরত আসবে এবং কুপন থাকলে কুপনের ব্যবহার এক কমবে।');
+        }
+
+        if (filled($order->consignment_id)) {
+            $notes[] = '⚠ '.__('এই অর্ডার কুরিয়ারে পাঠানো হয়েছে (কনসাইনমেন্ট: :id)। মুছলে কুরিয়ারে বুকিং বাতিল হবে না — কুরিয়ারের নিজস্ব প্যানেল থেকে আলাদা করে বাতিল করুন।', ['id' => $order->consignment_id]);
+        }
+
+        $notes[] = __('মোছার পর অর্ডারটি আর ফেরানো যাবে না।');
+
+        return new HtmlString(implode('<br>', $lines).'<br><br>'.implode('<br>', array_map('e', $notes)));
+    }
+
+    /** The same warning for a whole selection: counts, money, statuses, courier orders. */
+    public static function bulkDeleteDescription(Collection $records): HtmlString
+    {
+        $statuses = self::statuses();
+        $byStatus = $records->countBy('status')->map(fn ($n, $s) => ($statuses[$s] ?? $s).': '.$n)->implode(', ');
+        $live = $records->where('status', '!=', 'cancelled')->count();
+        $courier = $records->filter(fn (Order $o) => filled($o->consignment_id))->count();
+
+        $lines = [
+            '<strong>'.e(__('অর্ডার')).':</strong> '.e((string) $records->count()),
+            '<strong>'.e(__('মোট টাকা')).':</strong> '.e(Money::taka($records->sum('total'))),
+            '<strong>'.e(__('স্ট্যাটাস')).':</strong> '.e($byStatus),
+        ];
+
+        $notes = [];
+
+        if ($live > 0) {
+            $notes[] = __(':count টি অর্ডার বাতিল হয়নি: সেগুলোর স্টক ফেরত আসবে এবং কুপন থাকলে কুপনের ব্যবহার এক কমবে।', ['count' => $live]);
+        }
+
+        if ($courier > 0) {
+            $notes[] = '⚠ '.__(':count টি অর্ডার কুরিয়ারে পাঠানো হয়েছে। মুছলে কুরিয়ারে বুকিং বাতিল হবে না — কুরিয়ারের নিজস্ব প্যানেল থেকে আলাদা করে বাতিল করুন।', ['count' => $courier]);
+        }
+
+        $notes[] = __('মোছার পর অর্ডারগুলো আর ফেরানো যাবে না।');
+
+        return new HtmlString(implode('<br>', $lines).'<br><br>'.implode('<br>', array_map('e', $notes)));
     }
 
     public static function getRelations(): array

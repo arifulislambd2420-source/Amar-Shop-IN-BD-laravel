@@ -550,5 +550,18 @@
     "রুট ক্যাশ মোছা যায়নি — সার্ভারে \"php artisan route:clear\" চালান।": "Could not clear the route cache — run \"php artisan route:clear\" on the server.",
     "অ্যাডমিন লিংক বদলেছে: :url": "Admin address changed: :url",
     "শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন (-) চলবে — :min থেকে :max অক্ষর, হাইফেন দিয়ে শুরু বা শেষ নয়, পরপর দুটি হাইফেনও নয়।": "Only lowercase English letters, digits and hyphens (-) — :min to :max characters, no hyphen at the start or end, no two hyphens in a row.",
-    "\":path\" নামটি সাইটের অন্য পেজ বা ফোল্ডারের নামের সাথে মিলে যায়। অন্য একটি নাম দিন।": "\":path\" clashes with another page or folder of the site. Choose another name."
+    "\":path\" নামটি সাইটের অন্য পেজ বা ফোল্ডারের নামের সাথে মিলে যায়। অন্য একটি নাম দিন।": "\":path\" clashes with another page or folder of the site. Choose another name.",
+    "অর্ডার মুছুন": "Delete orders",
+    "বাছাই করা অর্ডারগুলো মুছবেন?": "Delete the selected orders?",
+    "হ্যাঁ, মুছুন": "Yes, delete",
+    ":count টি অর্ডার মোছা হয়েছে": ":count order(s) deleted",
+    "অর্ডার মুছবেন?": "Delete this order?",
+    "অর্ডার নম্বর": "Order number",
+    "মোট টাকা": "Total",
+    "এই অর্ডার বাতিল হয়নি: মুছলে এর স্টক ফেরত আসবে এবং কুপন থাকলে কুপনের ব্যবহার এক কমবে।": "This order is not cancelled: deleting it gives its stock back and, if it used a coupon, takes one off the coupon's use count.",
+    "এই অর্ডার কুরিয়ারে পাঠানো হয়েছে (কনসাইনমেন্ট: :id)। মুছলে কুরিয়ারে বুকিং বাতিল হবে না — কুরিয়ারের নিজস্ব প্যানেল থেকে আলাদা করে বাতিল করুন।": "This order was sent to the courier (consignment: :id). Deleting it will not be cancelled at the courier — cancel the booking separately in the courier's own panel.",
+    "মোছার পর অর্ডারটি আর ফেরানো যাবে না।": "A deleted order cannot be brought back.",
+    ":count টি অর্ডার বাতিল হয়নি: সেগুলোর স্টক ফেরত আসবে এবং কুপন থাকলে কুপনের ব্যবহার এক কমবে।": ":count order(s) are not cancelled: their stock comes back and, where a coupon was used, its use count goes down by one.",
+    ":count টি অর্ডার কুরিয়ারে পাঠানো হয়েছে। মুছলে কুরিয়ারে বুকিং বাতিল হবে না — কুরিয়ারের নিজস্ব প্যানেল থেকে আলাদা করে বাতিল করুন।": ":count order(s) were sent to the courier. Deleting them will not be cancelled at the courier — cancel those bookings separately in the courier's own panel.",
+    "মোছার পর অর্ডারগুলো আর ফেরানো যাবে না।": "Deleted orders cannot be brought back."
 }

@@ -155,6 +155,7 @@ class OrderService
             $shippingFee = Delivery::fee($customer['district'] ?? null, (float) $subtotal);
 
             $discount = 0;
+            $couponId = null;
             if ($couponCode) {
                 $coupon = Coupon::findByCode($couponCode, lock: true);
 
@@ -169,6 +170,7 @@ class OrderService
                 $discount = $coupon->discountFor((float) $subtotal);
 
                 $coupon->increment('uses');
+                $couponId = $coupon->id;
             }
 
             $total = $subtotal + $shippingFee - $discount;
@@ -179,6 +181,7 @@ class OrderService
 
             $order = Order::create([
                 'landing_page_id' => $landingPageId,
+                'coupon_id' => $couponId,
                 'is_flagged' => $flagReasons !== [],
                 'flag_reason' => $flagReasons ? implode('
 ', $flagReasons) : null,
@@ -276,6 +279,37 @@ class OrderService
             $fresh->forceFill(['stock_reserved' => $hold])->saveQuietly();
             $order->setAttribute('stock_reserved', $hold);
             $order->syncOriginalAttribute('stock_reserved');
+        });
+    }
+
+    /**
+     * An order is being deleted (any status): undo what it still holds, once.
+     * Stock goes back when the order is holding it (stock_reserved), and a
+     * coupon use is given back unless the order was cancelled (a cancelled
+     * order's coupon use stays counted, as before).
+     */
+    public function releaseForDeletion(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            $fresh = Order::with('items')->lockForUpdate()->find($order->id);
+
+            if (! $fresh) {
+                return;
+            }
+
+            if ($fresh->stock_reserved) {
+                foreach ($fresh->items as $item) {
+                    if ($item->product_id !== null) {
+                        Stock::release($item->product_id, $item->variant_id, $item->quantity);
+                    }
+                }
+
+                $fresh->forceFill(['stock_reserved' => false])->saveQuietly();
+            }
+
+            if ($fresh->status !== 'cancelled' && $fresh->coupon_id) {
+                Coupon::whereKey($fresh->coupon_id)->where('uses', '>', 0)->decrement('uses');
+            }
         });
     }
 
