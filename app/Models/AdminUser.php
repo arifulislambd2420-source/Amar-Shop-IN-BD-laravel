@@ -33,19 +33,49 @@ class AdminUser extends Authenticatable implements FilamentUser, HasName
 
     protected $fillable = [
         'username',
+        'name',
+        'email',
         'password',
         'role',
+        'is_active',
     ];
 
     protected $hidden = [
         'password',
+        'remember_token',
+    ];
+
+    /** Same as the column default, so a freshly created (not reloaded) admin is active too. */
+    protected $attributes = [
+        'is_active' => true,
     ];
 
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Last line of defence, whatever path tries it (admin screen, code, tinker): the shop
+        // must always keep one active super admin — it can't be deleted, deactivated or demoted.
+        static::deleting(function (AdminUser $user): void {
+            if ($user->isLastActiveSuperAdmin()) {
+                throw new \DomainException(__('শেষ সক্রিয় সুপার অ্যাডমিনকে মোছা যাবে না।'));
+            }
+        });
+
+        static::updating(function (AdminUser $user): void {
+            $wasSuper = $user->getOriginal('role') === self::ROLE_SUPER_ADMIN && (bool) $user->getOriginal('is_active');
+            $stillSuper = $user->role === self::ROLE_SUPER_ADMIN && $user->is_active;
+
+            if ($wasSuper && ! $stillSuper && ! self::otherActiveSuperAdmins($user->id)->exists()) {
+                throw new \DomainException(__('শেষ সক্রিয় সুপার অ্যাডমিনকে নিষ্ক্রিয় করা বা তার রোল বদলানো যাবে না।'));
+            }
+        });
     }
 
     public function isSuperAdmin(): bool
@@ -53,13 +83,25 @@ class AdminUser extends Authenticatable implements FilamentUser, HasName
         return $this->role === self::ROLE_SUPER_ADMIN;
     }
 
+    private static function otherActiveSuperAdmins(?int $exceptId)
+    {
+        return static::where('role', self::ROLE_SUPER_ADMIN)->where('is_active', true)->where('id', '!=', $exceptId);
+    }
+
+    /** The only active super admin left (so the shop would be locked out without them). */
+    public function isLastActiveSuperAdmin(): bool
+    {
+        return $this->isSuperAdmin() && $this->is_active && ! self::otherActiveSuperAdmins($this->id)->exists();
+    }
+
     /**
-     * Every admin_users row may sign in; what they can open is decided by
-     * their role (App\Support\AdminAccess).
+     * Every active admin_users row may sign in; what they can open is decided by
+     * their role (App\Support\AdminAccess). An inactive admin is turned away at
+     * sign-in and, if already signed in, on the very next request.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return (bool) $this->is_active;
     }
 
     /**
@@ -71,6 +113,6 @@ class AdminUser extends Authenticatable implements FilamentUser, HasName
      */
     public function getFilamentName(): string
     {
-        return $this->username;
+        return $this->name ?: $this->username;
     }
 }

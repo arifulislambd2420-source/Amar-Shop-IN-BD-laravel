@@ -23,7 +23,7 @@ class Login extends BaseLogin
     protected function getEmailFormComponent(): Component
     {
         return TextInput::make('username')
-            ->label(__('ইউজারনেম'))
+            ->label(__('ইউজারনেম বা ইমেইল'))
             ->required()
             ->autocomplete('username')
             ->autofocus()
@@ -38,8 +38,11 @@ class Login extends BaseLogin
      */
     protected function getCredentialsFromFormData(#[SensitiveParameter] array $data): array
     {
+        $login = trim((string) $data['username']);
+
+        // The username, or the e-mail saved on the admin account.
         return [
-            'username' => $data['username'],
+            str_contains($login, '@') ? 'email' : 'username' => $login,
             'password' => $data['password'],
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Http\Middleware\EnsureAdminAreaAccess;
 use App\Http\Middleware\SecurityHeaders;
@@ -72,6 +73,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.25rem')
             ->favicon(fn () => $this->setting('site_favicon') ?? $this->setting('site_logo'))
             ->login(Login::class)
+            ->profile(EditProfile::class)
             ->colors(fn () => [
                 'primary' => $this->primaryColor(),
             ])
