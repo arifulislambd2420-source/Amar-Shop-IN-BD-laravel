@@ -262,6 +262,21 @@ class LandingPageResource extends Resource
             ->schema([...$fields, self::hideToggle()->columnSpanFull()]);
     }
 
+    /** A video link: YouTube, Facebook, Vimeo or a direct .mp4/.webm — anything else is refused with a clear message. */
+    private static function videoLink(string $name): TextInput
+    {
+        return TextInput::make($name)
+            ->url()
+            ->maxLength(500)
+            ->columnSpanFull()
+            ->rule(fn () => function (string $attribute, $value, \Closure $fail): void {
+                if (filled($value) && \App\Support\VideoEmbed::parse((string) $value) === null) {
+                    $fail(__('এই লিংক চলবে না। YouTube বা Facebook ভিডিওর লিংক (বা সরাসরি .mp4 ফাইলের লিংক) দিন।'));
+                }
+            })
+            ->helperText(__('YouTube বা Facebook ভিডিওর লিংক বসান। ভিডিও চাপলে তবেই লোড হয়, তাই পেজ ধীর হয় না।'));
+    }
+
     /** @return array<int, Block> */
     public static function blockSchemas(): array
     {
@@ -274,7 +289,11 @@ class LandingPageResource extends Resource
                 TextInput::make('button_text')->label(__('বাটনের লেখা'))->default(__('অর্ডার করুন'))->maxLength(100),
                 TextInput::make('badge_text')->label(__('ব্যাজ/ঘোষণা'))->placeholder(__('নতুন বছর উপলক্ষে বিশেষ মূল্য ছাড়'))->maxLength(255),
                 ImageUpload::make('images')->label(__('ছবি (একাধিক হলে স্লাইডার)'))->multiple()->reorderable()->columnSpanFull(),
-                TextInput::make('video_url')->label(__('ভিডিও লিংক (ঐচ্ছিক)'))->url()->maxLength(500)->columnSpanFull(),
+                self::videoLink('video_url')->label(__('ভিডিও লিংক (ঐচ্ছিক)')),
+                Select::make('hero_media')->label(__('হিরোতে কী দেখাবে'))
+                    ->options(['image' => __('ছবি (ভিডিও দিলে ছবির উপর ▶ বাটন)'), 'video' => __('ভিডিও — ছবির বদলে')])
+                    ->default('image')->native(false)->columnSpanFull()
+                    ->helperText(__('"ভিডিও" বাছলে উপরের ভিডিও লিংকটি ছবির জায়গায় বসবে (মোবাইলে পুরো চওড়া, 16:9)। ছবি না দিয়ে শুধু ভিডিও লিংক দিলেও ভিডিওই দেখাবে।')),
                 TextInput::make('list_heading')->label(__('বৈশিষ্ট্য তালিকার শিরোনাম'))->default(__('পণ্যের বৈশিষ্ট্যসমূহ'))->maxLength(255)->columnSpanFull(),
                 Repeater::make('bullets')->label(__('বৈশিষ্ট্য তালিকা'))
                     ->simple(TextInput::make('text')->required()->maxLength(255))
@@ -318,7 +337,7 @@ class LandingPageResource extends Resource
             ]),
             self::block('video', __('ভিডিও'), 'heroicon-o-play-circle', [
                 TextInput::make('heading')->label(__('শিরোনাম'))->maxLength(255)->columnSpanFull(),
-                TextInput::make('url')->label(__('ভিডিও লিংক (YouTube / MP4)'))->url()->required()->maxLength(500)->columnSpanFull(),
+                self::videoLink('url')->label(__('ভিডিও লিংক (YouTube / Facebook / MP4)'))->required(),
                 ImageUpload::make('poster')->label(__('পোস্টার ছবি')),
             ]),
             self::block('variants', __('সাইজ / কালার'), 'heroicon-o-swatch', [

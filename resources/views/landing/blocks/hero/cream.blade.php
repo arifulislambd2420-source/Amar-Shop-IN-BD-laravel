@@ -6,6 +6,8 @@
         $images = [$d['image']];
     }
     $video = \App\Support\VideoEmbed::parse($d['video_url'] ?? null);
+    // Video in place of the picture: chosen in the block, or automatic when there is a video but no picture.
+    $videoOnly = $video && (($d['hero_media'] ?? 'image') === 'video' || ! $images);
     $button = $d['button_text'] ?? 'অর্ডার করুন';
     $bullets = array_values(array_filter(array_map(fn ($b) => is_array($b) ? ($b['text'] ?? null) : $b, (array) ($d['bullets'] ?? []))));
 @endphp
@@ -45,9 +47,9 @@
             @endif
         </div>
 
-        @if ($images)
-            <div class="mx-auto w-full max-w-sm md:max-w-none">
-                @include('landing.blocks._hero-media', ['images' => $images, 'video' => $video, 'aspect' => 'aspect-[3/4]', 'wrapClass' => 'border-0! rounded-3xl! shadow-2xl'])
+        @if ($images || $videoOnly)
+            <div class="{{ $videoOnly ? '' : 'mx-auto w-full max-w-sm md:max-w-none' }}">
+                @include('landing.blocks._hero-media', ['images' => $images, 'video' => $video, 'videoOnly' => $videoOnly, 'aspect' => 'aspect-[3/4]', 'wrapClass' => 'border-0! rounded-3xl! shadow-2xl'])
             </div>
         @endif
     </div>

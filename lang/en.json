@@ -590,5 +590,12 @@
     "সক্রিয় করা হয়েছে।": "Activated.",
     "নিষ্ক্রিয় করা হয়েছে।": "Deactivated.",
     "শেষ সক্রিয় সুপার অ্যাডমিনকে মোছা যাবে না।": "The last active super admin cannot be deleted.",
-    "শেষ সক্রিয় সুপার অ্যাডমিনকে নিষ্ক্রিয় করা বা তার রোল বদলানো যাবে না।": "The last active super admin cannot be deactivated or have the role changed."
+    "শেষ সক্রিয় সুপার অ্যাডমিনকে নিষ্ক্রিয় করা বা তার রোল বদলানো যাবে না।": "The last active super admin cannot be deactivated or have the role changed.",
+    "হিরোতে কী দেখাবে": "What the hero shows",
+    "ছবি (ভিডিও দিলে ছবির উপর ▶ বাটন)": "Picture (a ▶ button over it when there is a video)",
+    "ভিডিও — ছবির বদলে": "Video — instead of the picture",
+    "\"ভিডিও\" বাছলে উপরের ভিডিও লিংকটি ছবির জায়গায় বসবে (মোবাইলে পুরো চওড়া, 16:9)। ছবি না দিয়ে শুধু ভিডিও লিংক দিলেও ভিডিওই দেখাবে।": "Choosing \"Video\" puts the video link above in place of the picture (full width on a phone, 16:9). A video link with no picture shows the video too.",
+    "ভিডিও লিংক (YouTube / Facebook / MP4)": "Video link (YouTube / Facebook / MP4)",
+    "এই লিংক চলবে না। YouTube বা Facebook ভিডিওর লিংক (বা সরাসরি .mp4 ফাইলের লিংক) দিন।": "This link will not work. Give a YouTube or Facebook video link (or a direct .mp4 file link).",
+    "YouTube বা Facebook ভিডিওর লিংক বসান। ভিডিও চাপলে তবেই লোড হয়, তাই পেজ ধীর হয় না।": "Paste a YouTube or Facebook video link. The video only loads when tapped, so the page stays fast."
 }

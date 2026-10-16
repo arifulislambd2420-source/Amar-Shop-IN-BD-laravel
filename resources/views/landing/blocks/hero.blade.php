@@ -9,6 +9,8 @@
         $images = [$d['image']];
     }
     $video = \App\Support\VideoEmbed::parse($d['video_url'] ?? null);
+    // Video in place of the picture: chosen in the block, or automatic when there is a video but no picture.
+    $videoOnly = $video && (($d['hero_media'] ?? 'image') === 'video' || ! $images);
     $button = $d['button_text'] ?? 'অর্ডার করুন';
     $bullets = array_values(array_filter(array_map(fn ($b) => is_array($b) ? ($b['text'] ?? null) : $b, (array) ($d['bullets'] ?? []))));
 @endphp
@@ -37,9 +39,9 @@
 
 <section class="bg-white px-4 py-6 md:py-10">
     <div class="max-w-5xl mx-auto grid gap-5 md:grid-cols-2 md:items-start">
-        @include('landing.blocks._hero-media', ['images' => $images, 'video' => $video])
+        @include('landing.blocks._hero-media', ['images' => $images, 'video' => $video, 'videoOnly' => $videoOnly])
 
-        <div class="rounded-xl border-2 border-dashed border-secondary bg-secondary/20 p-4 @if (! $images) md:col-span-2 max-w-2xl mx-auto w-full @endif">
+        <div class="rounded-xl border-2 border-dashed border-secondary bg-secondary/20 p-4 @if (! $images && ! $videoOnly) md:col-span-2 max-w-2xl mx-auto w-full @endif">
             @if (! empty($d['badge_text']))
                 <h2 class="text-lg md:text-2xl font-extrabold leading-snug text-brand-600 text-center">{{ $d['badge_text'] }}</h2>
             @endif
