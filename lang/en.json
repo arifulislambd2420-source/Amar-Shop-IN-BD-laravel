@@ -533,7 +533,22 @@
     "🚚 ডেলিভারি": "🚚 Delivery",
     "🛡️ গ্যারান্টি": "🛡️ Guarantee",
     "ছবির গ্যালারি": "Photo gallery",
+    "সেভ করুন": "Save",
     "যত খুশি ছবি দিন — কম্পিউটার থেকে, লাইব্রেরি থেকে বা লিংক দিয়ে, একসাথে একাধিক। টেনে ক্রম বদলান; প্রথম ছবিটি আগে দেখাবে। রঙের ছবি আলাদা (রং/ভ্যারিয়েন্ট ট্যাবে) এবং রং বাছলে নিজে থেকেই দেখাবে।": "Add as many pictures as you like — from your computer, the Media Library or links, several at once. Drag to reorder; the first picture shows first. Colour pictures are separate (in the Colour / Variants tab) and show automatically when a colour is picked.",
     "ছবির লিংক (প্রতি লাইনে একটি)": "Image links (one per line)",
-    "কিছু ছবি আনা যায়নি": "Some images could not be fetched"
+    "কিছু ছবি আনা যায়নি": "Some images could not be fetched",
+    "অ্যাডমিন লিংক": "Admin address",
+    "অ্যাডমিন প্যানেলের লিংক": "Admin panel address",
+    "এখন: :url": "Now: :url",
+    "নতুন পথ": "New path",
+    "শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন (যেমন my-panel-2026)। \"admin\" দিলে আগের /admin-এ ফিরবে।": "Only lowercase English letters, digits and hyphens (e.g. my-panel-2026). Enter \"admin\" to go back to /admin.",
+    "সেভ করলে লগইন লিংক হবে: :url": "After saving, the login link will be: :url",
+    "অ্যাডমিন লিংক বদলাবেন?": "Change the admin address?",
+    "নতুন লগইন লিংক: :url — লিংকটি এখনই কোথাও লিখে রাখুন। এটি ভুলে গেলে প্যানেলে ঢুকতে পারবেন না। পুরনো লিংকে (:old) আর কিছু পাওয়া যাবে না (404)। ভুলে গেলে সার্ভারে \"php artisan admin:reset-path\" চালালে আবার /admin ফিরে আসবে।": "New login link: :url — write it down somewhere right now. If you forget it you cannot get into the panel. The old address (:old) will stop working (404). If forgotten, run \"php artisan admin:reset-path\" on the server to bring /admin back.",
+    "হ্যাঁ, লিংক বদলান": "Yes, change the address",
+    "লিংক আগের মতোই আছে।": "The address is unchanged.",
+    "রুট ক্যাশ মোছা যায়নি — সার্ভারে \"php artisan route:clear\" চালান।": "Could not clear the route cache — run \"php artisan route:clear\" on the server.",
+    "অ্যাডমিন লিংক বদলেছে: :url": "Admin address changed: :url",
+    "শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন (-) চলবে — :min থেকে :max অক্ষর, হাইফেন দিয়ে শুরু বা শেষ নয়, পরপর দুটি হাইফেনও নয়।": "Only lowercase English letters, digits and hyphens (-) — :min to :max characters, no hyphen at the start or end, no two hyphens in a row.",
+    "\":path\" নামটি সাইটের অন্য পেজ বা ফোল্ডারের নামের সাথে মিলে যায়। অন্য একটি নাম দিন।": "\":path\" clashes with another page or folder of the site. Choose another name."
 }

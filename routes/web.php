@@ -27,7 +27,8 @@ Route::get('/sitemap.xml', \App\Http\Controllers\SitemapController::class)->name
 Route::get('/robots.txt', function () {
     $lines = [
         'User-agent: *',
-        'Disallow: /admin',
+        // A custom admin address is secret: robots.txt is public, so it is not listed.
+        ...(\App\Support\AdminPath::isCustom() ? [] : ['Disallow: /admin']),
         'Disallow: /cart',
         'Disallow: /checkout',
         'Disallow: /track',

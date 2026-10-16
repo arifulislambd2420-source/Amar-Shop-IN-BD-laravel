@@ -186,3 +186,15 @@ Deploy করার পর এই জিনিসগুলো একবার �
 - **500 error / সাদা পেজ:** `storage/logs/laravel.log` দেখুন। প্রায়ই কারণ: `.env` এ ভুল DB credential, অথবা `APP_KEY` ফাঁকা (`php artisan key:generate` চালাননি)।
 - **CSS/JS লোড হচ্ছে না:** `npm run build` চালিয়েছেন কিনা, আর Document Root ঠিক `public/` ফোল্ডারে সেট আছে কিনা দেখুন।
 - **"Permission denied" storage error:** `chmod -R 775 storage bootstrap/cache` আবার চালান, আর `.env` ফাইলের owner ঠিক আছে কিনা দেখুন।
+
+## ৮. অ্যাডমিন লিংক বদলানো ও ফিরিয়ে আনা
+
+- অ্যাডমিন প্যানেলে **সেটিংস → অ্যাডমিন লিংক** থেকে `/admin`-এর বদলে অন্য পথ (যেমন `my-panel-2026`) রাখা যায়। শুধু ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন চলে। সেভের আগে নতুন লগইন লিংক দেখানো হয় — সেটা অবশ্যই লিখে রাখুন। বদলের পর পুরনো `/admin`-এ 404 আসে।
+- পথটি `storage/app/admin-path.txt` ফাইলে থাকে (`git pull` এতে হাত দেয় না)। `route:cache` চালানো থাকলে সেভের সময় নিজে থেকে মুছে যায়; না মুছলে `php artisan route:clear` চালান।
+- **লিংক ভুলে গেলে** সার্ভারে (SSH) চালান — `/admin` ফিরে আসবে:
+
+```bash
+php artisan admin:reset-path
+```
+
+(SSH না থাকলে File Manager থেকে `storage/app/admin-path.txt` ফাইলটি মুছে দিলেও একই কাজ হয়।)

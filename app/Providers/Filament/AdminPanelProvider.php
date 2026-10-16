@@ -6,6 +6,7 @@ use App\Filament\Auth\Login;
 use App\Http\Middleware\EnsureAdminAreaAccess;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetAdminLocale;
+use App\Support\AdminPath;
 use App\Support\SiteSettingsHelper;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -62,7 +63,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            // /admin unless changed in Admin → Admin address (or put back with `php artisan admin:reset-path`).
+            ->path(AdminPath::current())
             ->authGuard('admin')
             ->brandName(fn () => $this->brandName())
             // The shop's own logo / favicon from Site Setting (text name when there's no logo).
