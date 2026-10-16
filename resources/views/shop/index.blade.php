@@ -73,15 +73,13 @@
         </div>
     </div>
 
-    {{-- Phones: category shortcuts, then filter + sort --}}
+    {{-- Category cards (swipe on phones, a row on desktop); the one being shown is highlighted and tapping it again clears it --}}
     @if($categories->isNotEmpty())
-        <div class="swipe-row relative -mx-4 mb-3 gap-2 px-4 pb-1 md:hidden" aria-label="ক্যাটাগরি"
+        <div class="swipe-row relative -mx-4 mb-4 gap-3 px-4 pb-1 md:mx-0 md:mb-6 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-8" aria-label="ক্যাটাগরি"
             x-init="const a = $el.querySelector('[aria-current]'); if (a) $el.scrollLeft = a.offsetLeft - ($el.clientWidth - a.offsetWidth) / 2">
-            <a href="{{ $with(['category' => null]) }}" class="{{ $chip }} {{ $filters['category'] ? $chipOff : $chipOn }}">সব</a>
             @foreach($categories as $c)
                 @php $on = $activeCategory?->id === $c->id; @endphp
-                <a href="{{ $with(['category' => $c->slug]) }}" @if($on) aria-current="page" @endif
-                    class="{{ $chip }} {{ $on ? $chipOn : $chipOff }}">{{ $c->name }}</a>
+                <x-category-card :category="$c" :active="$on" :href="$with(['category' => $on ? null : $c->slug])" class="swipe-half md:w-auto md:min-w-0 md:flex-none" />
             @endforeach
         </div>
     @endif
