@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Tabs;
@@ -158,19 +159,48 @@ class ImageUpload
             ->modalDescription(__('ছবিটি আমাদের সার্ভারে কপি হয়ে যাবে, তাই অন্য সাইট বন্ধ হলেও ছবি থাকবে।'))
             ->modalSubmitActionLabel(__('ছবি আনুন'))
             ->modalCancelActionLabel(__('বন্ধ করুন'))
-            ->schema([self::linkInput()->required()])
+            // A gallery takes several links at once (one per line); a single picture takes one.
+            ->schema(fn (FileUpload $component) => [
+                $component->isMultiple()
+                    ? Textarea::make('url')
+                        ->label(__('ছবির লিংক (প্রতি লাইনে একটি)'))
+                        ->placeholder("https://example.com/photo-1.jpg\nhttps://example.com/photo-2.jpg")
+                        ->rows(5)
+                        ->required()
+                    : self::linkInput()->required(),
+            ])
             ->action(function (array $data, FileUpload $component): void {
-                try {
-                    $url = self::storeFromUrl((string) ($data['url'] ?? ''));
-                } catch (RuntimeException $e) {
-                    Notification::make()->title(__('ছবি আনা যায়নি'))->body($e->getMessage())->danger()->send();
+                $links = $component->isMultiple()
+                    ? array_slice(array_values(array_unique(array_filter(array_map('trim', preg_split('/\s+/', (string) ($data['url'] ?? ''))), 'strlen'))), 0, self::LINK_BATCH_LIMIT)
+                    : [(string) ($data['url'] ?? '')];
 
-                    return;
+                $urls = [];
+                $failed = [];
+
+                foreach ($links as $link) {
+                    try {
+                        $urls[] = self::storeFromUrl($link);
+                    } catch (RuntimeException $e) {
+                        $failed[] = $link.' — '.$e->getMessage();
+                    }
                 }
 
-                self::putInto($component, [$url]);
+                if ($failed !== []) {
+                    Notification::make()
+                        ->title($urls === [] ? __('ছবি আনা যায়নি') : __('কিছু ছবি আনা যায়নি'))
+                        ->body(implode("\n", $failed))
+                        ->{$urls === [] ? 'danger' : 'warning'}()
+                        ->send();
+                }
+
+                if ($urls !== []) {
+                    self::putInto($component, $urls);
+                }
             });
     }
+
+    /** At most this many links are fetched in one go (each is a download). */
+    private const LINK_BATCH_LIMIT = 10;
 
     public static function linkInput(string $name = 'url'): TextInput
     {

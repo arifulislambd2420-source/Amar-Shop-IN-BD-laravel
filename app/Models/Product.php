@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FlushesStorefrontCache;
 use App\Support\SiteSettingsHelper;
+use App\Support\StorefrontCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -72,6 +73,36 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    /** The gallery pictures in the order the admin arranged them. */
+    public function galleryUrls(): array
+    {
+        return $this->images()->orderBy('sort_order')->orderBy('id')->pluck('url')->all();
+    }
+
+    /**
+     * Make the gallery exactly these URLs, in this order. Pictures that stay keep
+     * their row (and alt text); removed ones lose only the link — the file stays
+     * in the Media Library.
+     */
+    public function syncGallery(array $urls): void
+    {
+        $urls = collect($urls)->map(fn ($u) => is_string($u) ? trim($u) : '')->filter()->unique()->values();
+
+        $existing = $this->images()->get()->keyBy('url');
+
+        $this->images()->whereNotIn('url', $urls->all())->delete();
+
+        foreach ($urls as $position => $url) {
+            if ($row = $existing->get($url)) {
+                $row->sort_order !== $position && $row->update(['sort_order' => $position]);
+            } else {
+                $this->images()->create(['url' => $url, 'alt' => '', 'sort_order' => $position]);
+            }
+        }
+
+        StorefrontCache::flush();
     }
 
     public function reviews(): HasMany

@@ -6,7 +6,6 @@ use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
-use App\Filament\Resources\Products\RelationManagers\ImagesRelationManager;
 use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
 use App\Filament\Support\ImageUpload;
 use App\Models\Product;
@@ -21,6 +20,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -164,6 +164,24 @@ class ProductResource extends Resource
                             ->columnSpanFull()
                             ->helperText(__('কমা দিয়ে ট্যাগ লিখুন।')),
                     ]),
+                Section::make(__('ছবির গ্যালারি'))
+                    ->description(__('যত খুশি ছবি দিন — কম্পিউটার থেকে, লাইব্রেরি থেকে বা লিংক দিয়ে, একসাথে একাধিক। টেনে ক্রম বদলান; প্রথম ছবিটি আগে দেখাবে। রঙের ছবি আলাদা (রং/ভ্যারিয়েন্ট ট্যাবে) এবং রং বাছলে নিজে থেকেই দেখাবে।'))
+                    ->schema([
+                        ImageUpload::make('gallery')
+                            ->hiddenLabel()
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
+                            ->panelLayout('grid')
+                            ->dehydrated(false)
+                            ->loadStateFromRelationshipsUsing(function (FileUpload $component, ?Product $record): void {
+                                $component->state($record?->galleryUrls() ?? []);
+                            })
+                            ->saveRelationshipsUsing(function (Product $record, ?array $state): void {
+                                $record->syncGallery(array_values($state ?? []));
+                            })
+                            ->columnSpanFull(),
+                    ]),
                 Section::make(__('এসইও'))
                     ->columns(1)
                     ->collapsed()
@@ -281,7 +299,6 @@ class ProductResource extends Resource
     {
         return [
             VariantsRelationManager::class,
-            ImagesRelationManager::class,
         ];
     }
 
