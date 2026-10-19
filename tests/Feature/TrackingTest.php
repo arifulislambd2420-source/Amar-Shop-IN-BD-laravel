@@ -55,24 +55,21 @@ class TrackingTest extends TestCase
         $this->assertStringContainsString('"value":750', $html);
     }
 
-    public function test_purchase_fires_once_with_total_currency_order_id_and_event_id(): void
+    public function test_the_browser_no_longer_sends_purchase_from_the_order_page(): void
     {
         $this->setting('gtm_id', 'GTM-TEST123');
+        $this->setting('meta_pixel_id', '123456789012345');
         $order = $this->placeOrder();
 
-        $first = $this->get('/order/'.$order->order_token)->assertOk()->getContent();
+        // Purchase is sent by the server when the order is confirmed (see ServerPurchaseTest); the page only tracks the view.
+        foreach ([1, 2] as $visit) {
+            $html = $this->get('/order/'.$order->order_token)->assertOk()->getContent();
 
-        $this->assertStringContainsString("trackEvent('purchase'", $first);
-        $this->assertStringContainsString('"transaction_id":"'.$order->invoice_no.'"', $first);
-        $this->assertStringContainsString('"currency":"BDT"', $first);
-        $this->assertStringContainsString('"value":'.(float) $order->total, $first);
-        $this->assertStringContainsString('purchase-'.$order->invoice_no, $first);
-
-        // Reloading the confirmation page must not fire it a second time.
-        $second = $this->get('/order/'.$order->order_token)->getContent();
-        $this->assertStringNotContainsString("trackEvent('purchase'", $second);
+            $this->assertStringNotContainsString("trackEvent('purchase'", $html);
+            $this->assertStringNotContainsString('purchase-'.$order->invoice_no, $html);
+            $this->assertStringContainsString('GTM-TEST123', $html);
+        }
     }
-
     public function test_landing_page_loads_tracking_and_events(): void
     {
         $this->setting('gtm_id', 'GTM-TEST123');

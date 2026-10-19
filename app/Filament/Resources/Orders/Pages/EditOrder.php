@@ -50,6 +50,8 @@ class EditOrder extends EditRecord
                 ->icon(Heroicon::OutlinedTruck)
                 ->button(),
 
+            OrderResource::resendPurchaseAction(),
+
             // Any order, super admins only (OrderResource::canDelete).
             OrderResource::configureDelete(DeleteAction::make()),
         ];

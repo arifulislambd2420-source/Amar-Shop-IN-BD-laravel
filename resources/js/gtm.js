@@ -8,7 +8,7 @@
 //   view_item              view_item              ViewContent      (again when a colour / size is picked)
 //   add_to_cart            add_to_cart            AddToCart        (also for "order now")
 //   begin_checkout         begin_checkout         InitiateCheckout (once per cart)
-//   purchase               purchase               Purchase
+//   purchase               (not sent from the browser — the server sends Purchase when the order is confirmed)
 //   search                 search                 Search
 //   view_category          view_category          ViewCategory     (custom)
 //   complete_registration  complete_registration  CompleteRegistration
@@ -93,12 +93,23 @@ function fbParams(event, data = {}) {
     }
 }
 
+// GA4 loaded straight on the site (no GTM container): gtag.js is set up by the head snippet and
+// gets the events here. (With GTM, the dataLayer above is what GTM's own GA4 tag reads.)
+const GA4_NAMES = { complete_registration: 'sign_up' };
+
+function sendGtag(name, params) {
+    if (window.__ga4Direct === true && typeof window.gtag === 'function') {
+        window.gtag('event', name, params);
+    }
+}
+
 export function trackEvent(event, data, eventId) {
     if (blocked()) return null;
 
     const id = eventId || newEventId(event);
 
     pushToDataLayer(event, ECOMMERCE_EVENTS.includes(event) ? { event_id: id, ecommerce: data } : { event_id: id, ...data });
+    sendGtag(GA4_NAMES[event] || event, data);
 
     if (typeof window.fbq === 'function' && FB_EVENTS[event]) {
         const [method, name] = FB_EVENTS[event];
@@ -115,6 +126,7 @@ export function trackNamedEvent(name, ecommerce, eventId) {
     const id = eventId || newEventId(name);
 
     pushToDataLayer(name, { event_id: id, ecommerce });
+    sendGtag(name, ecommerce);
 
     if (typeof window.fbq === 'function') {
         window.fbq(META_STANDARD.includes(name) ? 'track' : 'trackCustom', name, fbParams('purchase', ecommerce), { eventID: id });

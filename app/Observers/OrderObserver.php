@@ -6,6 +6,7 @@ use App\Jobs\SendOrderSms;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\Sms\SmsService;
+use App\Services\Tracking\ServerPurchase;
 
 /**
  * Turns order lifecycle changes into customer SMS — in one place, so it
@@ -33,10 +34,18 @@ class OrderObserver
         if ($order->payment_method === 'cod' && ! $order->is_flagged) {
             $this->send($order, SmsService::EVENT_CONFIRMED);
         }
+
+        // Only if the admin chose "pending" as the status that sends the server-side Purchase.
+        ServerPurchase::maybeDispatch($order);
     }
 
     public function updated(Order $order): void
     {
+        // Reached the status chosen for the server-side Purchase (Confirmed by default): Meta + GA4, once.
+        if ($order->wasChanged(['status', 'payment_status'])) {
+            ServerPurchase::maybeDispatch($order);
+        }
+
         // Cancelled -> stock back; un-cancelled -> stock taken again.
         if ($order->wasChanged(['status', 'payment_status'])) {
             app(OrderService::class)->reconcileStock($order);

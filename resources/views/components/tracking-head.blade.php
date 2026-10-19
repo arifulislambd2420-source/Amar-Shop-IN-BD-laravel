@@ -7,13 +7,26 @@
 @php
     $gtmId = \App\Support\Tracking::gtmId();
     $pixelId = \App\Support\Tracking::pixelId();
+    $ga4Id = \App\Support\Tracking::ga4Id();
 @endphp
-@if($gtmId || $pixelId)
+@if($gtmId || $pixelId || $ga4Id)
 <script>
     window.dataLayer = window.dataLayer || [];
     window.__trackingBlocked = navigator.webdriver === true;
     window.__trackingOn = !window.__trackingBlocked;
     window.__pageViewId = 'pv-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+</script>
+@endif
+@if($ga4Id)
+{{-- GA4 straight on the site (no GTM container): gtag.js; gtm.js sends the events to it. --}}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ $ga4Id }}"></script>
+<script id="ga4-base">
+    if (!window.__trackingBlocked) {
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', '{{ $ga4Id }}');
+        window.__ga4Direct = true;
+    }
 </script>
 @endif
 @if($gtmId)
@@ -40,7 +53,7 @@
     }
 </script>
 @endif
-@if($gtmId || $pixelId)
+@if($gtmId || $pixelId || $ga4Id)
 <script>
     // page_view in the dataLayer shares its event_id with the Pixel's PageView.
     if (!window.__trackingBlocked) {

@@ -351,16 +351,4 @@ class TrackingInterestTest extends TestCase
             $this->assertStringContainsString("fbq('init', '123456789012345')", $html, $ua);
         }
     }
-
-    public function test_a_bot_opening_an_order_page_does_not_fire_purchase_and_does_not_use_up_the_real_one(): void
-    {
-        $order = $this->placeOrder();
-
-        $bot = $this->withHeader('User-Agent', 'Googlebot/2.1')->get('/order/'.$order->order_token)->assertOk()->getContent();
-        $this->assertStringNotContainsString("trackEvent('purchase'", $bot);
-
-        // (withHeader sticks to the test, so a real browser's header is set for the second visit.)
-        $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0 Safari/537.36')
-            ->get('/order/'.$order->order_token)->assertOk()->assertSee("trackEvent('purchase'", false);
-    }
 }

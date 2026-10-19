@@ -34,7 +34,7 @@
         {{-- Always reachable on a phone: the save button sticks to the bottom of the screen. --}}
         <div class="settings-save-bar">
             <x-filament::button type="submit" size="lg">
-                সেভ করুন
+                {{ __('সেভ করুন') }}
             </x-filament::button>
         </div>
     </form>

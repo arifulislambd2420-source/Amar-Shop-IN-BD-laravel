@@ -67,6 +67,9 @@ class Order extends Model
             'is_flagged' => 'boolean',
             'stock_reserved' => 'boolean',
             'created_at' => 'datetime',
+            'purchase_triggered_at' => 'datetime',
+            'capi_sent_at' => 'datetime',
+            'ga4_sent_at' => 'datetime',
         ];
     }
 

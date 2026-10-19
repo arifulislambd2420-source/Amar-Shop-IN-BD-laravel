@@ -4,15 +4,6 @@
 @section('robots', 'noindex, nofollow')
 
 @section('content')
-@if(! empty($purchase))
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.trackEvent) {
-            window.trackEvent('purchase', @json($purchase['ecommerce']), @json($purchase['event_id']));
-        }
-    });
-</script>
-@endif
 <div class="max-w-2xl mx-auto px-4 py-6 md:py-12">
     <div class="mb-6 text-center">
         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-600">

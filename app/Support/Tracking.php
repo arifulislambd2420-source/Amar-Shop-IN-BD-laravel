@@ -53,9 +53,22 @@ class Tracking
         return $id !== '' ? $id : null;
     }
 
+    /**
+     * GA4 Measurement ID for loading gtag.js straight on the site — only when there is no GTM container
+     * (with one, GA4's browser tag belongs inside GTM; loading both would count everything twice).
+     */
+    public static function ga4Id(): ?string
+    {
+        if (config('services.gtm.enabled') === false || self::isBot() || Gtm::activeId() !== null) {
+            return null;
+        }
+
+        return TrackingSettings::ga4Id();
+    }
+
     public static function enabled(): bool
     {
-        return self::gtmId() !== null || self::pixelId() !== null;
+        return self::gtmId() !== null || self::pixelId() !== null || self::ga4Id() !== null;
     }
 
     /** The admin's name for the "order placed" event (Admin → GTM / Pixel), OrderPlaced by default. */

@@ -8,8 +8,10 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\ItemsRelationManager;
 use App\Models\Order;
+use App\Services\Tracking\ServerPurchase;
 use App\Support\AdminAccess;
 use App\Support\Money;
+use App\Support\TrackingSettings;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -24,6 +26,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
@@ -226,6 +229,15 @@ class OrderResource extends Resource
                             ->label(__('গ্রাহকের আইপি'))
                             ->disabled(),
                     ]),
+                Section::make(__('সার্ভার থেকে Purchase (ট্র্যাকিং)'))
+                    ->description(__('অর্ডার কনফার্ম হলে সার্ভার Meta ও GA4-কে Purchase জানায়। ফল এখানে; ব্যর্থ হলে কারণ দেখায় এবং উপরের "আবার পাঠান" বাটন আছে।'))
+                    ->columns(2)
+                    ->schema([
+                        Text::make(fn (?Order $record): string => 'Meta (Conversions API): '.self::purchaseLine($record, 'capi'))
+                            ->color(fn (?Order $record): ?string => self::purchaseColor($record, 'capi')),
+                        Text::make(fn (?Order $record): string => 'Google Analytics 4: '.self::purchaseLine($record, 'ga4'))
+                            ->color(fn (?Order $record): ?string => self::purchaseColor($record, 'ga4')),
+                    ]),
                 Section::make(__('মোট হিসাব'))
                     ->columns(4)
                     ->schema([
@@ -392,6 +404,73 @@ class OrderResource extends Resource
     public static function canDeleteAny(): bool
     {
         return (bool) auth('admin')->user()?->isSuperAdmin();
+    }
+
+    // ── Server-side Purchase (Meta Conversions API / GA4) ────────────────
+
+    private static function platformReady(string $platform): bool
+    {
+        return $platform === 'capi' ? TrackingSettings::capiReady() : TrackingSettings::ga4Ready();
+    }
+
+    /** One line: sent (when) / failed (why) / waiting / not yet / not set up. */
+    public static function purchaseLine(?Order $order, string $platform): string
+    {
+        if (! $order) {
+            return '';
+        }
+
+        $status = $order->{"{$platform}_status"};
+        $error = $order->{"{$platform}_error"};
+        $sentAt = $order->{"{$platform}_sent_at"};
+
+        if ($status === 'sent') {
+            return '✔ '.__('গেছে').($sentAt ? ' — '.$sentAt->format('d M Y, H:i') : '');
+        }
+
+        if ($status === 'failed') {
+            return '✖ '.__('ব্যর্থ').($error ? ' — '.$error : '');
+        }
+
+        if (! self::platformReady($platform)) {
+            return __('সেটআপ করা নেই (অ্যাডমিন → জিটিএম / পিক্সেল)');
+        }
+
+        return $order->purchase_triggered_at
+            ? __('কিউতে আছে, শিগগিরই যাবে')
+            : __('এখনো যায়নি — অর্ডার :status স্ট্যাটাসে পৌঁছালে যাবে', ['status' => self::statuses()[TrackingSettings::purchaseStatus()] ?? TrackingSettings::purchaseStatus()]);
+    }
+
+    public static function purchaseColor(?Order $order, string $platform): ?string
+    {
+        return match ($order?->{"{$platform}_status"}) {
+            'sent' => 'success',
+            'failed' => 'danger',
+            default => null,
+        };
+    }
+
+    /** "Send Purchase again": whatever is set up and has not gone out yet (failed or never sent). */
+    public static function resendPurchaseAction(): Action
+    {
+        $pending = fn (Order $order): array => array_values(array_filter([
+            self::platformReady('capi') && $order->capi_status !== 'sent' ? 'Meta' : null,
+            self::platformReady('ga4') && $order->ga4_status !== 'sent' ? 'GA4' : null,
+        ]));
+
+        return Action::make('resendPurchase')
+            ->label(__('Purchase আবার পাঠান'))
+            ->icon(Heroicon::OutlinedArrowPath)
+            ->color('gray')
+            ->visible(fn (Order $record): bool => ServerPurchase::sendable($record) && $pending($record) !== [])
+            ->requiresConfirmation()
+            ->modalHeading(__('Purchase আবার পাঠাবেন?'))
+            ->modalDescription(fn (Order $record): string => __(':to-তে Purchase পাঠানো হবে। যেখানে আগেই গেছে সেখানে আবার যাবে না।', ['to' => implode(' + ', $pending($record))]))
+            ->action(function (Order $record): void {
+                ServerPurchase::resend($record);
+
+                Notification::make()->title(__('Purchase কিউতে দেওয়া হয়েছে'))->body(__('কিছুক্ষণ পর পাতাটি রিফ্রেশ করে ফল দেখুন।'))->success()->send();
+            });
     }
 
     /** The delete popup: order number, customer, total, status — and what else deleting does. */
