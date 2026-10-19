@@ -24,13 +24,19 @@ class BlockBannedIps
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $blockedIps = Cache::remember(
+        // ip => when the block ends (null = until removed). Automatic blocks expire by themselves,
+        // so the end time is checked on every request, not only when the cache is rebuilt.
+        $blocked = Cache::remember(
             IpBlock::CACHE_KEY,
             IpBlock::CACHE_TTL,
-            fn () => IpBlock::pluck('ip')->all(),
+            fn () => IpBlock::query()->get(['ip', 'expires_at'])
+                ->mapWithKeys(fn (IpBlock $b) => [$b->ip => $b->expires_at?->timestamp])
+                ->all(),
         );
 
-        abort_if(in_array($request->ip(), $blockedIps, true), 403);
+        $ip = (string) $request->ip();
+
+        abort_if(array_key_exists($ip, $blocked) && ($blocked[$ip] === null || $blocked[$ip] > now()->timestamp), 403);
 
         return $next($request);
     }

@@ -95,6 +95,8 @@ class AuthController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        // Read once by the tracking snippet on the next page (CompleteRegistration).
+        $request->session()->flash('track_registration', true);
 
         return redirect()->intended(route('home'));
     }

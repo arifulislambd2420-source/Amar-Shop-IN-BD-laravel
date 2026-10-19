@@ -4,6 +4,7 @@ namespace App\Livewire\Product;
 
 use App\Models\Product;
 use App\Services\CartService;
+use App\Support\Tracking;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -52,7 +53,7 @@ class AddToCart extends Component
 
         if ($product && $product->variants->isNotEmpty()) {
             // Preselect the first size that can actually be bought.
-            $this->variantId = ($product->variants->first(fn ($v) => $v->stock > 0) ?? $product->variants->first())->id;
+            $this->variantId = $product->defaultVariant()->id;
         }
     }
 
@@ -69,6 +70,12 @@ class AddToCart extends Component
                 $this->dispatch('variant-image', url: $image);
             }
             $this->quantity = max(1, min($this->quantity, $this->maxQuantity($product)));
+
+            // ViewContent again, for the colour / size now chosen (product page only).
+            if ($this->mode === 'detail' && Tracking::enabled()) {
+                $variant = $this->selectedVariant($product);
+                $this->dispatch('gtm:view_item', ecommerce: Tracking::product($product->loadMissing('category'), (float) $variant->price, 1, $variant));
+            }
         }
     }
 
@@ -125,6 +132,8 @@ class AddToCart extends Component
 
         app(CartService::class)->add($this->productId, $this->cleanQuantity(), $this->variantId);
         $this->dispatch('cart-updated');
+        // "Order now" puts the item in the cart too, so it counts as AddToCart.
+        $this->dispatch('gtm:add_to_cart', ecommerce: $this->addToCartPayload());
 
         return redirect()->route('checkout');
     }
@@ -141,16 +150,8 @@ class AddToCart extends Component
         $quantity = $this->cleanQuantity();
         $price = $variant ? (float) $variant->price : (float) ($product?->sale_price ?? $product?->price ?? 0);
 
-        return [
-            'currency' => 'BDT',
-            'value' => $price * $quantity,
-            'items' => [[
-                'item_id' => $this->productId,
-                'item_name' => $product?->name,
-                'price' => $price,
-                'quantity' => $quantity,
-            ]],
-        ];
+        // Product (variant) as item_name, the variant in item_variant, plus content_name / content_category.
+        return Tracking::product($product->loadMissing('category'), $price, $quantity, $variant);
     }
 
     protected function product(): ?Product

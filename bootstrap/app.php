@@ -16,8 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // /admin, which has its own separate middleware stack (see
         // App\Providers\Filament\AdminPanelProvider::middleware()) and so is
         // structurally unaffected by this.
+        // The Pixel's and Google Analytics' own cookies are plain (not Laravel-encrypted), so
+        // Laravel must not try to decrypt them — otherwise the server never sees them (they are
+        // saved with each order for server-side tracking).
+        $middleware->encryptCookies(except: ['_fbp', '_fbc', '_ga']);
+
         $middleware->web(append: [
             \App\Http\Middleware\BlockBannedIps::class,
+            \App\Http\Middleware\AutoBlockFlood::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
 

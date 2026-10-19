@@ -9,6 +9,7 @@ use App\Services\CartService;
 use App\Services\OrderService;
 use App\Services\Payment\BkashService;
 use App\Support\Delivery;
+use App\Support\Tracking;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -65,17 +66,22 @@ class CheckoutForm extends Component
 
         // GTM begin_checkout — fired once when the checkout page loads with
         // items in the cart, matching the old app's checkout page effect.
+        // Once per cart: opening or reloading checkout with the same items does not count again
+        // (a different cart — or the same items after an order was placed — does).
         $lines = app(CartService::class)->lines();
-        if (! empty($lines)) {
+        if (! empty($lines) && session('begin_checkout_cart') !== ($signature = Tracking::cartSignature($lines))) {
+            session()->put('begin_checkout_cart', $signature);
+
             $this->dispatch('gtm:begin_checkout', ecommerce: [
                 'currency' => 'BDT',
                 'value' => app(CartService::class)->subtotal(),
-                'items' => array_map(fn ($l) => [
+                'items' => array_map(fn ($l) => array_filter([
                     'item_id' => $l['product']->id,
                     'item_name' => $l['name'],
+                    'item_variant' => $l['variant']?->label,
                     'price' => $l['price'],
                     'quantity' => $l['quantity'],
-                ], $lines),
+                ], fn ($v) => $v !== null), $lines),
             ]);
         }
     }
@@ -344,6 +350,13 @@ class CheckoutForm extends Component
             $this->error = $e->getMessage();
 
             return null;
+        }
+
+        // The order exists now: tell the browser (the admin-named "order placed" event), and let
+        // the next cart with the same items count as a new checkout.
+        session()->forget('begin_checkout_cart');
+        if (Tracking::enabled()) {
+            $this->dispatch('gtm:order_placed', ...Tracking::orderPlaced($order));
         }
 
         if ($isBkash) {

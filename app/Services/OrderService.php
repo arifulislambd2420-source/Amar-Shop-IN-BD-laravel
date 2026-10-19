@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Support\Delivery;
 use App\Support\SiteSettingsHelper;
 use App\Support\Stock;
+use App\Support\Tracking;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -186,6 +187,8 @@ class OrderService
                 'flag_reason' => $flagReasons ? implode('
 ', $flagReasons) : null,
                 'ip_address' => $ip,
+                // What the browser knew (fbp/fbc cookies, user agent, page, GA client id) — for a later server-side Purchase.
+                ...Tracking::requestContext(),
                 'order_token' => Str::random(40),
                 'invoice_no' => 'INV-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_name' => $customer['customer_name'],

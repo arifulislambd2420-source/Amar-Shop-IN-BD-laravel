@@ -18,3 +18,6 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
 
 // Keep the failed-jobs table from growing forever.
 Schedule::command('queue:prune-failed --hours=720')->daily();
+
+// Automatic IP blocks end by themselves (BlockBannedIps ignores an expired one); this tidies the list.
+Schedule::call(fn () => \App\Models\IpBlock::expired()->get()->each->delete())->hourly();

@@ -19,13 +19,30 @@ class IpBlock extends Model
     protected $fillable = [
         'ip',
         'reason',
+        'is_auto',
+        'expires_at',
+        'hits',
     ];
 
     protected function casts(): array
     {
         return [
             'created_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'is_auto' => 'boolean',
         ];
+    }
+
+    /** Blocking right now (no end, or the end is still ahead). */
+    public function isActive(): bool
+    {
+        return $this->expires_at === null || $this->expires_at->isFuture();
+    }
+
+    /** Rows of automatic blocks whose time is over. */
+    public function scopeExpired($query)
+    {
+        return $query->whereNotNull('expires_at')->where('expires_at', '<=', now());
     }
 
     /**

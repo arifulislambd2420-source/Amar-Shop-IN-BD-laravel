@@ -204,4 +204,22 @@
         </form>
     </div>
 </div>
+
+{{-- Tracking: a search was made / a single category is being looked at (once per page load). --}}
+@if(\App\Support\Tracking::enabled() && ($search !== '' || $activeCategory))
+    @php
+        $trackIds = $products->getCollection()->pluck('id')->map(fn ($id) => (string) $id)->values()->all();
+    @endphp
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.trackEvent) return;
+            @if($search !== '')
+                window.trackEvent('search', @json(['search_term' => $search, 'results' => $products->total(), 'content_ids' => $trackIds]));
+            @endif
+            @if($activeCategory)
+                window.trackEvent('view_category', @json(['category_name' => $activeCategory->name, 'category_slug' => $activeCategory->slug, 'content_ids' => $trackIds]));
+            @endif
+        });
+    </script>
+@endif
 @endsection

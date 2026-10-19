@@ -7,6 +7,7 @@ use App\Models\LandingPage;
 use App\Services\OrderService;
 use App\Services\Payment\BkashService;
 use App\Support\Delivery;
+use App\Support\Tracking;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -396,6 +397,11 @@ class LandingOrderForm extends Component
             $this->error = $e->getMessage();
 
             return null;
+        }
+
+        // The order exists now: tell the browser (the admin-named "order placed" event).
+        if (Tracking::enabled()) {
+            $this->dispatch('gtm:order_placed', ...Tracking::orderPlaced($order));
         }
 
         if ($isBkash) {

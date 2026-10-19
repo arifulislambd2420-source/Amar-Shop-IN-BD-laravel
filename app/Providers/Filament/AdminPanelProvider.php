@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Http\Middleware\EnsureAdminAreaAccess;
+use App\Http\Middleware\RememberAdminIp;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetAdminLocale;
 use App\Support\AdminPath;
@@ -101,6 +102,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 SetAdminLocale::class, // persistent: Livewire updates stay Bangla too
                 Authenticate::class,
+                RememberAdminIp::class, // after Authenticate: only signed-in admins' IPs are remembered
                 EnsureAdminAreaAccess::class,
             ], isPersistent: true);
     }

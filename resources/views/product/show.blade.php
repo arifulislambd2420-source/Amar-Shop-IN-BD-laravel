@@ -51,10 +51,16 @@
 @push('head')
     <script type="application/ld+json">{!! \App\Support\Seo::jsonLd($schema) !!}</script>
 @endpush
+@php
+    // ViewContent for what the page starts on: the preselected colour / size with its own price and name
+    // (picking another one sends ViewContent again — see AddToCart::selectVariant).
+    $trackVariant = $product->defaultVariant();
+    $trackPayload = \App\Support\Tracking::product($product, $trackVariant ? (float) $trackVariant->price : (float) $price, 1, $trackVariant);
+@endphp
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (window.trackEvent) {
-            window.trackEvent('view_item', @json(\App\Support\Tracking::product($product, (float) $price)));
+            window.trackEvent('view_item', @json($trackPayload));
         }
     });
 </script>

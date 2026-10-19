@@ -75,6 +75,14 @@ class Product extends Model
         return $this->hasMany(ProductImage::class);
     }
 
+    /** The variant the product page starts on: the first one that can be bought (else the first), or null without variants. */
+    public function defaultVariant(): ?ProductVariant
+    {
+        $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+
+        return $variants->first(fn ($v) => $v->stock > 0) ?? $variants->first();
+    }
+
     /** The gallery pictures in the order the admin arranged them. */
     public function galleryUrls(): array
     {
