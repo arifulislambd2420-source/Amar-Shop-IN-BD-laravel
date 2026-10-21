@@ -750,5 +750,19 @@
     "সক্রিয় মেনু, বাটন ও লিংকের রং। ডিফল্ট উজ্জ্বল নীল।": "The colour of the active menu, buttons and links. Bright blue by default.",
     "ওয়েবসাইট দেখুন (নতুন ট্যাবে)": "View website (new tab)",
     "ওয়েবসাইট দেখুন": "View site",
-    "লগ আউট": "Log out"
+    "লগ আউট": "Log out",
+    "কনফার্মড বিক্রি": "Confirmed sales",
+    "কনফার্মের অপেক্ষায়": "Awaiting confirmation",
+    "নতুন": "New",
+    "আগের সময়ের মতো": "Same as before",
+    "আগে :value": "before :value",
+    "এই সময়ে এসেছে :now · আগে :before": ":now came in this period · before :before",
+    "৭ দিন": "7 days",
+    "৩০ দিন": "30 days",
+    "কাস্টম": "Custom",
+    "এই সময়ে কোনো অর্ডার নেই।": "No orders in this period.",
+    "বিস্তারিত রিপোর্ট": "Detailed reports",
+    "লাভ-লোকসান, পণ্য, কাস্টমার, পেমেন্ট, স্টক": "Profit, products, customers, payments, stock",
+    "লাভ-লোকসান": "Profit & loss",
+    "পেমেন্ট": "Payments"
 }

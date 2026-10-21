@@ -7,7 +7,7 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Widgets\CustomerStats;
 use App\Filament\Widgets\LatestOrders;
 use App\Filament\Widgets\LowStockProducts;
-use App\Filament\Widgets\OrdersByStatusChart;
+use App\Filament\Widgets\DashboardDetails;
 use App\Filament\Widgets\OrderStatusSummary;
 use App\Filament\Widgets\PaymentDeliveryReport;
 use App\Filament\Widgets\SalesChart;
@@ -332,7 +332,10 @@ class DashboardReportTest extends TestCase
 
         Livewire::test(OrderStatusSummary::class, ['pageFilters' => ['range' => 'today']])
             ->assertSee('Pending')->assertSee('Confirmed')->assertSee('Shipped')->assertSee('Delivered')->assertSee('Cancelled')
-            ->assertSee('Out for delivery')->assertSee('21 Oct 2026');
+            ->assertSee('Out for delivery')->assertSee('21 Oct 2026')->assertDontSee('No orders in this period.');
+
+        Livewire::test(OrderStatusSummary::class, ['pageFilters' => ['range' => 'custom', 'from' => '2026-01-01', 'until' => '2026-01-02']])
+            ->assertSee('No orders in this period.');
 
         $today = DashboardReport::make(['range' => 'today'])->statusCounts();
         $month = DashboardReport::make(['range' => 'this_month'])->statusCounts();
@@ -346,14 +349,13 @@ class DashboardReportTest extends TestCase
         $this->seedMixed();
 
         Livewire::test(StatsOverview::class, ['pageFilters' => ['range' => 'today']])
-            ->assertSee('All orders (cancelled included)')
-            ->assertSee('৳11,280') // 1070 + 2070 + 3070 + 5070
-            ->assertSee('Real sales (confirmed)')
-            ->assertSee('৳5,140')  // 2070 + 3070
-            ->assertSee('Delivered sales')
-            ->assertSee('৳3,070')
-            ->assertSee('Cancelled orders')
-            ->assertSee('Estimated profit (confirmed)');
+            ->assertSee("Today's orders")
+            ->assertSee('Confirmed sales')
+            ->assertSee('৳5,140')  // 2070 + 3070 (cancelled and waiting orders are not in it)
+            ->assertDontSee('৳11,280')
+            ->assertSee('Awaiting confirmation')
+            ->assertSee('Estimated profit')
+            ->assertSee('before');
     }
 
     public function test_the_report_table_widget_lists_every_group(): void
@@ -374,7 +376,7 @@ class DashboardReportTest extends TestCase
     {
         $this->admin();
 
-        foreach ([TopProducts::class, CustomerStats::class, PaymentDeliveryReport::class, SalesChart::class, OrdersByStatusChart::class, StatsOverview::class, OrderStatusSummary::class, SalesProfitReport::class] as $widget) {
+        foreach ([TopProducts::class, CustomerStats::class, PaymentDeliveryReport::class, SalesChart::class, DashboardDetails::class, StatsOverview::class, OrderStatusSummary::class, SalesProfitReport::class] as $widget) {
             Livewire::test($widget, ['pageFilters' => ['range' => 'last_30']])->assertOk(); // no orders at all
         }
 
@@ -389,7 +391,7 @@ class DashboardReportTest extends TestCase
     {
         $this->admin();
 
-        $this->get('/admin')->assertOk()->assertSee('Date range');
+        $this->get('/admin')->assertOk()->assertSee('7 days')->assertSee('Custom');
 
         $page = Livewire::test(Dashboard::class)
             ->assertFormFieldExists('range', 'filtersForm')
@@ -406,6 +408,30 @@ class DashboardReportTest extends TestCase
             ->set('filters.from', '2026-10-01')
             ->set('filters.until', '2026-10-15')
             ->assertSet('filters.from', '2026-10-01');
+    }
+
+    public function test_the_details_section_is_folded_and_opens_tab_by_tab(): void
+    {
+        $this->admin();
+        $this->seedMixed();
+
+        Livewire::test(DashboardDetails::class, ['pageFilters' => ['range' => 'today']])
+            ->assertSee('Detailed reports')
+            ->assertDontSee('Sales & profit report')
+            ->call('toggle')
+            ->assertSee('Sales & profit report')
+            ->call('setTab', 'customers')
+            ->assertSee('Total customers')
+            ->call('setTab', 'nonsense')
+            ->assertSet('tab', 'customers');
+    }
+
+    public function test_change_compares_with_the_period_before(): void
+    {
+        $this->assertSame(['pct' => 50, 'dir' => 'up'], DashboardReport::change(150, 100));
+        $this->assertSame(['pct' => 25, 'dir' => 'down'], DashboardReport::change(75, 100));
+        $this->assertSame(['pct' => null, 'dir' => 'up'], DashboardReport::change(5, 0));
+        $this->assertSame(['pct' => null, 'dir' => 'flat'], DashboardReport::change(0, 0));
     }
 
     // ── quick actions ────────────────────────────────────────────────────
@@ -487,7 +513,7 @@ class DashboardReportTest extends TestCase
 
         $this->assertTrue(OrderStatusSummary::canView());
         $this->assertTrue(LatestOrders::canView());
-        foreach ([StatsOverview::class, SalesProfitReport::class, TopProducts::class, CustomerStats::class, PaymentDeliveryReport::class, SalesChart::class] as $widget) {
+        foreach ([StatsOverview::class, SalesProfitReport::class, TopProducts::class, CustomerStats::class, PaymentDeliveryReport::class, SalesChart::class, DashboardDetails::class] as $widget) {
             $this->assertFalse($widget::canView(), $widget);
         }
 

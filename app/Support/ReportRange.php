@@ -41,6 +41,18 @@ class ReportRange
         ];
     }
 
+    /** The buttons above the dashboard: key => short label. (Yesterday is still understood, just not a button.) */
+    public static function buttons(): array
+    {
+        return [
+            self::TODAY => 'আজ',
+            self::LAST_7 => '৭ দিন',
+            self::LAST_30 => '৩০ দিন',
+            self::THIS_MONTH => 'এই মাস',
+            self::CUSTOM => 'কাস্টম',
+        ];
+    }
+
     public function __construct(
         public readonly string $key,
         public readonly Carbon $from, // first day, shop time, 00:00
@@ -90,6 +102,14 @@ class ReportRange
         }
 
         return [$from, $until];
+    }
+
+    /** The same number of days straight before this range — what the cards compare with. */
+    public function previous(): self
+    {
+        $days = $this->days();
+
+        return new self($this->key, $this->from->copy()->subDays($days), $this->from->copy()->subDay());
     }
 
     /** First instant of the range, in UTC. */

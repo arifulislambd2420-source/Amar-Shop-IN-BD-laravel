@@ -135,28 +135,50 @@
         transition: background-color .15s ease;
     }
     .admin-viewsite-btn:hover { background: color-mix(in srgb, var(--primary-500) 12%, transparent); }
-    /* ── Dashboard stat cards ────────────────────────────────── */
+    /* ── Dashboard: calm cards, date buttons, status list, folded details ───────── */
     .dash-stat {
         --tone: var(--primary-500);
-        border-left: 4px solid var(--tone);
-        background: color-mix(in srgb, var(--tone) 9%, transparent) !important;
+        border-radius: 1rem;
     }
+    .dash-stat .fi-wi-stats-overview-stat-label-ctn > svg {
+        width: 2.1rem; height: 2.1rem; padding: 0.4rem; border-radius: 0.65rem;
+        color: var(--tone);
+        background: color-mix(in srgb, var(--tone) 12%, transparent);
+    }
+    .dash-stat .fi-wi-stats-overview-stat-value { font-size: 1.5rem; }
+    a.dash-stat:hover, .dash-stat a:hover { filter: brightness(0.98); }
     .dash-stat--info    { --tone: var(--dash-info); }
     .dash-stat--success { --tone: var(--dash-success); }
     .dash-stat--warning { --tone: var(--dash-warning); }
     .dash-stat--danger  { --tone: var(--dash-danger); }
-    a.dash-stat:hover, .dash-stat a:hover { filter: brightness(0.98); }
-    .dash-stat .fi-wi-stats-overview-stat-label-ctn > svg {
-        width: 2.25rem;
-        height: 2.25rem;
-        padding: 0.45rem;
-        border-radius: 0.65rem;
-        color: var(--tone);
-        background: color-mix(in srgb, var(--tone) 18%, transparent);
+
+    /* the date filter: one small row of buttons at the top right */
+    .dash-filter > div { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; }
+    .dash-filter .fi-fo-field-wrp { width: auto; }
+    .dash-filter .fi-btn-group .fi-btn, .dash-filter .fi-fo-toggle-buttons-btn-ctn label { font-size: 0.8rem; }
+
+    .dash-empty { padding: 1.5rem 0.5rem; text-align: center; opacity: .6; font-size: 0.9rem; }
+    .dash-status-list { display: flex; flex-direction: column; gap: 0.15rem; }
+    .dash-status-row {
+        display: grid; grid-template-columns: minmax(6.5rem, 9rem) 1fr 2.5rem; align-items: center; gap: 0.75rem;
+        padding: 0.45rem 0.5rem; border-radius: 0.6rem; font-size: 0.9rem;
     }
-    .dash-stat .fi-wi-stats-overview-stat-value {
-        color: color-mix(in srgb, var(--tone) 70%, currentColor);
+    .dash-status-row:hover { background: color-mix(in srgb, var(--primary-500) 8%, transparent); }
+    .dash-status-row.is-zero { opacity: .55; }
+    .dash-status-bar { height: 0.4rem; border-radius: 999px; background: rgba(127, 127, 127, .18); overflow: hidden; }
+    .dash-status-bar > span { display: block; height: 100%; background: var(--primary-500); border-radius: 999px; }
+    .dash-status-count { text-align: right; font-weight: 600; }
+
+    .dash-details { border: 1px solid rgba(127, 127, 127, .25); border-radius: 1rem; overflow: hidden; }
+    .dash-details-head {
+        display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.9rem 1.1rem;
+        text-align: left; font-weight: 600; cursor: pointer;
     }
+    .dash-details-head small { flex: 1; font-weight: 400; opacity: .6; }
+    .dash-tabs { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0 1rem; border-bottom: 1px solid rgba(127, 127, 127, .25); }
+    .dash-tab { padding: 0.6rem 0.9rem; font-size: 0.875rem; white-space: nowrap; border-bottom: 2px solid transparent; opacity: .7; }
+    .dash-tab.is-active { border-bottom-color: var(--primary-500); color: var(--primary-600); opacity: 1; font-weight: 600; }
+    .dash-tab-body { padding: 1rem; }
     /* Phones: 16px text in fields so iOS doesn't zoom the page on focus. */
     @media (max-width: 640px) {
         .fi-input, .fi-select-input, .fi-fo-textarea textarea, .fi-input-wrp input, .fi-input-wrp select, .fi-input-wrp textarea {

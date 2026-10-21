@@ -17,6 +17,8 @@ class TopProducts extends Widget
 
     protected string $view = 'filament.widgets.product-sales';
 
+    protected static bool $isDiscovered = false;
+
     protected static ?int $sort = 7;
 
     protected int|string|array $columnSpan = 'full';

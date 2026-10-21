@@ -18,6 +18,8 @@ class SalesProfitReport extends Widget
 
     protected string $view = 'filament.widgets.sales-profit-report';
 
+    protected static bool $isDiscovered = false;
+
     protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 'full';

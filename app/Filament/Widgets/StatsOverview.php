@@ -4,83 +4,102 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Concerns\HasAdminAreaWidget;
 use App\Filament\Resources\Orders\OrderResource;
-use App\Filament\Resources\Products\ProductResource;
 use App\Models\Order;
-use App\Models\Product;
 use App\Support\DashboardReport;
 use App\Support\Money;
+use App\Support\ReportRange;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
- * Dashboard money KPIs for the chosen dates. Orders placed and REAL sales are kept apart: real sales are
- * confirmed orders (and everything after confirming); cancelled orders never count in them, pending ones
- * not yet. Delivered sales are shown on their own, and profit is an estimate (see DashboardReport).
+ * The four main cards at the top of the dashboard — orders, confirmed (real) sales, orders waiting to be
+ * confirmed, and estimated profit — each compared with the same number of days just before. Everything else
+ * (profit table, products, customers, payments, stock) is under "Details" further down.
+ *
+ * Real sales are confirmed orders and everything after confirming; cancelled orders never count in them.
  */
 class StatsOverview extends StatsOverviewWidget
 {
     use HasAdminAreaWidget;
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 1;
 
     protected ?string $pollingInterval = '60s';
 
-    /** 2 per row on phones, 3 on tablets and desktop. */
-    protected int|array|null $columns = ['default' => 2, 'md' => 3, 'xl' => 3];
+    /** 2 per row on phones, 4 in one row from tablets up. */
+    protected int|array|null $columns = ['default' => 2, 'md' => 4];
 
     protected function getHeading(): ?string
     {
-        return __('বিক্রির সারসংক্ষেপ').' — '.DashboardReport::make($this->pageFilters)->range->label();
+        return null;
+    }
+
+    /** "▲ 12% · before ৳1,000" as the description, with the arrow's colour (green up, red down, grey flat). */
+    private function trend(Stat $stat, float $now, float $before, string $beforeText, string $suffix = ''): Stat
+    {
+        $change = DashboardReport::change($now, $before);
+
+        $text = match (true) {
+            $change['pct'] === null && $change['dir'] === 'up' => __('নতুন'),
+            $change['pct'] === null => __('আগের সময়ের মতো'),
+            default => ($change['dir'] === 'down' ? '▼ ' : ($change['dir'] === 'up' ? '▲ ' : '')).$change['pct'].'%',
+        };
+
+        return $stat
+            ->description($text.' · '.__('আগে :value', ['value' => $beforeText]).$suffix)
+            ->descriptionColor(match ($change['dir']) {
+                'up' => 'success',
+                'down' => 'danger',
+                default => 'gray',
+            });
     }
 
     protected function getStats(): array
     {
         $report = DashboardReport::make($this->pageFilters);
+        $before = $report->previous();
+        $today = $report->range->key === ReportRange::TODAY;
+
         $placed = $report->group(null);
+        $placedBefore = $before->group(null);
         $real = $report->group(DashboardReport::CONFIRMED);
-        $delivered = $report->group(DashboardReport::DELIVERED);
-        $cancelled = $report->group(DashboardReport::CANCELLED);
+        $realBefore = $before->group(DashboardReport::CONFIRMED);
 
-        // What still needs confirming, whatever the dates: an action list, not a report.
+        // Waiting to be confirmed — what still needs doing, whatever the dates.
         $waiting = Order::query()->whereIn('status', DashboardReport::AWAITING)->count();
-        $flagged = Order::query()->where('is_flagged', true)->where('status', '!=', 'cancelled')->count();
-
-        $threshold = Product::lowStockThreshold();
-        $lowStock = Product::query()->where('stock', '<=', $threshold)->count();
-        $outOfStock = Product::query()->where('stock', '<=', 0)->count();
-
+        $awaitingNow = $report->group(DashboardReport::AWAITING)['orders'];
+        $awaitingBefore = $before->group(DashboardReport::AWAITING)['orders'];
         $noCost = $report->itemsWithoutCost();
-        $card = fn (Stat $stat, string $icon, string $tone): Stat => $stat
-            ->icon($icon)
-            ->extraAttributes(['class' => "dash-stat dash-stat--{$tone}"]);
+
+        $card = fn (Stat $stat, string $icon): Stat => $stat->icon($icon)->extraAttributes(['class' => 'dash-stat']);
 
         return [
-            $card(Stat::make(__('মোট অর্ডার (বাতিলসহ)'), number_format($placed['orders']))
-                ->description(__('মূল্য :amount', ['amount' => Money::taka($placed['total'])])), 'heroicon-o-shopping-bag', 'info'),
+            $this->trend(
+                $card(Stat::make($today ? __('আজকের অর্ডার') : __('অর্ডার'), number_format($placed['orders'])), 'heroicon-o-shopping-bag')
+                    ->url(OrderResource::getUrl('index')),
+                $placed['orders'], $placedBefore['orders'], number_format($placedBefore['orders']),
+            ),
 
-            $card(Stat::make(__('প্রকৃত বিক্রি (কনফার্মড)'), Money::taka($real['total']))
-                ->description(__(':countটি অর্ডার — বাতিল বাদে, কনফার্ম হওয়ার পর', ['count' => number_format($real['orders'])])), 'heroicon-o-banknotes', 'success'),
+            $this->trend(
+                $card(Stat::make(__('কনফার্মড বিক্রি'), Money::taka($real['total'])), 'heroicon-o-banknotes'),
+                $real['total'], $realBefore['total'], Money::taka($realBefore['total']),
+            ),
 
-            $card(Stat::make(__('ডেলিভারড বিক্রি'), Money::taka($delivered['total']))
-                ->description(__(':countটি অর্ডার পৌঁছে গেছে', ['count' => number_format($delivered['orders'])])), 'heroicon-o-check-badge', 'success'),
+            $card(Stat::make(__('কনফার্মের অপেক্ষায়'), number_format($waiting))
+                ->description($waiting
+                    ? __('এই সময়ে এসেছে :now · আগে :before', ['now' => number_format($awaitingNow), 'before' => number_format($awaitingBefore)])
+                    : __('সব অর্ডার কনফার্ম হয়ে গেছে'))
+                ->descriptionColor($waiting ? 'warning' : 'success')
+                ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]])), 'heroicon-o-clock'),
 
-            $card(Stat::make(__('বাতিল অর্ডার'), number_format($cancelled['orders']))
-                ->description(__(':amount — বিক্রির হিসাবে নেই', ['amount' => Money::taka($cancelled['total'])]))
-                ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'cancelled']]])), 'heroicon-o-x-circle', 'danger'),
-
-            $card(Stat::make(__('কনফার্ম করা বাকি'), number_format($waiting))
-                ->description($waiting ? __('পেন্ডিং / যাচাই চলছে').($flagged ? ' · '.__(':countটি সন্দেহজনক', ['count' => $flagged]) : '') : __('সব অর্ডার কনফার্ম হয়ে গেছে'))
-                ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]])), 'heroicon-o-clock', 'warning'),
-
-            $card(Stat::make(__('আনুমানিক লাভ (কনফার্মড)'), Money::taka($real['profit']))
-                ->description(__('খরচ: পণ্য :cost + ডেলিভারি :delivery', ['cost' => Money::taka($real['cost']), 'delivery' => Money::taka($real['delivery_cost'])]).($noCost ? ' · '.__(':countটি লাইনে কস্ট প্রাইস নেই', ['count' => $noCost]) : ''))
-                ->color($real['profit'] >= 0 ? 'success' : 'danger'), 'heroicon-o-chart-bar', $real['profit'] >= 0 ? 'success' : 'danger'),
-
-            $card(Stat::make(__('কম স্টকের প্রোডাক্ট'), number_format($lowStock))
-                ->description($outOfStock ? __(':countটি একদম শেষ · স্টক :limit বা কম', ['count' => $outOfStock, 'limit' => $threshold]) : __('স্টক :limit বা কম', ['limit' => $threshold]))
-                ->url(ProductResource::getUrl('index')), 'heroicon-o-archive-box', $lowStock ? 'danger' : 'info'),
+            $this->trend(
+                $card(Stat::make(__('আনুমানিক লাভ'), Money::taka($real['profit'])), 'heroicon-o-chart-bar'),
+                $real['profit'], $realBefore['profit'], Money::taka($realBefore['profit']),
+                // a note when some products have no cost price (the profit would look too high)
+                $noCost ? ' · ⚠ '.__(':countটি লাইনে কস্ট প্রাইস নেই', ['count' => $noCost]) : '',
+            ),
         ];
     }
 }

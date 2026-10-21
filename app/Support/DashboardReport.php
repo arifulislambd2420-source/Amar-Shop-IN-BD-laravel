@@ -37,6 +37,29 @@ class DashboardReport
     {
     }
 
+    /** The report for the equal stretch of days right before this one. */
+    public function previous(): self
+    {
+        return new self($this->range->previous());
+    }
+
+    /**
+     * How $now compares with $before: ['pct' => int|null, 'dir' => 'up'|'down'|'flat']. pct is null when there
+     * was nothing before to compare with.
+     *
+     * @return array{pct: int|null, dir: string}
+     */
+    public static function change(float $now, float $before): array
+    {
+        if ($before == 0.0) {
+            return ['pct' => null, 'dir' => $now > 0 ? 'up' : 'flat'];
+        }
+
+        $pct = (int) round(($now - $before) / abs($before) * 100);
+
+        return ['pct' => abs($pct), 'dir' => $pct > 0 ? 'up' : ($pct < 0 ? 'down' : 'flat')];
+    }
+
     public static function make(?array $filters): self
     {
         return new self(ReportRange::fromFilters($filters));

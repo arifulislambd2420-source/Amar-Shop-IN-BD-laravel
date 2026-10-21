@@ -17,6 +17,8 @@ class CustomerStats extends StatsOverviewWidget
     use HasAdminAreaWidget;
     use InteractsWithPageFilters;
 
+    protected static bool $isDiscovered = false;
+
     protected static ?int $sort = 8;
 
     protected ?string $pollingInterval = null;

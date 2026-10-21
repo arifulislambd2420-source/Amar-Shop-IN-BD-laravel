@@ -20,9 +20,9 @@ class LatestOrders extends TableWidget
 
     protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
-    protected static ?int $sort = 10;
+    protected static ?int $sort = 4;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
@@ -31,7 +31,7 @@ class LatestOrders extends TableWidget
             ->query(
                 fn (): Builder => Order::query()->latest('created_at')
             )
-            ->defaultPaginationPageOption(10)->paginationPageOptions([5, 10, 25])
+            ->defaultPaginationPageOption(5)->paginationPageOptions([5, 10, 25])
             ->columns([
                 TextColumn::make('invoice_no')
                     ->label(__('ইনভয়েস'))
@@ -39,7 +39,7 @@ class LatestOrders extends TableWidget
                 TextColumn::make('customer_name')
                     ->label(__('গ্রাহক'))
                     ->searchable(),
-                TextColumn::make('phone')->label(__('ফোন')),
+                TextColumn::make('phone')->label(__('ফোন'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total')
                     ->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2))
                     ->sortable(),
@@ -48,7 +48,7 @@ class LatestOrders extends TableWidget
                     ->formatStateUsing(fn (?string $state): string => OrderResource::statuses()[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => OrderResource::STATUS_COLORS[$state] ?? 'gray'),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('d M, h:i A')->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
             ])
             ->recordActions(OrderResource::quickStatusActions())

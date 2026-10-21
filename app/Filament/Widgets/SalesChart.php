@@ -18,7 +18,7 @@ class SalesChart extends ChartWidget
     use HasAdminAreaWidget;
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';
 

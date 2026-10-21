@@ -15,6 +15,8 @@ class LowStockProducts extends TableWidget
 {
     use HasAdminAreaWidget;
 
+    protected static bool $isDiscovered = false;
+
     protected static ?int $sort = 6;
 
     protected int|string|array $columnSpan = 1;

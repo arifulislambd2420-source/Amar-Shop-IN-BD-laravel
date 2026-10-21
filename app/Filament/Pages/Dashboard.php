@@ -4,16 +4,16 @@ namespace App\Filament\Pages;
 
 use App\Support\ReportRange;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 /**
- * The admin dashboard, with one date filter for every report on it: Today, Yesterday, Last 7 days,
- * Last 30 days, This month or a Custom range (from – to). The widgets read it as their page filters
+ * The admin dashboard, with one date filter for every report on it: a small row of buttons at the top right —
+ * Today, 7 days, 30 days, This month, Custom (then a from / to pair). The widgets read it as their page filters
  * (see App\Support\ReportRange / DashboardReport).
  */
 class Dashboard extends BaseDashboard
@@ -23,29 +23,31 @@ class Dashboard extends BaseDashboard
     public function filtersForm(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()
+            Group::make()
                 ->columnSpanFull()
-                ->columns(['default' => 1, 'sm' => 3])
+                ->extraAttributes(['class' => 'dash-filter'])
                 ->schema([
-                    Select::make('range')
-                        ->label(__('সময়কাল'))
-                        ->options(array_map('__', ReportRange::options()))
-                        ->default(ReportRange::DEFAULT)
-                        ->native(false)
-                        ->selectablePlaceholder(false)
-                        ->live(),
                     DatePicker::make('from')
-                        ->label(__('শুরুর তারিখ'))
+                        ->hiddenLabel()
+                        ->placeholder(__('শুরুর তারিখ'))
                         ->native(false)
                         ->maxDate(now()->addDay())
                         ->live()
                         ->visible(fn (Get $get): bool => $get('range') === ReportRange::CUSTOM),
                     DatePicker::make('until')
-                        ->label(__('শেষ তারিখ'))
+                        ->hiddenLabel()
+                        ->placeholder(__('শেষ তারিখ'))
                         ->native(false)
                         ->maxDate(now()->addDay())
                         ->live()
                         ->visible(fn (Get $get): bool => $get('range') === ReportRange::CUSTOM),
+                    ToggleButtons::make('range')
+                        ->hiddenLabel()
+                        ->options(array_map('__', ReportRange::buttons()))
+                        ->default(ReportRange::DEFAULT)
+                        ->inline()
+                        ->grouped()
+                        ->live(),
                 ]),
         ]);
     }

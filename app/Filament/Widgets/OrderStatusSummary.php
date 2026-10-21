@@ -7,51 +7,45 @@ use App\Filament\Resources\Orders\OrderResource;
 use App\Support\AdminAccess;
 use App\Support\DashboardReport;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Widget;
 
 /**
- * Dashboard: how many orders are in each status (Pending, Confirmed, Shipped, … Cancelled) for the chosen
- * dates. Each card opens the order list on that status.
+ * Dashboard: a small list of how many orders are in each status for the chosen dates, with a thin bar for the
+ * share of all orders. Each row opens the order list on that status. With no orders it says so, instead of
+ * showing an empty box.
  */
-class OrderStatusSummary extends StatsOverviewWidget
+class OrderStatusSummary extends Widget
 {
     use HasAdminAreaWidget;
     use InteractsWithPageFilters;
 
     protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
-    protected static ?int $sort = 1;
+    protected string $view = 'filament.widgets.order-status-summary';
 
-    protected ?string $pollingInterval = '60s';
+    protected static ?int $sort = 3;
 
-    protected int|array|null $columns = ['default' => 2, 'md' => 4, 'xl' => 4];
+    protected int|string|array $columnSpan = 1;
 
-    private const TONES = [
-        'pending' => 'warning',
-        'processing' => 'info',
-        'shipped' => 'info',
-        'out_for_delivery' => 'info',
-        'delivered' => 'success',
-        'completed' => 'success',
-        'on_hold' => 'warning',
-        'cancelled' => 'danger',
-    ];
-
-    protected function getHeading(): ?string
+    protected function getViewData(): array
     {
-        return __('অর্ডারের অবস্থা').' — '.DashboardReport::make($this->pageFilters)->range->label();
-    }
-
-    protected function getStats(): array
-    {
+        $report = DashboardReport::make($this->pageFilters);
         $labels = OrderResource::statuses();
-        $counts = DashboardReport::make($this->pageFilters)->statusCounts();
+        $counts = $report->statusCounts();
+        $total = array_sum($counts);
 
-        return collect(self::TONES)->map(fn (string $tone, string $status) => Stat::make($labels[$status] ?? $status, number_format($counts[$status] ?? 0))
-            ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => $status]]]))
-            ->extraAttributes(['class' => "dash-stat dash-stat--{$tone}"]))
-            ->values()
-            ->all();
+        $rows = [];
+
+        foreach ($counts as $status => $count) {
+            $rows[] = [
+                'label' => $labels[$status] ?? $status,
+                'count' => $count,
+                'pct' => $total ? round($count / $total * 100) : 0,
+                
+                'url' => OrderResource::getUrl('index', ['filters' => ['status' => ['value' => $status]]]),
+            ];
+        }
+
+        return ['label' => $report->range->label(), 'total' => $total, 'rows' => $rows];
     }
 }

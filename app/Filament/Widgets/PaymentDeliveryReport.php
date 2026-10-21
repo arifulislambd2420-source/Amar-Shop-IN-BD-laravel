@@ -19,6 +19,8 @@ class PaymentDeliveryReport extends Widget
 
     protected string $view = 'filament.widgets.payment-delivery-report';
 
+    protected static bool $isDiscovered = false;
+
     protected static ?int $sort = 9;
 
     protected int|string|array $columnSpan = 'full';
