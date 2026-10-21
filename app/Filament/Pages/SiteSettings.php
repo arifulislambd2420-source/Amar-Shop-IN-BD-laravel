@@ -4,8 +4,13 @@ namespace App\Filament\Pages;
 
 use App\Filament\Support\ImageUpload;
 use App\Filament\Support\SettingsPage;
+use App\Models\SiteSetting;
+use App\Support\AdminTheme;
 use App\Support\SiteSettingsHelper;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Notifications\Notification;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -40,14 +45,42 @@ class SiteSettings extends SettingsPage
 
     protected function keys(): array
     {
-        return ['admin_locale', 'site_name', 'site_name_en', 'site_logo', 'site_favicon'];
+        return ['admin_locale', 'site_name', 'site_name_en', 'site_logo', 'site_favicon', ...AdminTheme::KEYS];
     }
 
     protected function fillState(array $state): array
     {
         $state['admin_locale'] = SiteSettingsHelper::adminLocale();
 
+        // The admin colours in use (the defaults when none is saved).
+        $state['admin_color_primary'] = AdminTheme::primary();
+        $state['admin_color_sidebar'] = AdminTheme::sidebar();
+
         return $state;
+    }
+
+    /** An admin colour equal to its default is stored empty, so it keeps following the default. */
+    protected function valueToStore(string $key, mixed $value): string
+    {
+        if (in_array($key, AdminTheme::KEYS, true)) {
+            return strtolower((string) $value) === strtolower(AdminTheme::defaults()[$key]) ? '' : (string) $value;
+        }
+
+        return (string) $value;
+    }
+
+    /** Put both admin colours back to the defaults (navy sidebar, blue main colour). */
+    public function resetAdminColors(): void
+    {
+        foreach (AdminTheme::defaults() as $key => $default) {
+            SiteSetting::where('setting_key', $key)->delete();
+            SiteSettingsHelper::forget($key);
+            $this->data[$key] = $default;
+        }
+
+        Notification::make()->title(__('অ্যাডমিনের রং ডিফল্টে ফিরেছে।'))->success()->send();
+
+        $this->redirect(static::getUrl());
     }
 
     protected function sections(): array
@@ -62,6 +95,30 @@ class SiteSettings extends SettingsPage
                         ->native(false)
                         ->selectablePlaceholder(false)
                         ->required(),
+                ]),
+            Section::make(__('অ্যাডমিনের রং'))
+                ->description(__('এই অ্যাডমিন প্যানেলের নিজস্ব রং — সাইটের (গ্রাহকের দেখা) ব্র্যান্ড রং থেকে আলাদা, একটা বদলালে অন্যটা বদলায় না।'))
+                ->headerActions([
+                    Action::make('resetAdminColors')
+                        ->label(__('ডিফল্টে ফেরত'))
+                        ->color('gray')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('অ্যাডমিনের রং ডিফল্টে ফেরত নেবেন?'))
+                        ->modalSubmitActionLabel(__('হ্যাঁ, ফেরত নিন'))
+                        ->action(fn () => $this->resetAdminColors()),
+                ])
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    ColorPicker::make('admin_color_sidebar')
+                        ->label(__('সাইডবারের রং'))
+                        ->helperText(__('ডিফল্ট গাঢ় নেভি। হালকা রং দিলে সাইডবারের লেখা নিজে থেকেই গাঢ় হয়ে যায়।'))
+                        ->required()
+                        ->regex('/^#[0-9a-fA-F]{6}$/'),
+                    ColorPicker::make('admin_color_primary')
+                        ->label(__('অ্যাডমিনের মূল রং'))
+                        ->helperText(__('সক্রিয় মেনু, বাটন ও লিংকের রং। ডিফল্ট উজ্জ্বল নীল।'))
+                        ->required()
+                        ->regex('/^#[0-9a-fA-F]{6}$/'),
                 ]),
             Section::make(__('সাইটের পরিচয়'))
                 ->description(__('দোকানের নাম আর লোগো। লোগো না দিলে নামটাই লেখা আকারে দেখাবে। ফুটারের লোগো "হেডার ও ফুটার" পেজে।'))
@@ -87,12 +144,9 @@ class SiteSettings extends SettingsPage
 
     protected function afterSave(array $data): void
     {
-        // The admin language applies from the next page load, so reload now if it changed.
-        $switched = ($data['admin_locale'] ?? null) !== app()->getLocale();
+        // The admin language and the admin colours apply from the next page load, so reload now.
         app()->setLocale(SiteSettingsHelper::adminLocale());
 
-        if ($switched) {
-            $this->redirect(static::getUrl());
-        }
+        $this->redirect(static::getUrl());
     }
 }

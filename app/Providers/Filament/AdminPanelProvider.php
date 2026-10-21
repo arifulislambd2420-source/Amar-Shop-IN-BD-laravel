@@ -9,14 +9,16 @@ use App\Http\Middleware\RememberAdminIp;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetAdminLocale;
 use App\Support\AdminPath;
+use App\Support\AdminTheme;
 use App\Support\SiteSettingsHelper;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -27,13 +29,13 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
-    /** Admin primary color = the site brand color (Site Setting → Colors). */
+    /** The admin's main colour: its own setting (Site settings → General → Admin colours), not the shop's brand colour. */
     private function primaryColor(): string|array
     {
         try {
-            return SiteSettingsHelper::color('brand');
+            return AdminTheme::primary();
         } catch (\Throwable) {
-            return Color::Amber;
+            return AdminTheme::DEFAULT_PRIMARY;
         }
     }
 
@@ -77,6 +79,20 @@ class AdminPanelProvider extends PanelProvider
             ->colors(fn () => [
                 'primary' => $this->primaryColor(),
             ])
+            // Sidebar: every group is a menu entry with its own icon, an arrow on the right, and opens its sub-menu on click.
+            ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make()->label(fn () => __('বিক্রয়'))->icon(Heroicon::OutlinedShoppingBag)->collapsed(),
+                NavigationGroup::make()->label(fn () => __('ক্যাটালগ'))->icon(Heroicon::OutlinedSquares2x2)->collapsed(),
+                NavigationGroup::make()->label(fn () => __('মার্কেটিং'))->icon(Heroicon::OutlinedMegaphone)->collapsed(),
+                NavigationGroup::make()->label(fn () => __('কনটেন্ট'))->icon(Heroicon::OutlinedDocumentText)->collapsed(),
+                NavigationGroup::make()->label(fn () => __('গ্রাহক'))->icon(Heroicon::OutlinedUsers)->collapsed(),
+                NavigationGroup::make()->label(fn () => __('সেটিংস'))->icon(Heroicon::OutlinedCog6Tooth)->collapsed(),
+            ])
+            // Topbar: an icon next to the shop's name that opens the website in a new tab.
+            ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER, fn (): string => view('filament.admin-view-site')->render())
+            // Sidebar foot: who is signed in (and their role), View site, Log out.
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): string => view('filament.admin-sidebar-footer')->render())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             // (App\Filament\Pages\Dashboard — the dashboard with the date filter — is found by discoverPages above.)

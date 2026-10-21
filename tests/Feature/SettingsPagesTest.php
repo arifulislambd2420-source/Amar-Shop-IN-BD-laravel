@@ -35,7 +35,7 @@ class SettingsPagesTest extends TestCase
         'contact_phone', 'contact_whatsapp', 'contact_email', 'contact_address', 'contact_hours',
         'social_facebook', 'social_youtube', 'social_instagram', 'social_tiktok', 'social_twitter', 'social_linkedin', 'social_telegram',
         'home_sections', 'home_showcase_categories',
-        'admin_locale',
+        'admin_locale', 'admin_color_primary', 'admin_color_sidebar',
     ];
 
     private const PAGES = [

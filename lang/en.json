@@ -739,5 +739,16 @@
     "পেমেন্টের ধরন অনুযায়ী": "By payment method",
     "ডেলিভারি ও বাতিল": "Delivery & cancelled",
     "কাস্টমারের দেওয়া ডেলিভারি চার্জ": "Delivery charge paid by customers",
-    "আমার ডেলিভারি খরচ (আনুমানিক)": "My delivery cost (estimated)"
+    "আমার ডেলিভারি খরচ (আনুমানিক)": "My delivery cost (estimated)",
+    "অ্যাডমিনের রং ডিফল্টে ফিরেছে।": "The admin colours are back to the defaults.",
+    "অ্যাডমিনের রং": "Admin colours",
+    "এই অ্যাডমিন প্যানেলের নিজস্ব রং — সাইটের (গ্রাহকের দেখা) ব্র্যান্ড রং থেকে আলাদা, একটা বদলালে অন্যটা বদলায় না।": "The admin panel's own colours — separate from the shop's brand colours (what customers see); changing one does not change the other.",
+    "অ্যাডমিনের রং ডিফল্টে ফেরত নেবেন?": "Put the admin colours back to the defaults?",
+    "সাইডবারের রং": "Sidebar colour",
+    "ডিফল্ট গাঢ় নেভি। হালকা রং দিলে সাইডবারের লেখা নিজে থেকেই গাঢ় হয়ে যায়।": "Dark navy by default. With a light colour the sidebar text turns dark by itself.",
+    "অ্যাডমিনের মূল রং": "Admin main colour",
+    "সক্রিয় মেনু, বাটন ও লিংকের রং। ডিফল্ট উজ্জ্বল নীল।": "The colour of the active menu, buttons and links. Bright blue by default.",
+    "ওয়েবসাইট দেখুন (নতুন ট্যাবে)": "View website (new tab)",
+    "ওয়েবসাইট দেখুন": "View site",
+    "লগ আউট": "Log out"
 }

@@ -24,6 +24,7 @@ class Dashboard extends BaseDashboard
     {
         return $schema->components([
             Section::make()
+                ->columnSpanFull()
                 ->columns(['default' => 1, 'sm' => 3])
                 ->schema([
                     Select::make('range')
