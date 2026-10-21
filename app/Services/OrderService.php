@@ -190,7 +190,7 @@ class OrderService
                 // What the browser knew (fbp/fbc cookies, user agent, page, GA client id) — for a later server-side Purchase.
                 ...Tracking::requestContext(),
                 'order_token' => Str::random(40),
-                'invoice_no' => 'INV-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
+                'invoice_no' => 'INV-'.now(\App\Support\ShopTime::zone())->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_name' => $customer['customer_name'],
                 'phone' => $phone,
                 'email' => $customer['email'] ?? null,

@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\SiteSetting;
+// (settings are read through SiteSettingsHelper: one cached lookup for all of them)
 
 /**
  * Ported from the old Next.js app's src/lib/gtm.ts getActiveGtmId(): returns
@@ -19,7 +19,7 @@ class Gtm
             return null;
         }
 
-        $id = trim((string) (SiteSetting::where('setting_key', 'gtm_id')->value('setting_value') ?? ''));
+        $id = trim((string) SiteSettingsHelper::get('gtm_id'));
 
         return $id !== '' ? $id : null;
     }

@@ -18,6 +18,14 @@ class ManageIpBlocks extends ManageRecords
 {
     protected static string $resource = IpBlockResource::class;
 
+    /** A proxy is in front of the shop but not trusted: every visitor looks like one IP, so blocking by IP can't work. */
+    public function getSubheading(): ?string
+    {
+        return AutoBlock::behindUntrustedProxy(request())
+            ? __('⚠ সাইটের সামনে একটি প্রক্সি আছে, কিন্তু অ্যাপ সেটি বিশ্বাস করছে না — তাই সব ভিজিটরের আইপি একই দেখাচ্ছে এবং আইপি ব্লক/স্বয়ংক্রিয় ব্লক ঠিকমতো কাজ করবে না (নিরাপত্তার জন্য স্বয়ংক্রিয় ব্লক এই অবস্থায় কাউকে ব্লক করে না)। সার্ভারের .env-এ TRUSTED_PROXIES ঠিক করুন (DEPLOY.md দেখুন), তারপর php artisan config:cache চালান।')
+            : null;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

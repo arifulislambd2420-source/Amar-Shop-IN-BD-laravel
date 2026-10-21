@@ -27,7 +27,7 @@ class AuthController extends Controller
         'phone.required' => 'মোবাইল নম্বর লিখুন।',
         'phone.max' => 'সঠিক মোবাইল নম্বর দিন।',
         'password.required' => 'পাসওয়ার্ড লিখুন।',
-        'password.min' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+        'password.min' => 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
         'password.max' => 'পাসওয়ার্ড অনেক বড় হয়ে গেছে।',
     ];
 
@@ -74,7 +74,7 @@ class AuthController extends Controller
                     $fail('সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)।');
                 }
             }],
-            'password' => ['required', 'string', 'min:6', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
         ], self::MESSAGES);
 
         // Saved as 01XXXXXXXXX; any other form of the same number counts as taken.

@@ -29,7 +29,9 @@ class TrustedProxies
     /** @return string|array<int, string> */
     public static function resolve(?string $configured = null): string|array
     {
-        $configured = trim((string) ($configured ?? env('TRUSTED_PROXIES', '')));
+        // config('proxies.trusted'), not env(): env() is empty once the config is cached (php artisan config:cache),
+        // which used to silently drop TRUSTED_PROXIES on a deployed shop.
+        $configured = trim((string) ($configured ?? config('proxies.trusted', '')));
 
         if ($configured === '*') {
             return '*';

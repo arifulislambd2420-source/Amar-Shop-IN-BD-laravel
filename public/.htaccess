@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Never serve dotfiles (.env, .git, …) if one ever ends up under public/; .well-known stays reachable.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -28,4 +31,24 @@
     # Don't advertise PHP (PHP's own expose_php=Off is the other half).
     Header always unset X-Powered-By
     Header unset X-Powered-By
+</IfModule>
+
+# Smaller pages: compress text on the way out.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/javascript text/javascript application/json image/svg+xml
+</IfModule>
+
+# Browser caching for files that never change under the same name: the built CSS/JS carry a hash in
+# their name (/build/assets/app-<hash>.css) and uploaded pictures a random one, so a long life is safe.
+# HTML is not listed, so pages are never cached here.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType image/webp "access plus 6 months"
+    ExpiresByType image/jpeg "access plus 6 months"
+    ExpiresByType image/png "access plus 6 months"
+    ExpiresByType image/x-icon "access plus 6 months"
 </IfModule>

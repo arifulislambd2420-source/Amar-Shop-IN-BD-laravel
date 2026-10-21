@@ -38,7 +38,7 @@ class TrackingSettings
 
     private static function raw(string $key): string
     {
-        return trim((string) (SiteSetting::where('setting_key', $key)->value('setting_value') ?? ''));
+        return trim((string) SiteSettingsHelper::get($key));
     }
 
     public static function secret(string $key): ?string

@@ -11,7 +11,7 @@
             @if($socials)
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4">
                     @foreach($socials as $label => $url)
-                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="hover:text-brand-500">{{ $label }}</a>
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="inline-flex min-h-9 items-center hover:text-brand-500">{{ $label }}</a>
                     @endforeach
                 </div>
             @endif
@@ -19,23 +19,23 @@
         <div>
             <div class="text-white font-semibold mb-2">গুরুত্বপূর্ণ লিংক</div>
             <ul class="space-y-1">
-                <li><a href="{{ route('about') }}" class="hover:text-brand-500">আমাদের সম্পর্কে</a></li>
-                <li><a href="{{ route('shop') }}" class="hover:text-brand-500">সকল পণ্য (Shop)</a></li>
-                <li><a href="{{ route('offers') }}" class="hover:text-brand-500">অফার সমূহ</a></li>
+                <li><a href="{{ route('about') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">আমাদের সম্পর্কে</a></li>
+                <li><a href="{{ route('shop') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">সকল পণ্য (Shop)</a></li>
+                <li><a href="{{ route('offers') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">অফার সমূহ</a></li>
                 @if(\App\Models\Blog::hasPublished())
-                <li><a href="{{ route('blog.index') }}" class="hover:text-brand-500">ব্লগ ও টিপস</a></li>
+                <li><a href="{{ route('blog.index') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">ব্লগ ও টিপস</a></li>
                 @endif
-                <li><a href="{{ route('track') }}" class="hover:text-brand-500">অর্ডার ট্র্যাকিং</a></li>
+                <li><a href="{{ route('track') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">অর্ডার ট্র্যাকিং</a></li>
             </ul>
         </div>
         <div>
             <div class="text-white font-semibold mb-2">পলিসি ও নিয়মাবলী</div>
             <ul class="space-y-1">
-                <li><a href="{{ route('delivery') }}" class="hover:text-brand-500">ডেলিভারি পলিসি</a></li>
-                <li><a href="{{ route('returns') }}" class="hover:text-brand-500">রিটার্ন ও রিফান্ড পলিসি</a></li>
-                <li><a href="{{ route('privacy') }}" class="hover:text-brand-500">প্রাইভেসি পলিসি</a></li>
-                <li><a href="{{ route('terms') }}" class="hover:text-brand-500">ব্যবহারের শর্তাবলী</a></li>
-                <li><a href="{{ route('contact') }}" class="hover:text-brand-500">যোগাযোগ ও হেল্পলাইন</a></li>
+                <li><a href="{{ route('delivery') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">ডেলিভারি পলিসি</a></li>
+                <li><a href="{{ route('returns') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">রিটার্ন ও রিফান্ড পলিসি</a></li>
+                <li><a href="{{ route('privacy') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">প্রাইভেসি পলিসি</a></li>
+                <li><a href="{{ route('terms') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">ব্যবহারের শর্তাবলী</a></li>
+                <li><a href="{{ route('contact') }}" class="inline-flex min-h-9 items-center hover:text-brand-500">যোগাযোগ ও হেল্পলাইন</a></li>
             </ul>
         </div>
         <div>

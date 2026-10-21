@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Concerns\HasAdminAreaWidget;
 use App\Models\Order;
+use App\Support\ShopTime;
 use App\Support\SiteSettingsHelper;
 use Filament\Widgets\ChartWidget;
 
@@ -46,14 +47,17 @@ class SalesChart extends ChartWidget
     protected function getData(): array
     {
         $days = in_array($this->filter, ['7', '30', '90'], true) ? (int) $this->filter : 30;
-        $from = now()->subDays($days - 1)->startOfDay();
+        // One bar per shop day (Bangladesh time): sum in PHP, because the database dates are UTC.
+        $from = ShopTime::dayStart($days - 1);
+        $totals = [];
 
-        $totals = Order::query()
-            ->counted()
-            ->where('created_at', '>=', $from)
-            ->selectRaw('DATE(created_at) as day, SUM(total) as total')
-            ->groupBy('day')
-            ->pluck('total', 'day');
+        Order::query()->counted()->where('created_at', '>=', $from)->get(['created_at', 'total'])
+            ->each(function (Order $order) use (&$totals): void {
+                $day = ShopTime::local($order->created_at)->toDateString();
+                $totals[$day] = ($totals[$day] ?? 0) + (float) $order->total;
+            });
+
+        $from = ShopTime::local($from);
 
         $labels = [];
         $data = [];

@@ -60,7 +60,7 @@ class SendServerPurchase implements ShouldQueue
         $retry = false;
 
         if (TrackingSettings::capiReady() && $order->capi_status !== 'sent') {
-            $pixel = preg_replace('/\D+/', '', (string) \App\Models\SiteSetting::where('setting_key', 'meta_pixel_id')->value('setting_value'));
+            $pixel = preg_replace('/\D+/', '', (string) \App\Support\SiteSettingsHelper::get('meta_pixel_id'));
             $result = $purchase->sendMeta($pixel, (string) TrackingSettings::capiToken(), $purchase->metaEvent($order), TrackingSettings::capiTestCode());
 
             $order->forceFill($this->outcome('capi', $result))->saveQuietly();

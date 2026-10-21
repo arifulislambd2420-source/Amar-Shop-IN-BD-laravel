@@ -34,6 +34,13 @@ class AppServiceProvider extends ServiceProvider
         // Bangla default labels for admin fields / columns / filters (see AdminLang).
         AdminLang::register();
 
+        // The admin panel shows stored (UTC) times in the shop's timezone.
+        \Filament\Support\Facades\FilamentTimezone::set(\App\Support\ShopTime::zone());
+
+        // Which proxies' X-Forwarded-* headers to believe (TRUSTED_PROXIES via config/proxies.php, so it
+        // still works after `php artisan config:cache`).
+        \Illuminate\Http\Middleware\TrustProxies::at(\App\Support\TrustedProxies::resolve());
+
         // Behind the host's proxy the app can see the request as plain http
         // (X-Forwarded-Proto ignored — see TrustedProxies), which makes
         // asset()/@vite emit http:// CSS and JS links that browsers block as

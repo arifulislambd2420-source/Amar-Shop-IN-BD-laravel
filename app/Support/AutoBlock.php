@@ -68,6 +68,15 @@ class AutoBlock
         return $ip !== '' && Cache::has('admin_ip:'.$ip);
     }
 
+    /**
+     * A proxy forwarded this request (X-Forwarded-For is there) but is not trusted, so ip() is the proxy's own
+     * address, shared by every visitor: counting it would block the whole shop. Fix TRUSTED_PROXIES (DEPLOY.md).
+     */
+    public static function behindUntrustedProxy(Request $request): bool
+    {
+        return $request->headers->has('X-Forwarded-For') && $request->server->get('REMOTE_ADDR') === $request->ip();
+    }
+
     /** Requests that are never counted or blocked. */
     public static function isExempt(Request $request): bool
     {
@@ -78,7 +87,8 @@ class AutoBlock
             || $request->routeIs('media.file')
             || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
             || auth('admin')->check()
-            || Cache::has('admin_ip:'.$ip);
+            || Cache::has('admin_ip:'.$ip)
+            || self::behindUntrustedProxy($request);
     }
 
     /**

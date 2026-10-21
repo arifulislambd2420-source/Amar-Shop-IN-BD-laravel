@@ -37,7 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // (The admin panel has its own login and never uses this.)
         $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => route('customer.login'));
 
-        $middleware->trustProxies(at: \App\Support\TrustedProxies::resolve());
+        // (The trusted proxies are applied in AppServiceProvider::boot(), once config — also a cached one — is loaded.)
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

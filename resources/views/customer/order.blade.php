@@ -10,7 +10,7 @@
     <div class="mt-3 mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="break-all text-xl font-bold md:text-2xl">অর্ডার {{ $order->invoice_no }}</h1>
-            <p class="text-sm text-gray-500">{{ $order->created_at->locale('bn')->translatedFormat('j F Y, g:i A') }}</p>
+            <p class="text-sm text-gray-500">{{ \App\Support\ShopTime::local($order->created_at)->locale('bn')->translatedFormat('j F Y, g:i A') }}</p>
         </div>
         <span class="rounded bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-600">{{ \App\Support\OrderStatus::label($order->status) }}</span>
     </div>

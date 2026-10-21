@@ -6,6 +6,8 @@ return [
     'name' => env('SITE_NAME', 'আমারশপ'),
     'legal_name' => env('SITE_LEGAL_NAME', 'Amar Shop in BD'),
     'url' => env('SITE_URL', 'https://online.amarshopinbd.com'),
+    // What customers and the owner SEE (order times, invoices, "today" on the dashboard). The database stays UTC.
+    'timezone' => env('SHOP_TIMEZONE', 'Asia/Dhaka'),
     'support_phone' => env('SUPPORT_PHONE', '+880 1874-783819'),
     'support_phone_raw' => env('SUPPORT_PHONE_RAW', '+8801874783819'),
     'whatsapp_number' => env('WHATSAPP_NUMBER', '8801874783819'),

@@ -38,7 +38,7 @@ class CustomerAuthTest extends TestCase
         $this->from('/customer/register')->post('/customer/register', ['name' => 'ক', 'phone' => '12345', 'password' => 'abc'])
             ->assertSessionHasErrors([
                 'phone' => 'সঠিক মোবাইল নম্বর দিন (যেমন 01712345678)।',
-                'password' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+                'password' => 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
             ]);
 
         $this->assertSame(0, User::count());

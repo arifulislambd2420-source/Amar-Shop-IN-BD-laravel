@@ -13,20 +13,47 @@ use Illuminate\Support\Facades\Cache;
  */
 class SiteSettingsHelper
 {
+    private const CACHE_KEY = 'site_settings:all';
+
+    /** The whole table once per request (see all()); not kept between jobs of a long-running worker. */
+    private static ?array $memo = null;
+
+    /**
+     * Every setting as key => raw value, read with ONE cache lookup (and one query when the cache is
+     * cold) instead of one per key. A page reads around fifty settings; with the database cache that
+     * used to be fifty extra queries on every single page view.
+     *
+     * @return array<string, string>
+     */
+    public static function all(): array
+    {
+        $console = app()->runningInConsole(); // queue workers, artisan and tests always read fresh
+
+        if (! $console && self::$memo !== null) {
+            return self::$memo;
+        }
+
+        $all = Cache::remember(self::CACHE_KEY, 300, fn (): array => SiteSetting::query()
+            ->pluck('setting_value', 'setting_key')
+            ->map(fn ($value) => (string) $value)
+            ->all());
+
+        return $console ? $all : (self::$memo = $all);
+    }
+
     public static function get(string $key, ?string $default = null): ?string
     {
-        // Cache the raw value ('' when unset) so a missing key is cached too
-        // and the default is never baked into the cache.
-        $value = Cache::remember("site_setting:{$key}", 300, function () use ($key) {
-            return (string) (SiteSetting::where('setting_key', $key)->value('setting_value') ?? '');
-        });
+        // The raw value is '' when unset, so the default is never baked into the cache.
+        $value = (string) (self::all()[$key] ?? '');
 
         return $value !== '' ? $value : $default;
     }
 
-    public static function forget(string $key): void
+    /** A setting changed: the next read loads them all again. ($key is kept for the callers that name it.) */
+    public static function forget(?string $key = null): void
     {
-        Cache::forget("site_setting:{$key}");
+        Cache::forget(self::CACHE_KEY);
+        self::$memo = null;
     }
 
     /** Languages the admin panel can be shown in (Site Setting → admin language). */

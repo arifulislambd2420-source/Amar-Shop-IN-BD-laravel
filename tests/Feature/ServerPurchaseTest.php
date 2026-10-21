@@ -87,6 +87,7 @@ class ServerPurchaseTest extends TestCase
 
         // A damaged value or a changed APP_KEY reads as "not set", never as an error.
         SiteSetting::where('setting_key', TrackingSettings::CAPI_TOKEN)->update(['setting_value' => 'garbage']);
+        \App\Support\SiteSettingsHelper::forget(); // a bulk update bypasses the model, so drop the settings cache by hand
         $this->assertNull(TrackingSettings::capiToken());
         $this->assertFalse(TrackingSettings::capiReady());
     }
@@ -288,7 +289,9 @@ class ServerPurchaseTest extends TestCase
     {
         Queue::fake();
         SiteSetting::where('setting_key', TrackingSettings::CAPI_TOKEN)->update(['setting_value' => '']);
+        \App\Support\SiteSettingsHelper::forget(); // a bulk update bypasses the model, so drop the settings cache by hand
         SiteSetting::where('setting_key', TrackingSettings::GA4_SECRET)->update(['setting_value' => '']);
+        \App\Support\SiteSettingsHelper::forget(); // a bulk update bypasses the model, so drop the settings cache by hand
 
         $this->order()->update(['status' => 'processing']);
 
@@ -563,7 +566,9 @@ class ServerPurchaseTest extends TestCase
 
         $plain = $this->order();
         SiteSetting::where('setting_key', TrackingSettings::CAPI_TOKEN)->update(['setting_value' => '']);
+        \App\Support\SiteSettingsHelper::forget(); // a bulk update bypasses the model, so drop the settings cache by hand
         SiteSetting::where('setting_key', TrackingSettings::GA4_SECRET)->update(['setting_value' => '']);
+        \App\Support\SiteSettingsHelper::forget(); // a bulk update bypasses the model, so drop the settings cache by hand
         Livewire::test(EditOrder::class, ['record' => $plain->getRouteKey()])->assertActionHidden('resendPurchase');
     }
 

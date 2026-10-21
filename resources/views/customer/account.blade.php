@@ -39,7 +39,7 @@
                class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-4 transition hover:border-brand-500">
                 <div class="min-w-0">
                     <p class="truncate font-semibold text-gray-900">{{ $order->invoice_no }}</p>
-                    <p class="text-xs text-gray-500">{{ $order->created_at->locale('bn')->translatedFormat('j F Y') }} · {{ $order->items->sum('quantity') }}টি পণ্য</p>
+                    <p class="text-xs text-gray-500">{{ \App\Support\ShopTime::local($order->created_at)->locale('bn')->translatedFormat('j F Y') }} · {{ $order->items->sum('quantity') }}টি পণ্য</p>
                     <span @class([
                         'mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold',
                         'bg-error-50 text-error-500' => $order->status === 'cancelled',

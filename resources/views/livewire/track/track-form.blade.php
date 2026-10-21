@@ -38,7 +38,7 @@
             <div class="mb-4 flex flex-wrap items-start justify-between gap-2">
                 <div>
                     <p class="font-semibold text-gray-900">{{ $result->invoice_no ?? '#'.$result->id }}</p>
-                    <p class="text-xs text-gray-500">{{ $result->created_at?->locale('bn')->translatedFormat('j F Y, g:i A') }}</p>
+                    <p class="text-xs text-gray-500">{{ \App\Support\ShopTime::local($result->created_at)?->locale('bn')->translatedFormat('j F Y, g:i A') }}</p>
                 </div>
                 <span @class([
                     'rounded-full px-3 py-1 text-xs font-semibold',

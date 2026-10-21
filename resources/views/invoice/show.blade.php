@@ -79,7 +79,7 @@
             <div class="inv-title">
                 <h1>ইনভয়েস</h1>
                 <div class="row">নম্বর: <b>{{ $order->invoice_no ?? '#'.$order->id }}</b></div>
-                <div class="row">তারিখ: <b>{{ $order->created_at?->format('d M Y, h:i A') }}</b></div>
+                <div class="row">তারিখ: <b>{{ \App\Support\ShopTime::local($order->created_at)?->format('d M Y, h:i A') }}</b></div>
             </div>
         </div>
 

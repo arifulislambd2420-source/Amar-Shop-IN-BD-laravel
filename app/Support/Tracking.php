@@ -5,7 +5,6 @@ namespace App\Support;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 /**
@@ -48,7 +47,7 @@ class Tracking
             return null;
         }
 
-        $id = preg_replace('/\D+/', '', (string) (SiteSetting::where('setting_key', 'meta_pixel_id')->value('setting_value') ?? ''));
+        $id = preg_replace('/\D+/', '', (string) SiteSettingsHelper::get('meta_pixel_id'));
 
         return $id !== '' ? $id : null;
     }
@@ -74,7 +73,7 @@ class Tracking
     /** The admin's name for the "order placed" event (Admin → GTM / Pixel), OrderPlaced by default. */
     public static function orderEventName(): string
     {
-        $name = trim((string) (SiteSetting::where('setting_key', 'tracking_order_event')->value('setting_value') ?? ''));
+        $name = trim((string) SiteSettingsHelper::get('tracking_order_event'));
 
         return preg_match(self::EVENT_NAME_PATTERN, $name) ? $name : self::DEFAULT_ORDER_EVENT;
     }

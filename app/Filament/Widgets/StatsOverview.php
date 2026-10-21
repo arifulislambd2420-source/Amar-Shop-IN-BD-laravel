@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\ShopTime;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -33,14 +34,14 @@ class StatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $today = today();
-        $yesterday = today()->subDay();
-
-        $ordersOn = fn ($day) => Order::query()->counted()->whereDate('created_at', $day);
-        $todayOrders = $ordersOn($today)->count();
-        $yesterdayOrders = $ordersOn($yesterday)->count();
-        $todaySales = (float) $ordersOn($today)->sum('total');
-        $yesterdaySales = (float) $ordersOn($yesterday)->sum('total');
+        // Days are the shop's days (Bangladesh time), compared with the UTC times in the database.
+        $ordersOn = fn (int $daysAgo) => Order::query()->counted()
+            ->where('created_at', '>=', ShopTime::dayStart($daysAgo))
+            ->where('created_at', '<', ShopTime::dayStart($daysAgo - 1));
+        $todayOrders = $ordersOn(0)->count();
+        $yesterdayOrders = $ordersOn(1)->count();
+        $todaySales = (float) $ordersOn(0)->sum('total');
+        $yesterdaySales = (float) $ordersOn(1)->sum('total');
 
         $pending = Order::query()->whereIn('status', ['pending', 'on_hold'])->count();
         $flagged = Order::query()->where('is_flagged', true)->where('status', '!=', 'cancelled')->count();
@@ -49,11 +50,11 @@ class StatsOverview extends StatsOverviewWidget
         $lowStock = Product::query()->where('stock', '<=', $threshold)->count();
         $outOfStock = Product::query()->where('stock', '<=', 0)->count();
 
-        $monthSales = (float) Order::query()->counted()->where('created_at', '>=', $today->copy()->startOfMonth())->sum('total');
-        $monthOrders = Order::query()->counted()->where('created_at', '>=', $today->copy()->startOfMonth())->count();
+        $monthSales = (float) Order::query()->counted()->where('created_at', '>=', ShopTime::monthStart())->sum('total');
+        $monthOrders = Order::query()->counted()->where('created_at', '>=', ShopTime::monthStart())->count();
 
         // Last 7 days of sales, for the little trend line on the sales card.
-        $week = collect(range(6, 0))->map(fn ($i) => (float) $ordersOn(today()->subDays($i))->sum('total'))->all();
+        $week = collect(range(6, 0))->map(fn ($i) => (float) $ordersOn($i)->sum('total'))->all();
 
         $card = fn (Stat $stat, string $icon, string $tone): Stat => $stat
             ->icon($icon)

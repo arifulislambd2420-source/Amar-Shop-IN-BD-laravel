@@ -244,6 +244,15 @@ class CheckoutForm extends Component
             return;
         }
 
+        // Guessing coupon codes: a few tries are fine, a stream of them is not.
+        $limitKey = 'coupon-try:'.request()->ip();
+        if (RateLimiter::tooManyAttempts($limitKey, 15)) {
+            $this->couponError = 'অনেকবার চেষ্টা করা হয়েছে। '.RateLimiter::availableIn($limitKey).' সেকেন্ড পর আবার চেষ্টা করুন।';
+
+            return;
+        }
+        RateLimiter::hit($limitKey, 600);
+
         $subtotal = app(CartService::class)->subtotal();
         $coupon = Coupon::findByCode($code);
 
