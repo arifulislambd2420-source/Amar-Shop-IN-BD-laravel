@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
         // Bangla default labels for admin fields / columns / filters (see AdminLang).
         AdminLang::register();
 
+        // Admin tables: long text goes onto a second line instead of widening the table (no sideways scroll).
+        \Filament\Tables\Columns\TextColumn::configureUsing(fn (\Filament\Tables\Columns\TextColumn $column) => $column->wrap());
+
         // The admin panel shows stored (UTC) times in the shop's timezone.
         \Filament\Support\Facades\FilamentTimezone::set(\App\Support\ShopTime::zone());
 

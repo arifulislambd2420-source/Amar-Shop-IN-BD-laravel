@@ -19,6 +19,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -86,6 +87,8 @@ class AdminPanelProvider extends PanelProvider
             // the items inside keep their own icons (resources/views/vendor/filament-panels/components/sidebar/group.blade.php).
             // Log out lives in the avatar menu at the top right.
             ->sidebarCollapsibleOnDesktop()
+            // Every admin page uses the whole screen instead of a narrow column in the middle.
+            ->maxContentWidth(Width::Full)
             // Moving between pages swaps only the content (no full reload), so the open groups and the sidebar's scroll stay put.
             ->spa()
             ->navigationGroups([

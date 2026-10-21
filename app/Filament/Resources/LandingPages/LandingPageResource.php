@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LandingPages;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\LandingPages\Pages\CreateLandingPage;
 use App\Filament\Resources\LandingPages\Pages\EditLandingPage;
@@ -421,12 +422,13 @@ class LandingPageResource extends Resource
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
-                    ->limit(40),
+                    ->limit(60)
+                    ->extraCellAttributes(['style' => 'min-width: 13rem']),
                 TextColumn::make('slug')
                     ->visibleFrom('lg')
                     ->searchable()
                     ->copyable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('template')
                     ->visibleFrom('lg')
                     ->badge()
@@ -436,7 +438,7 @@ class LandingPageResource extends Resource
                     ->visibleFrom('md')
                     ->label(__('পণ্য'))
                     ->limit(30)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('views')
                     ->label(__('ভিজিট'))
                     ->numeric()
@@ -448,6 +450,7 @@ class LandingPageResource extends Resource
                     ->sortable(),
                 TextColumn::make('conversion')
                     ->visibleFrom('md')
+                    ->toggleable()
                     ->label(__('কনভার্শন'))
                     ->state(fn (LandingPage $record): string => $record->views > 0
                         ? number_format($record->orders_count / $record->views * 100, 1).'%'
@@ -457,6 +460,7 @@ class LandingPageResource extends Resource
                     ->tooltip(__('অর্ডার ÷ ভিজিট')),
                 TextColumn::make('revenue')
                     ->visibleFrom('md')
+                    ->toggleable()
                     ->label(__('বিক্রি'))
                     ->state(fn (LandingPage $record): string => '৳ '.number_format((float) $record->orders()->counted()->sum('total'), 0)),
                 IconColumn::make('is_active')
@@ -475,15 +479,16 @@ class LandingPageResource extends Resource
                 TernaryFilter::make('is_active'),
             ])
             ->recordActions([
-                Action::make('preview')
-                    ->label(__('প্রিভিউ'))
-                    ->icon(Heroicon::OutlinedEye)
-                    ->color('gray')
-                    ->url(fn (LandingPage $record): string => route('landing.show', $record->slug))
-                    ->openUrlInNewTab(),
-                self::duplicateAction(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([
+                    Action::make('preview')
+                        ->label(__('প্রিভিউ'))
+                        ->icon(Heroicon::OutlinedEye)
+                        ->url(fn (LandingPage $record): string => route('landing.show', $record->slug))
+                        ->openUrlInNewTab(),
+                    self::duplicateAction(),
+                    DeleteAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

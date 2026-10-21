@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Banners;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Banners\Pages\ManageBanners;
 use App\Filament\Support\ImageUpload;
@@ -93,10 +94,12 @@ class BannerResource extends Resource
                     ->badge()
                     ->sortable(),
                 TextColumn::make('link')
+                    ->toggleable()
                     ->limit(40)
                     ->url(fn (Banner $record): ?string => $record->link)
                     ->openUrlInNewTab(),
                 TextColumn::make('sort_order')
+                    ->toggleable()
                     ->sortable(),
                 IconColumn::make('active')
                     ->boolean()
@@ -113,8 +116,8 @@ class BannerResource extends Resource
                 TernaryFilter::make('active'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

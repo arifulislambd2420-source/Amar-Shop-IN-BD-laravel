@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reviews;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Reviews\Pages\ManageReviews;
 use App\Models\Review;
@@ -95,6 +96,7 @@ class ReviewResource extends Resource
                     ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                     ->sortable(),
                 TextColumn::make('comment')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->limit(50)
                     ->wrap(),
@@ -129,8 +131,8 @@ class ReviewResource extends Resource
                     ->color('warning')
                     ->visible(fn (Review $record): bool => (bool) $record->approved)
                     ->action(fn (Review $record) => $record->update(['approved' => false])),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

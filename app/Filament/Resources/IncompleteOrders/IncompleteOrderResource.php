@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\IncompleteOrders;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\IncompleteOrders\Pages\ManageIncompleteOrders;
 use App\Filament\Resources\Orders\OrderResource;
@@ -87,12 +88,14 @@ class IncompleteOrderResource extends Resource
                 TextColumn::make('name')->label(__('নাম'))->placeholder('—')->searchable(),
                 TextColumn::make('phone')->label(__('ফোন'))->searchable()->copyable(),
                 TextColumn::make('items')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('প্রোডাক্ট'))
                     ->state(fn (IncompleteOrder $r): string => collect($r->items)->map(fn ($i) => ($i['name'] ?? '').' × '.($i['quantity'] ?? 1))->implode(', '))
                     ->wrap()
                     ->limit(60),
                 TextColumn::make('total')->label(__('মোট'))->formatStateUsing(fn ($state): string => '৳ '.number_format((float) $state, 2)),
                 TextColumn::make('source')
+                    ->toggleable()
                     ->label(__('কোথা থেকে'))
                     ->state(fn (IncompleteOrder $r): string => $r->source === 'landing' ? __('ল্যান্ডিং: :title', ['title' => $r->landingPage?->title ?? '—']) : __('চেকআউট'))
                     ->badge()
@@ -124,7 +127,9 @@ class IncompleteOrderResource extends Resource
             ])
             ->recordActions([
                 self::convertAction(),
-                DeleteAction::make()->label(__('বাদ দিন'))->visible(fn (IncompleteOrder $r): bool => $r->status === IncompleteOrder::OPEN),
+                RowMenu::make([
+                    DeleteAction::make()->label(__('বাদ দিন'))->visible(fn (IncompleteOrder $r): bool => $r->status === IncompleteOrder::OPEN),
+                ]),
             ]);
     }
 

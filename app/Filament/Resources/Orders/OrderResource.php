@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\ListOrders;
@@ -296,6 +297,7 @@ class OrderResource extends Resource
                     ->weight(fn (Order $record): ?FontWeight => $record->is_flagged ? FontWeight::Bold : null),
                 TextColumn::make('is_flagged')
                     ->visibleFrom('md')
+                    ->toggleable()
                     ->label(__('যাচাই'))
                     ->badge()
                     ->state(fn (Order $record): ?string => $record->is_flagged ? __('চিহ্নিত') : null)
@@ -308,11 +310,14 @@ class OrderResource extends Resource
                     ->description(fn (Order $record): string => (string) $record->phone)
                     ->searchable()
                     ->sortable(),
+                // (the phone is also under the customer's name; this column is for sorting / copying)
                 TextColumn::make('phone')
                     ->visibleFrom('md')
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total')
-                    ->money('BDT')
+                    ->formatStateUsing(fn ($state): string => Money::taka((float) $state))
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
@@ -321,6 +326,7 @@ class OrderResource extends Resource
                     ->sortable(),
                 TextColumn::make('payment_status')
                     ->visibleFrom('lg')
+                    ->toggleable()
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => self::paymentStatuses()[$state] ?? (string) $state)
                     ->color(fn (?string $state): string => match ($state) {
@@ -331,8 +337,9 @@ class OrderResource extends Resource
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->visibleFrom('md')
-                    ->dateTime()
-                    ->sortable(),
+                    ->dateTime('d M, h:i A')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -357,19 +364,21 @@ class OrderResource extends Resource
                     }),
             ])
             ->recordActions([
-                Action::make('clearFlag')
-                    ->label(__('যাচাই হয়েছে'))
-                    ->icon(Heroicon::OutlinedCheckCircle)
-                    ->color('success')
-                    ->visible(fn (Order $record): bool => $record->is_flagged)
-                    ->modalDescription(fn (Order $record): string => (string) $record->flag_reason)
-                    ->requiresConfirmation()
-                    ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
-                ...self::quickStatusActions(),
                 ViewAction::make()->iconButton(),
                 EditAction::make()->iconButton(),
-                // Any order, super admins only; the popup spells out what deleting does.
-                self::configureDelete(DeleteAction::make()->iconButton()),
+                RowMenu::make([
+                    Action::make('clearFlag')
+                        ->label(__('যাচাই হয়েছে'))
+                        ->icon(Heroicon::OutlinedCheckCircle)
+                        ->color('success')
+                        ->visible(fn (Order $record): bool => $record->is_flagged)
+                        ->modalDescription(fn (Order $record): string => (string) $record->flag_reason)
+                        ->requiresConfirmation()
+                        ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
+                    ...self::quickStatusActions(inMenu: true),
+                    // Any order, super admins only; the popup spells out what deleting does.
+                    self::configureDelete(DeleteAction::make()),
+                ]),
             ])
             ->toolbarActions([
                 BulkAction::make('deleteOrders')
@@ -416,21 +425,21 @@ class OrderResource extends Resource
      *
      * @return array<int, Action>
      */
-    public static function quickStatusActions(): array
+    public static function quickStatusActions(bool $inMenu = false): array
     {
+        $button = fn (Action $action): Action => $inMenu ? $action : $action->iconButton()->tooltip($action->getLabel());
+
         $move = function (Order $record, string $status, string $done): void {
             $record->update(['status' => $status]);
 
             Notification::make()->title(__($done, ['invoice' => $record->invoice_no]))->success()->send();
         };
 
-        return [
+        return array_map($button, [
             Action::make('quickConfirm')
                 ->label(__('কনফার্ম করুন'))
                 ->icon(Heroicon::OutlinedCheckCircle)
                 ->color('success')
-                ->iconButton()
-                ->tooltip(__('কনফার্ম করুন'))
                 ->visible(fn (Order $record): bool => $record->status === 'pending')
                 ->requiresConfirmation()
                 ->modalHeading(fn (Order $record): string => __(':invoice কনফার্ম করবেন?', ['invoice' => $record->invoice_no]))
@@ -441,8 +450,6 @@ class OrderResource extends Resource
                 ->label(__('ডেলিভারড'))
                 ->icon(Heroicon::OutlinedTruck)
                 ->color('info')
-                ->iconButton()
-                ->tooltip(__('ডেলিভারড করুন'))
                 ->visible(fn (Order $record): bool => in_array($record->status, ['processing', 'shipped', 'out_for_delivery'], true))
                 ->requiresConfirmation()
                 ->modalHeading(fn (Order $record): string => __(':invoice ডেলিভারড করবেন?', ['invoice' => $record->invoice_no]))
@@ -452,14 +459,12 @@ class OrderResource extends Resource
                 ->label(__('বাতিল করুন'))
                 ->icon(Heroicon::OutlinedXCircle)
                 ->color('danger')
-                ->iconButton()
-                ->tooltip(__('বাতিল করুন'))
                 ->visible(fn (Order $record): bool => ! in_array($record->status, ['cancelled', 'delivered', 'completed'], true))
                 ->requiresConfirmation()
                 ->modalHeading(fn (Order $record): string => __(':invoice বাতিল করবেন?', ['invoice' => $record->invoice_no]))
                 ->modalDescription(__('বাতিল হলে অর্ডারের স্টক ফেরত আসবে এবং এটি প্রকৃত বিক্রির হিসাবে থাকবে না।'))
                 ->action(fn (Order $record) => $move($record, 'cancelled', ':invoice বাতিল হয়েছে।')),
-        ];
+        ]);
     }
 
     // ── Server-side Purchase (Meta Conversions API / GA4) ────────────────

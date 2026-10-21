@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ContactMessages;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\ContactMessages\Pages\ManageContactMessages;
 use App\Models\ContactMessage;
@@ -86,6 +87,7 @@ class ContactMessageResource extends Resource
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('subject')
+                    ->toggleable()
                     ->limit(40)
                     ->searchable(),
                 TextColumn::make('message')
@@ -97,8 +99,8 @@ class ContactMessageResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
-                ViewAction::make(),
-                DeleteAction::make(),
+                ViewAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Blogs;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Blogs\Pages\ManageBlogs;
 use App\Filament\Support\ImageUpload;
@@ -108,16 +109,18 @@ class BlogResource extends Resource
                     ->badge()
                     ->searchable(),
                 TextColumn::make('read_time')
+                    ->toggleable()
                     ->label(__('পড়া (মিনিট)'))
                     ->sortable(),
                 TextColumn::make('published_at')
+                    ->toggleable()
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('published_at', 'desc')
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

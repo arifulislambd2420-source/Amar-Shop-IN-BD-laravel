@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FlashSales;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\FlashSales\Pages\CreateFlashSale;
 use App\Filament\Resources\FlashSales\Pages\EditFlashSale;
@@ -100,8 +101,8 @@ class FlashSaleResource extends Resource
                 TernaryFilter::make('is_active'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

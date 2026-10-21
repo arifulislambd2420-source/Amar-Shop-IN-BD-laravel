@@ -30,7 +30,7 @@
                              class="relative flex items-center gap-3 overflow-hidden rounded-lg border-2 p-3 transition
                                     {{ $gone ? 'cursor-not-allowed border-dashed border-gray-200 bg-gray-50 opacity-60' : 'cursor-pointer '.($selected ? 'border-brand-500 bg-brand-50' : 'border-gray-200 bg-white hover:border-brand-200') }}">
                             @if ($c['compare_price'] && $c['compare_price'] > $c['price'])
-                                <span class="absolute right-0 top-0 rounded-bl-lg bg-brand-600 px-2.5 py-0.5 text-[10px] font-bold text-white">অফার</span>
+                                <span class="absolute right-0 top-0 rounded-bl-lg bg-brand-600 px-2.5 py-0.5 text-xs font-bold text-white">অফার</span>
                             @endif
 
                             <input type="radio" name="package" value="{{ $i }}" @checked($selected) @disabled($gone) class="accent-brand-500"

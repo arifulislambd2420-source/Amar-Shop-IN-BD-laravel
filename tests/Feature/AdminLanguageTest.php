@@ -59,7 +59,7 @@ class AdminLanguageTest extends TestCase
         $this->setting('admin_locale', 'bn');
 
         $this->get('/admin')->assertOk()->assertSee('lang="bn"', false)->assertSee('সাইট সেটিং')->assertDontSee('Site settings');
-        $this->get('/admin/orders')->assertOk()->assertSee('তৈরির সময়');
+        $this->get('/admin/orders')->assertOk()->assertSee('ইনভয়েস');
     }
 
     public function test_an_unknown_language_value_falls_back_to_english(): void

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Coupons;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Coupons\Pages\ManageCoupons;
 use App\Models\Coupon;
@@ -100,23 +101,28 @@ class CouponResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('discount_type')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->badge(),
                 TextColumn::make('discount_value')
                     ->sortable(),
                 TextColumn::make('min_spend')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->money('BDT')
                     ->sortable(),
                 TextColumn::make('uses')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->label(__('ব্যবহৃত'))
                     ->sortable(),
                 TextColumn::make('max_uses')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->label(__('সর্বোচ্চ'))
                     ->placeholder('∞'),
                 TextColumn::make('valid_until')
+                    ->toggleable()
                     ->visibleFrom('md')
                     ->dateTime()
                     ->sortable(),
@@ -129,8 +135,8 @@ class CouponResource extends Resource
                 TernaryFilter::make('is_active'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

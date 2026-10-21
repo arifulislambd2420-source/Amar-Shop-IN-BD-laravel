@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AdminUsers;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\AdminUsers\Pages\ManageAdminUsers;
 use App\Models\AdminUser;
@@ -138,6 +139,7 @@ class AdminUserResource extends Resource
                     ->placeholder('—')
                     ->visibleFrom('md'),
                 TextColumn::make('email')
+                    ->toggleable()
                     ->label(__('ইমেইল'))
                     ->searchable()
                     ->placeholder('—')
@@ -157,59 +159,58 @@ class AdminUserResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()->iconButton(),
-                Action::make('resetPassword')
-                    ->label(__('পাসওয়ার্ড রিসেট'))
-                    ->icon(Heroicon::OutlinedKey)
-                    ->iconButton()
-                    ->color('warning')
-                    ->modalHeading(fn (AdminUser $record): string => __('":user"-এর নতুন পাসওয়ার্ড', ['user' => $record->username]))
-                    ->modalDescription(__('নতুন পাসওয়ার্ড সেট হলে তিনি অন্য সব জায়গা থেকে লগআউট হবেন। পাসওয়ার্ডটি তাকে নিরাপদে জানিয়ে দিন।'))
-                    ->modalSubmitActionLabel(__('পাসওয়ার্ড বদলান'))
-                    ->schema([
-                        TextInput::make('password')
-                            ->label(__('নতুন পাসওয়ার্ড'))
-                            ->password()
-                            ->revealable()
-                            ->required()
-                            ->rule(Password::min(8))
-                            ->same('passwordConfirmation')
-                            ->helperText(__('ন্যূনতম ৮ অক্ষর।')),
-                        TextInput::make('passwordConfirmation')
-                            ->label(__('নতুন পাসওয়ার্ড আবার'))
-                            ->password()
-                            ->revealable()
-                            ->required()
-                            ->dehydrated(false),
-                    ])
-                    ->action(function (AdminUser $record, array $data): void {
-                        $record->update(['password' => $data['password'], 'remember_token' => Str::random(60)]);
-
-                        Notification::make()->title(__('":user"-এর পাসওয়ার্ড বদলেছে।', ['user' => $record->username]))->success()->send();
-                    }),
-                Action::make('toggleActive')
-                    ->label(fn (AdminUser $record): string => $record->is_active ? __('নিষ্ক্রিয় করুন') : __('সক্রিয় করুন'))
-                    ->icon(fn (AdminUser $record) => $record->is_active ? Heroicon::OutlinedNoSymbol : Heroicon::OutlinedCheckCircle)
-                    ->iconButton()
-                    ->color(fn (AdminUser $record): string => $record->is_active ? 'gray' : 'success')
-                    ->visible(fn (AdminUser $record): bool => ! self::isProtected($record) || ! $record->is_active)
-                    ->requiresConfirmation()
-                    ->modalDescription(fn (AdminUser $record): string => $record->is_active
-                        ? __('নিষ্ক্রিয় করলে তিনি আর লগইন করতে পারবেন না, লগইন থাকলেও পরের ক্লিকেই বের হয়ে যাবেন। তার তথ্য থেকে যাবে।')
-                        : __('সক্রিয় করলে তিনি আবার লগইন করতে পারবেন।'))
-                    ->action(function (AdminUser $record): void {
-                        try {
-                            $record->update(['is_active' => ! $record->is_active]);
-                        } catch (\DomainException $e) {
-                            Notification::make()->title($e->getMessage())->danger()->send();
-
-                            return;
-                        }
-
-                        Notification::make()->title($record->is_active ? __('সক্রিয় করা হয়েছে।') : __('নিষ্ক্রিয় করা হয়েছে।'))->success()->send();
-                    }),
-                DeleteAction::make()
-                    ->iconButton()
-                    ->hidden(fn (AdminUser $record): bool => self::isProtected($record)),
+                RowMenu::make([
+                    Action::make('resetPassword')
+                        ->label(__('পাসওয়ার্ড রিসেট'))
+                        ->icon(Heroicon::OutlinedKey)
+                        ->color('warning')
+                        ->modalHeading(fn (AdminUser $record): string => __('":user"-এর নতুন পাসওয়ার্ড', ['user' => $record->username]))
+                        ->modalDescription(__('নতুন পাসওয়ার্ড সেট হলে তিনি অন্য সব জায়গা থেকে লগআউট হবেন। পাসওয়ার্ডটি তাকে নিরাপদে জানিয়ে দিন।'))
+                        ->modalSubmitActionLabel(__('পাসওয়ার্ড বদলান'))
+                        ->schema([
+                            TextInput::make('password')
+                                ->label(__('নতুন পাসওয়ার্ড'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->rule(Password::min(8))
+                                ->same('passwordConfirmation')
+                                ->helperText(__('ন্যূনতম ৮ অক্ষর।')),
+                            TextInput::make('passwordConfirmation')
+                                ->label(__('নতুন পাসওয়ার্ড আবার'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->dehydrated(false),
+                        ])
+                        ->action(function (AdminUser $record, array $data): void {
+                            $record->update(['password' => $data['password'], 'remember_token' => Str::random(60)]);
+    
+                            Notification::make()->title(__('":user"-এর পাসওয়ার্ড বদলেছে।', ['user' => $record->username]))->success()->send();
+                        }),
+                    Action::make('toggleActive')
+                        ->label(fn (AdminUser $record): string => $record->is_active ? __('নিষ্ক্রিয় করুন') : __('সক্রিয় করুন'))
+                        ->icon(fn (AdminUser $record) => $record->is_active ? Heroicon::OutlinedNoSymbol : Heroicon::OutlinedCheckCircle)
+                        ->color(fn (AdminUser $record): string => $record->is_active ? 'gray' : 'success')
+                        ->visible(fn (AdminUser $record): bool => ! self::isProtected($record) || ! $record->is_active)
+                        ->requiresConfirmation()
+                        ->modalDescription(fn (AdminUser $record): string => $record->is_active
+                            ? __('নিষ্ক্রিয় করলে তিনি আর লগইন করতে পারবেন না, লগইন থাকলেও পরের ক্লিকেই বের হয়ে যাবেন। তার তথ্য থেকে যাবে।')
+                            : __('সক্রিয় করলে তিনি আবার লগইন করতে পারবেন।'))
+                        ->action(function (AdminUser $record): void {
+                            try {
+                                $record->update(['is_active' => ! $record->is_active]);
+                            } catch (\DomainException $e) {
+                                Notification::make()->title($e->getMessage())->danger()->send();
+    
+                                return;
+                            }
+    
+                            Notification::make()->title($record->is_active ? __('সক্রিয় করা হয়েছে।') : __('নিষ্ক্রিয় করা হয়েছে।'))->success()->send();
+                        }),
+                    DeleteAction::make()
+                        ->hidden(fn (AdminUser $record): bool => self::isProtected($record)),
+                ]),
             ])
             ->headerActions([
                 CreateAction::make(),

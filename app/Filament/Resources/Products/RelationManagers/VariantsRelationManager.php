@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Support\ImageUpload;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -83,8 +84,8 @@ class VariantsRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

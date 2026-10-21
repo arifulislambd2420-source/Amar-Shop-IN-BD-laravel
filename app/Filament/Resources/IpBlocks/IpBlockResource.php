@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\IpBlocks;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\IpBlocks\Pages\ManageIpBlocks;
 use App\Models\IpBlock;
@@ -97,6 +98,7 @@ class IpBlockResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('reason')
+                    ->toggleable()
                     ->searchable(),
                 TextColumn::make('is_auto')
                     ->label(__('ধরন'))
@@ -109,11 +111,13 @@ class IpBlockResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => $state === __('ব্লক চলছে') ? 'danger' : 'gray'),
                 TextColumn::make('expires_at')
+                    ->toggleable()
                     ->label(__('শেষ হবে'))
                     ->dateTime()
                     ->placeholder(__('স্থায়ী'))
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime()
                     ->sortable(),
             ])
@@ -126,8 +130,8 @@ class IpBlockResource extends Resource
                     ->falseLabel(__('হাতে দেওয়া')),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categories;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Support\ImageUpload;
@@ -125,8 +126,8 @@ class CategoryResource extends Resource
             ])
             ->defaultSort('name')
             ->recordActions([
-                EditAction::make()->mutateFormDataUsing(fn (array $data): array => self::applyIconImage($data)),
-                DeleteAction::make(),
+                EditAction::make()->iconButton()->mutateFormDataUsing(fn (array $data): array => self::applyIconImage($data)),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

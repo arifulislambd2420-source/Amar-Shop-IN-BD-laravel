@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\RelationManagers;
 
+use App\Filament\Support\RowMenu;
 use App\Models\Product;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -94,8 +95,8 @@ class ItemsRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                RowMenu::make([DeleteAction::make()]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

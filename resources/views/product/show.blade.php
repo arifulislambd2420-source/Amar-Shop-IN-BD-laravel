@@ -67,7 +67,7 @@
 <div class="max-w-7xl mx-auto px-4 py-4 md:py-8">
     <nav aria-label="ব্রেডক্রাম্ব" class="mb-4 overflow-hidden text-sm text-gray-500">
         <ol class="flex items-center gap-1.5 whitespace-nowrap">
-            <li><a href="{{ url('/') }}" class="hover:text-brand-600">হোম</a></li>
+            <li><a href="{{ url('/') }}" class="inline-block py-2 hover:text-brand-600">হোম</a></li>
             @if($product->category)
                 <li aria-hidden="true">›</li>
                 <li><a href="{{ route('shop', ['category' => $product->category->slug]) }}" class="hover:text-brand-600">{{ $product->category->name }}</a></li>

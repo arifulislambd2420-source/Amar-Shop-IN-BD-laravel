@@ -241,7 +241,7 @@ class CustomizationTest extends TestCase
             ->assertSee('সাইট সেটিং')
             ->assertSee('অর্ডার');
 
-        $this->get('/admin/orders')->assertOk()->assertSee('তৈরির সময়')->assertDontSee('Created at');
+        $this->get('/admin/orders')->assertOk()->assertSee('ইনভয়েস')->assertDontSee('Created at');
     }
 
     public function test_fields_without_a_label_get_a_bangla_one(): void

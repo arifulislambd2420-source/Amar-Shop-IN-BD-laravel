@@ -158,6 +158,26 @@
     .dash-tab { padding: 0.6rem 0.9rem; font-size: 0.875rem; white-space: nowrap; border-bottom: 2px solid transparent; opacity: .7; }
     .dash-tab.is-active { border-bottom-color: var(--primary-500); color: var(--primary-600); opacity: 1; font-weight: 600; }
     .dash-tab-body { padding: 1rem; }
+    /* ── Admin pages: readable text, tables that fit the screen ─────────────────── */
+    html:not(.dark) {
+        /* Filament's muted greys are too light to read comfortably; darken them a notch. */
+        --gray-400: oklch(0.58 0.016 285.9);
+        --gray-500: oklch(0.45 0.017 285.8);
+        --gray-600: oklch(0.37 0.017 285.8);
+    }
+    .fi-body { font-size: 0.95rem; }
+    .fi-ta-header-cell-label { font-size: 0.8rem; font-weight: 700; color: var(--gray-700, #3f3f46); }
+    .fi-ta-text-item-label, .fi-ta-text-item { font-size: 0.9rem; }
+    .fi-ta-text-item-description { font-size: 0.8rem; }
+    .fi-ta-cell { padding-block: 0.15rem; }
+    .fi-badge { font-size: 0.78rem; }
+    .fi-sc-section-label, .fi-fo-field-label-content { font-size: 0.9rem; }
+    .fi-fo-field-wrp-hint, .fi-fo-field-wrp-helper-text, .fi-sc-text { font-size: 0.85rem; }
+    @media (min-width: 1024px) {
+        .fi-ta-content-ctn { overflow-x: visible; }
+        .fi-ta-table { table-layout: auto; width: 100%; }
+        .fi-ta-cell:not(.fi-ta-actions-cell) { max-width: 22rem; }
+    }
     /* Phones: 16px text in fields so iOS doesn't zoom the page on focus. */
     @media (max-width: 640px) {
         .fi-input, .fi-select-input, .fi-fo-textarea textarea, .fi-input-wrp input, .fi-input-wrp select, .fi-input-wrp textarea {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products;
 
+use App\Filament\Support\RowMenu;
 use App\Filament\Concerns\HasAdminArea;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
@@ -228,6 +229,7 @@ class ProductResource extends Resource
                     ->money('BDT')
                     ->sortable(),
                 TextColumn::make('stock')
+                    ->toggleable()
                     ->numeric()
                     ->sortable()
                     ->badge()
@@ -266,7 +268,7 @@ class ProductResource extends Resource
             // Edit as an icon, the rest in a ⋯ menu — keeps the table narrow on phones.
             ->recordActions([
                 EditAction::make()->iconButton(),
-                ActionGroup::make([
+                RowMenu::make([
                     ReplicateAction::make()
                         ->label(__('কপি করুন'))
                         ->excludeAttributes(['slug', 'sku'])

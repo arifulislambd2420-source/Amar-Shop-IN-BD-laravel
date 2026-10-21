@@ -40,8 +40,8 @@
         </div>
         <div>
             <div class="text-white font-semibold mb-2">যোগাযোগ</div>
-            <p>ফোন: <a href="tel:{{ \App\Support\SiteSettingsHelper::phoneRaw() }}" class="hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::phone() }}</a></p>
-            <p class="mt-1">ইমেইল: <a href="mailto:{{ \App\Support\SiteSettingsHelper::email() }}" class="hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::email() }}</a></p>
+            <p>ফোন: <a href="tel:{{ \App\Support\SiteSettingsHelper::phoneRaw() }}" class="inline-block py-2 hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::phone() }}</a></p>
+            <p class="mt-1">ইমেইল: <a href="mailto:{{ \App\Support\SiteSettingsHelper::email() }}" class="inline-block py-2 hover:text-brand-500">{{ \App\Support\SiteSettingsHelper::email() }}</a></p>
             <p class="mt-1 text-xs text-white/60">ঠিকানা: {{ \App\Support\SiteSettingsHelper::address() }}</p>
             @if($hours = \App\Support\SiteSettingsHelper::contactHours())
                 <p class="mt-1 text-xs text-white/60">সময়: {{ $hours }}</p>
