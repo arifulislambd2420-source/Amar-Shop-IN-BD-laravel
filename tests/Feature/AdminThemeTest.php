@@ -32,7 +32,7 @@ class AdminThemeTest extends TestCase
     public function test_the_defaults_are_a_dark_navy_sidebar_and_a_bright_blue(): void
     {
         $this->assertSame('#0b1437', AdminTheme::sidebar());
-        $this->assertSame('#2f6df6', AdminTheme::primary());
+        $this->assertSame('#f97316', AdminTheme::primary());
         $this->assertTrue(AdminTheme::sidebarIsDark());
         $this->assertSame('#f1f5f9', AdminTheme::sidebarVars()['--sb-text'], 'light text on the dark sidebar');
     }
@@ -42,7 +42,7 @@ class AdminThemeTest extends TestCase
         $this->setting('color_brand', '#16a34a');
         $this->setting('color_secondary', '#7c2d12');
 
-        $this->assertSame('#2f6df6', AdminTheme::primary(), 'the shop brand colour no longer drives the admin');
+        $this->assertSame('#f97316', AdminTheme::primary(), 'the shop brand colour no longer drives the admin');
         $this->assertSame('#0b1437', AdminTheme::sidebar());
 
         $this->setting('admin_color_primary', '#e11d48');
@@ -63,7 +63,7 @@ class AdminThemeTest extends TestCase
         $this->setting('admin_color_sidebar', 'javascript:alert(1)');
         $this->setting('admin_color_primary', 'red; background:url(x)');
         $this->assertSame('#0b1437', AdminTheme::sidebar());
-        $this->assertSame('#2f6df6', AdminTheme::primary());
+        $this->assertSame('#f97316', AdminTheme::primary());
     }
 
     public function test_the_colours_reach_the_admin_pages(): void
@@ -87,7 +87,7 @@ class AdminThemeTest extends TestCase
         Livewire::test(SiteSettings::class)
             ->assertSee('Admin colours')->assertSee('Sidebar colour')->assertSee('Admin main colour')
             ->assertSet('data.admin_color_sidebar', '#0b1437')
-            ->assertSet('data.admin_color_primary', '#2f6df6')
+            ->assertSet('data.admin_color_primary', '#f97316')
             ->set('data.admin_color_sidebar', '#1e1b4b')
             ->set('data.admin_color_primary', '#f97316')
             ->call('save')->assertHasNoErrors()->assertRedirect();
@@ -98,7 +98,7 @@ class AdminThemeTest extends TestCase
         // Back to the defaults by typing them: nothing is kept in the table.
         Livewire::test(SiteSettings::class)
             ->set('data.admin_color_sidebar', '#0B1437')
-            ->set('data.admin_color_primary', '#2f6df6')
+            ->set('data.admin_color_primary', '#f97316')
             ->call('save');
         $this->assertSame('', SiteSetting::where('setting_key', 'admin_color_sidebar')->value('setting_value'));
         $this->assertSame('', SiteSetting::where('setting_key', 'admin_color_primary')->value('setting_value'));
@@ -119,7 +119,7 @@ class AdminThemeTest extends TestCase
         Livewire::test(SiteSettings::class)->call('resetAdminColors')->assertRedirect();
 
         $this->assertSame('#0b1437', AdminTheme::sidebar());
-        $this->assertSame('#2f6df6', AdminTheme::primary());
+        $this->assertSame('#f97316', AdminTheme::primary());
         $this->assertNull(SiteSetting::where('setting_key', 'admin_color_sidebar')->first());
     }
 
@@ -140,24 +140,42 @@ class AdminThemeTest extends TestCase
         $this->assertStringContainsString('Orders', $html);
     }
 
-    public function test_the_sidebar_foot_shows_who_is_signed_in_view_site_and_log_out(): void
+    public function test_the_sidebar_has_no_foot_and_log_out_is_in_the_avatar_menu(): void
     {
         $this->admin(AdminUser::ROLE_MANAGER, 'Rahim Uddin');
 
         $html = $this->get('/admin')->assertOk()->getContent();
 
-        $this->assertStringContainsString('admin-sb-foot', $html);
+        $this->assertStringNotContainsString('admin-sb-foot', $html);
+        $this->assertStringNotContainsString('admin-sb-link', $html);
+
+        // The user menu (top right) has the name and a real POST log-out form with the CSRF token.
         $this->assertStringContainsString('Rahim Uddin', $html);
-        $this->assertStringContainsString('>R<', str_replace(["\n", ' '], '', $html), 'the avatar shows the initial');
-        $this->assertStringContainsString('Manager', $html, 'the role, without the explanation in brackets');
-        $this->assertStringNotContainsString('Manager (everything except', $html);
+        $this->assertMatchesRegularExpression('#<form[^>]*action="[^"]*logout"[^>]*method="post"|<form[^>]*method="post"[^>]*action="[^"]*logout"#i', $html);
+    }
 
-        // View site opens the website in a new tab.
-        $this->assertMatchesRegularExpression('#<a href="'.preg_quote(url('/'), '#').'" target="_blank" rel="noopener" class="admin-sb-link">#', $html);
+    public function test_items_inside_a_group_keep_their_own_icons_and_the_pages_load_as_a_spa(): void
+    {
+        $this->admin();
 
-        // Log out is a real POST form with the CSRF token.
-        $this->assertMatchesRegularExpression('#<form method="POST" action="[^"]*logout">\s*<input type="hidden" name="_token"#', $html);
-        $this->assertStringContainsString('Log out', $html);
+        $html = $this->get('/admin')->assertOk()->getContent();
+
+        // inside the "Sales" group, the Orders entry has its own svg icon
+        $this->assertMatchesRegularExpression('#id="fi-sidebar-group-items-sales.*?<svg class="fi-sidebar-item-icon#s', $html);
+        // links navigate without a full reload
+        $this->assertStringContainsString('wire:navigate', $html);
+    }
+
+    public function test_the_avatar_is_the_admins_initial_drawn_locally(): void
+    {
+        $admin = $this->admin(AdminUser::ROLE_MANAGER, 'Rahim Uddin');
+
+        $url = (new \App\Support\InitialAvatarProvider)->get($admin);
+
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', $url);
+        $svg = base64_decode(substr($url, strlen('data:image/svg+xml;base64,')));
+        $this->assertStringContainsString('>R<', $svg);
+        $this->assertStringContainsString('#f97316', $svg);
     }
 
     public function test_the_topbar_has_an_icon_that_opens_the_website_in_a_new_tab(): void

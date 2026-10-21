@@ -10,6 +10,7 @@ use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetAdminLocale;
 use App\Support\AdminPath;
 use App\Support\AdminTheme;
+use App\Support\InitialAvatarProvider;
 use App\Support\SiteSettingsHelper;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -76,11 +77,17 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(fn () => $this->setting('site_favicon') ?? $this->setting('site_logo'))
             ->login(Login::class)
             ->profile(EditProfile::class)
+            // The avatar menu at the top right (name, my profile, Log out) with the admin's initial, drawn locally.
+            ->defaultAvatarProvider(InitialAvatarProvider::class)
             ->colors(fn () => [
                 'primary' => $this->primaryColor(),
             ])
-            // Sidebar: every group is a menu entry with its own icon, an arrow on the right, and opens its sub-menu on click.
+            // Sidebar: every group is a menu entry with its own icon, an arrow on the right, and opens its sub-menu on click;
+            // the items inside keep their own icons (resources/views/vendor/filament-panels/components/sidebar/group.blade.php).
+            // Log out lives in the avatar menu at the top right.
             ->sidebarCollapsibleOnDesktop()
+            // Moving between pages swaps only the content (no full reload), so the open groups and the sidebar's scroll stay put.
+            ->spa()
             ->navigationGroups([
                 NavigationGroup::make()->label(fn () => __('বিক্রয়'))->icon(Heroicon::OutlinedShoppingBag)->collapsed(),
                 NavigationGroup::make()->label(fn () => __('ক্যাটালগ'))->icon(Heroicon::OutlinedSquares2x2)->collapsed(),
@@ -91,8 +98,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             // Topbar: an icon next to the shop's name that opens the website in a new tab.
             ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER, fn (): string => view('filament.admin-view-site')->render())
-            // Sidebar foot: who is signed in (and their role), View site, Log out.
-            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): string => view('filament.admin-sidebar-footer')->render())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             // (App\Filament\Pages\Dashboard — the dashboard with the date filter — is found by discoverPages above.)

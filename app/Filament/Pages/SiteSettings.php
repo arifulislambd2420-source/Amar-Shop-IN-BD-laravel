@@ -116,7 +116,7 @@ class SiteSettings extends SettingsPage
                         ->regex('/^#[0-9a-fA-F]{6}$/'),
                     ColorPicker::make('admin_color_primary')
                         ->label(__('অ্যাডমিনের মূল রং'))
-                        ->helperText(__('সক্রিয় মেনু, বাটন ও লিংকের রং। ডিফল্ট উজ্জ্বল নীল।'))
+                        ->helperText(__('সক্রিয় মেনু, বাটন ও লিংকের রং। ডিফল্ট কমলা।'))
                         ->required()
                         ->regex('/^#[0-9a-fA-F]{6}$/'),
                 ]),

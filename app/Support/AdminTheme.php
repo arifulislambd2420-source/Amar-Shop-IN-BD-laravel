@@ -6,12 +6,12 @@ namespace App\Support;
  * The admin panel's own colours — separate from the shop's brand colours (Site settings → Colours):
  *  - the sidebar colour (dark navy by default; light text and icons on it, or dark ones if a light
  *    colour is chosen), and
- *  - the main colour (active menu, buttons, links; a bright blue by default).
+ *  - the main colour (active menu, buttons, links; orange by default).
  * Both are set in Site settings → General → Admin colours.
  */
 class AdminTheme
 {
-    public const DEFAULT_PRIMARY = '#2f6df6';
+    public const DEFAULT_PRIMARY = '#f97316';
 
     public const DEFAULT_SIDEBAR = '#0b1437';
 

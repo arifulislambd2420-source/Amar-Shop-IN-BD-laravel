@@ -81,14 +81,19 @@
     .fi-sidebar-group.fi-collapsed .fi-sidebar-group-collapse-btn svg { transform: rotate(90deg); }
     .fi-sidebar-group.fi-active > .fi-sidebar-group-btn .fi-sidebar-group-label { color: var(--sb-text); font-weight: 600; }
 
-    /* sub-menu: indented, with a thin guide line */
-    .fi-sidebar-group-items { gap: 0.1rem; padding: 0.1rem 0 0.3rem 0.35rem; }
-    .fi-sidebar-item-grouped-border-part,
-    .fi-sidebar-item-grouped-border-part-not-first,
-    .fi-sidebar-item-grouped-border-part-not-last { background-color: var(--sb-line) !important; }
-    .fi-sidebar-group-items .fi-sidebar-item-label { font-size: 0.875rem; color: var(--sb-muted); }
-    .fi-sidebar-group-items .fi-sidebar-item-btn:hover .fi-sidebar-item-label { color: var(--sb-text); }
-
+    /* sub-menu: indented under its group, a thin vertical line on the left, every entry with its own icon */
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) > .fi-sidebar-group-items {
+        gap: 0.1rem;
+        margin: 0.1rem 0 0.35rem 1.35rem;
+        padding-left: 0.5rem;
+        border-left: 1px solid var(--sb-line);
+    }
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-btn { padding: 0.5rem 0.65rem; gap: 0.6rem; }
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-icon { width: 1.2rem; height: 1.2rem; }
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-label { font-size: 0.875rem; color: var(--sb-muted); }
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-btn:hover .fi-sidebar-item-label,
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-btn:hover .fi-sidebar-item-icon { color: var(--sb-text); }
+    .fi-sidebar-group:has(> .fi-sidebar-group-btn) .fi-sidebar-group-items .fi-sidebar-item-grouped-border { display: none; }
     /* the open page: a bright rounded box */
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
         background: var(--primary-500) !important;
@@ -100,32 +105,6 @@
         font-weight: 600;
     }
     .fi-sidebar-item-badge-ctn .fi-badge { font-weight: 700; }
-
-    /* ── Sidebar foot: signed-in admin, View site, Log out ───────────────────────── */
-    .fi-sidebar-footer { padding: 0 !important; }
-    .admin-sb-foot {
-        margin: 0.5rem 0.75rem 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--sb-line);
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-    }
-    .admin-sb-user { display: flex; align-items: center; gap: 0.65rem; padding: 0.35rem 0.5rem 0.6rem; }
-    .admin-sb-avatar {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 2.25rem; height: 2.25rem; flex: none; border-radius: 999px;
-        background: var(--primary-500); color: #fff; font-weight: 700;
-    }
-    .admin-sb-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-    .admin-sb-name { color: var(--sb-text); font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .admin-sb-role { color: var(--sb-muted); font-size: 0.78rem; }
-    .admin-sb-link {
-        display: flex; align-items: center; gap: 0.7rem; width: 100%;
-        padding: 0.55rem 0.8rem; border-radius: 0.8rem; border: 0; background: transparent;
-        color: var(--sb-muted); font-size: 0.9rem; font-weight: 500; text-align: left; cursor: pointer; text-decoration: none;
-    }
-    .admin-sb-link:hover { background: var(--sb-hover); color: var(--sb-text); }
 
     /* ── Topbar: the "open the website" icon beside the shop's name ──────────────── */
     .admin-viewsite-btn {
