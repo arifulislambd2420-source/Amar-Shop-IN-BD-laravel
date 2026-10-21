@@ -3,36 +3,28 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Concerns\HasAdminAreaWidget;
-use App\Models\Order;
-use App\Support\ShopTime;
+use App\Support\DashboardReport;
 use App\Support\SiteSettingsHelper;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
 
 /**
- * Dashboard: sales (৳) per day for the last 7 / 30 / 90 days (filter on the
- * chart). Counts the same orders as the sales cards: Order::counted() — not
- * cancelled, and not an unpaid/failed bKash attempt.
+ * Dashboard: a line per shop day for the chosen dates — everything ordered, and the real (confirmed) sales.
+ * The gap between the two is what is still waiting or was cancelled.
  */
 class SalesChart extends ChartWidget
 {
     use HasAdminAreaWidget;
+    use InteractsWithPageFilters;
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
 
     public function getHeading(): ?string
     {
-
         return __('বিক্রির চার্ট');
-
-    }
-
-    public ?string $filter = '30';
-
-    protected function getFilters(): ?array
-    {
-        return ['7' => __('গত ৭ দিন'), '30' => __('গত ৩০ দিন'), '90' => __('গত ৯০ দিন')];
     }
 
     protected ?string $maxHeight = '280px';
@@ -46,48 +38,38 @@ class SalesChart extends ChartWidget
 
     protected function getData(): array
     {
-        $days = in_array($this->filter, ['7', '30', '90'], true) ? (int) $this->filter : 30;
-        // One bar per shop day (Bangladesh time): sum in PHP, because the database dates are UTC.
-        $from = ShopTime::dayStart($days - 1);
-        $totals = [];
-
-        Order::query()->counted()->where('created_at', '>=', $from)->get(['created_at', 'total'])
-            ->each(function (Order $order) use (&$totals): void {
-                $day = ShopTime::local($order->created_at)->toDateString();
-                $totals[$day] = ($totals[$day] ?? 0) + (float) $order->total;
-            });
-
-        $from = ShopTime::local($from);
-
-        $labels = [];
-        $data = [];
-
-        for ($i = 0; $i < $days; $i++) {
-            $day = $from->copy()->addDays($i);
-            $labels[] = $day->locale('bn')->translatedFormat('j M');
-            $data[] = round((float) ($totals[$day->toDateString()] ?? 0), 2);
-        }
-
+        $series = DashboardReport::make($this->pageFilters)->series();
         $brand = SiteSettingsHelper::color('brand');
 
         return [
-            'datasets' => [[
-                'label' => __('বিক্রি (৳)'),
-                'data' => $data,
-                'borderColor' => $brand,
-                'backgroundColor' => $brand.'22',
-                'fill' => true,
-                'tension' => 0.35,
-                'pointRadius' => 2,
-            ]],
-            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => __('প্রকৃত বিক্রি (কনফার্মড) ৳'),
+                    'data' => array_map(fn ($d) => round($d['real'], 2), array_values($series)),
+                    'borderColor' => $brand,
+                    'backgroundColor' => $brand.'22',
+                    'fill' => true,
+                    'tension' => 0.35,
+                    'pointRadius' => 2,
+                ],
+                [
+                    'label' => __('মোট অর্ডার (বাতিলসহ) ৳'),
+                    'data' => array_map(fn ($d) => round($d['placed'], 2), array_values($series)),
+                    'borderColor' => '#94a3b8',
+                    'backgroundColor' => 'transparent',
+                    'borderDash' => [5, 4],
+                    'tension' => 0.35,
+                    'pointRadius' => 0,
+                ],
+            ],
+            'labels' => array_map(fn (string $day) => Carbon::parse($day)->locale('bn')->translatedFormat('j M'), array_keys($series)),
         ];
     }
 
     protected function getOptions(): array
     {
         return [
-            'plugins' => ['legend' => ['display' => false]],
+            'plugins' => ['legend' => ['display' => true, 'position' => 'bottom']],
             'scales' => ['y' => ['beginAtZero' => true]],
         ];
     }

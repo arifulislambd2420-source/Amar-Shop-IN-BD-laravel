@@ -116,10 +116,6 @@ class SiteAuditFixesTest extends TestCase
 
     public function test_the_dashboard_counts_an_order_from_after_midnight_in_dhaka_as_today(): void
     {
-        if (! extension_loaded('intl')) {
-            $this->markTestSkipped('Filament needs the intl PHP extension.');
-        }
-
         Carbon::setTestNow(Carbon::parse('2026-10-21 22:00:00', 'UTC')); // 04:00 on the 22nd in Dhaka
 
         $late = $this->placeOrder();       // 21 Oct 20:00 UTC = 02:00 on the 22nd in Dhaka → today
@@ -127,12 +123,8 @@ class SiteAuditFixesTest extends TestCase
         $early = $this->placeOrder(customer: ['phone' => '01812345678']); // 21 Oct 12:00 UTC = 18:00 on the 21st → yesterday
         Order::whereKey($early->id)->update(['created_at' => '2026-10-21 12:00:00']);
 
-        $this->setting('admin_locale', 'en');
-        app()->setLocale('en');
-        $this->actingAs(\App\Models\AdminUser::create(['username' => 'boss', 'password' => 'secret-pass-1', 'role' => 'super_admin']), 'admin');
-
-        $stats = Livewire::test(\App\Filament\Widgets\StatsOverview::class);
-        $stats->assertSee("Today's orders")->assertSee('Yesterday 1');
+        $this->assertSame(1, \App\Support\DashboardReport::make(['range' => 'today'])->group(null)['orders']);
+        $this->assertSame(1, \App\Support\DashboardReport::make(['range' => 'yesterday'])->group(null)['orders']);
 
         Carbon::setTestNow();
     }

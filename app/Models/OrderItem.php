@@ -15,6 +15,7 @@ class OrderItem extends Model
         'variant_id',
         'product_name',
         'unit_price',
+        'unit_cost',
         'quantity',
         'discount',
         'line_total',
@@ -24,6 +25,7 @@ class OrderItem extends Model
     {
         return [
             'unit_price' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
             'quantity' => 'integer',
             'discount' => 'decimal:2',
             'line_total' => 'decimal:2',

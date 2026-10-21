@@ -7,91 +7,80 @@ use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\User;
+use App\Support\DashboardReport;
 use App\Support\Money;
-use App\Support\ShopTime;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
- * Dashboard KPIs, today first: today's orders and sales (vs yesterday, with a
- * 7-day trend), orders waiting to be confirmed, low-stock products, this
- * month's sales and the customer count. Each card opens the matching list.
- *
- * Sales count real purchases only (Order::counted(): not cancelled, and not
- * an unpaid/failed bKash attempt).
+ * Dashboard money KPIs for the chosen dates. Orders placed and REAL sales are kept apart: real sales are
+ * confirmed orders (and everything after confirming); cancelled orders never count in them, pending ones
+ * not yet. Delivered sales are shown on their own, and profit is an estimate (see DashboardReport).
  */
 class StatsOverview extends StatsOverviewWidget
 {
     use HasAdminAreaWidget;
+    use InteractsWithPageFilters;
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 2;
 
     protected ?string $pollingInterval = '60s';
 
-    /** 2 per row on phones, 3 on tablets, all in one or two rows on desktop. */
+    /** 2 per row on phones, 3 on tablets and desktop. */
     protected int|array|null $columns = ['default' => 2, 'md' => 3, 'xl' => 3];
+
+    protected function getHeading(): ?string
+    {
+        return __('বিক্রির সারসংক্ষেপ').' — '.DashboardReport::make($this->pageFilters)->range->label();
+    }
 
     protected function getStats(): array
     {
-        // Days are the shop's days (Bangladesh time), compared with the UTC times in the database.
-        $ordersOn = fn (int $daysAgo) => Order::query()->counted()
-            ->where('created_at', '>=', ShopTime::dayStart($daysAgo))
-            ->where('created_at', '<', ShopTime::dayStart($daysAgo - 1));
-        $todayOrders = $ordersOn(0)->count();
-        $yesterdayOrders = $ordersOn(1)->count();
-        $todaySales = (float) $ordersOn(0)->sum('total');
-        $yesterdaySales = (float) $ordersOn(1)->sum('total');
+        $report = DashboardReport::make($this->pageFilters);
+        $placed = $report->group(null);
+        $real = $report->group(DashboardReport::CONFIRMED);
+        $delivered = $report->group(DashboardReport::DELIVERED);
+        $cancelled = $report->group(DashboardReport::CANCELLED);
 
-        $pending = Order::query()->whereIn('status', ['pending', 'on_hold'])->count();
+        // What still needs confirming, whatever the dates: an action list, not a report.
+        $waiting = Order::query()->whereIn('status', DashboardReport::AWAITING)->count();
         $flagged = Order::query()->where('is_flagged', true)->where('status', '!=', 'cancelled')->count();
 
         $threshold = Product::lowStockThreshold();
         $lowStock = Product::query()->where('stock', '<=', $threshold)->count();
         $outOfStock = Product::query()->where('stock', '<=', 0)->count();
 
-        $monthSales = (float) Order::query()->counted()->where('created_at', '>=', ShopTime::monthStart())->sum('total');
-        $monthOrders = Order::query()->counted()->where('created_at', '>=', ShopTime::monthStart())->count();
-
-        // Last 7 days of sales, for the little trend line on the sales card.
-        $week = collect(range(6, 0))->map(fn ($i) => (float) $ordersOn($i)->sum('total'))->all();
-
+        $noCost = $report->itemsWithoutCost();
         $card = fn (Stat $stat, string $icon, string $tone): Stat => $stat
             ->icon($icon)
             ->extraAttributes(['class' => "dash-stat dash-stat--{$tone}"]);
 
-        $versus = function (float $now, float $before): string {
-            if ($before <= 0) {
-                return $now > 0 ? __('গতকাল কিছু ছিল না') : __('গতকালও শূন্য');
-            }
-            $pct = (int) round(($now - $before) / $before * 100);
-
-            return ($pct >= 0 ? '▲ ' : '▼ ').abs($pct).'% '.__('গতকালের তুলনায়');
-        };
-
         return [
-            $card(Stat::make(__('আজকের অর্ডার'), number_format($todayOrders))
-                ->description(__('গতকাল :countটি', ['count' => number_format($yesterdayOrders)]))
-                ->url(OrderResource::getUrl('index')), 'heroicon-o-shopping-bag', 'primary'),
+            $card(Stat::make(__('মোট অর্ডার (বাতিলসহ)'), number_format($placed['orders']))
+                ->description(__('মূল্য :amount', ['amount' => Money::taka($placed['total'])])), 'heroicon-o-shopping-bag', 'info'),
 
-            $card(Stat::make(__('আজকের বিক্রি'), Money::taka($todaySales))
-                ->description($versus($todaySales, $yesterdaySales))
-                ->chart($week)
-                ->color($todaySales >= $yesterdaySales ? 'success' : 'danger'), 'heroicon-o-banknotes', 'success'),
+            $card(Stat::make(__('প্রকৃত বিক্রি (কনফার্মড)'), Money::taka($real['total']))
+                ->description(__(':countটি অর্ডার — বাতিল বাদে, কনফার্ম হওয়ার পর', ['count' => number_format($real['orders'])])), 'heroicon-o-banknotes', 'success'),
 
-            $card(Stat::make(__('পেন্ডিং অর্ডার'), number_format($pending))
-                ->description($pending ? __('কনফার্ম করা বাকি').($flagged ? ' · '.__(':countটি সন্দেহজনক', ['count' => $flagged]) : '') : __('সব অর্ডার কনফার্ম হয়ে গেছে'))
+            $card(Stat::make(__('ডেলিভারড বিক্রি'), Money::taka($delivered['total']))
+                ->description(__(':countটি অর্ডার পৌঁছে গেছে', ['count' => number_format($delivered['orders'])])), 'heroicon-o-check-badge', 'success'),
+
+            $card(Stat::make(__('বাতিল অর্ডার'), number_format($cancelled['orders']))
+                ->description(__(':amount — বিক্রির হিসাবে নেই', ['amount' => Money::taka($cancelled['total'])]))
+                ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'cancelled']]])), 'heroicon-o-x-circle', 'danger'),
+
+            $card(Stat::make(__('কনফার্ম করা বাকি'), number_format($waiting))
+                ->description($waiting ? __('পেন্ডিং / যাচাই চলছে').($flagged ? ' · '.__(':countটি সন্দেহজনক', ['count' => $flagged]) : '') : __('সব অর্ডার কনফার্ম হয়ে গেছে'))
                 ->url(OrderResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]])), 'heroicon-o-clock', 'warning'),
+
+            $card(Stat::make(__('আনুমানিক লাভ (কনফার্মড)'), Money::taka($real['profit']))
+                ->description(__('খরচ: পণ্য :cost + ডেলিভারি :delivery', ['cost' => Money::taka($real['cost']), 'delivery' => Money::taka($real['delivery_cost'])]).($noCost ? ' · '.__(':countটি লাইনে কস্ট প্রাইস নেই', ['count' => $noCost]) : ''))
+                ->color($real['profit'] >= 0 ? 'success' : 'danger'), 'heroicon-o-chart-bar', $real['profit'] >= 0 ? 'success' : 'danger'),
 
             $card(Stat::make(__('কম স্টকের প্রোডাক্ট'), number_format($lowStock))
                 ->description($outOfStock ? __(':countটি একদম শেষ · স্টক :limit বা কম', ['count' => $outOfStock, 'limit' => $threshold]) : __('স্টক :limit বা কম', ['limit' => $threshold]))
                 ->url(ProductResource::getUrl('index')), 'heroicon-o-archive-box', $lowStock ? 'danger' : 'info'),
-
-            $card(Stat::make(__('এই মাসের বিক্রি'), Money::taka($monthSales))
-                ->description(__(':countটি অর্ডার', ['count' => number_format($monthOrders)])), 'heroicon-o-calendar-days', 'success'),
-
-            $card(Stat::make(__('গ্রাহক'), number_format(User::count()))
-                ->description(__('রেজিস্টার করা অ্যাকাউন্ট')), 'heroicon-o-users', 'info'),
         ];
     }
 }

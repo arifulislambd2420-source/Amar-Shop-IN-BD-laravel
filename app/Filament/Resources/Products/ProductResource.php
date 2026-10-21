@@ -10,6 +10,7 @@ use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
 use App\Filament\Support\ImageUpload;
 use App\Models\Product;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -26,6 +27,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -285,6 +287,38 @@ class ProductResource extends Resource
                     ForceDeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Change a product's stock from a list (dashboard low-stock widget). A product with sizes / colours keeps its
+     * stock in the variants, so for those the button opens the product instead.
+     */
+    public static function quickStockAction(): Action
+    {
+        return Action::make('quickStock')
+            ->label(__('স্টক আপডেট'))
+            ->icon(Heroicon::OutlinedPlusCircle)
+            ->iconButton()
+            ->tooltip(__('স্টক আপডেট'))
+            ->color('warning')
+            ->modalHeading(fn (Product $record): string => __(':name — স্টক আপডেট', ['name' => $record->name]))
+            ->modalSubmitActionLabel(__('সেভ করুন'))
+            ->fillForm(fn (Product $record): array => ['stock' => $record->stock])
+            ->schema([
+                TextInput::make('stock')
+                    ->label(__('এখন স্টকে কত পিস'))
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->maxValue(1000000)
+                    ->required(),
+            ])
+            ->visible(fn (Product $record): bool => ! $record->variants()->exists())
+            ->action(function (Product $record, array $data): void {
+                $record->update(['stock' => (int) $data['stock']]);
+
+                Notification::make()->title(__(':name — স্টক :stock পিস করা হয়েছে।', ['name' => $record->name, 'stock' => (int) $data['stock']]))->success()->send();
+            });
     }
 
     public static function getEloquentQuery(): Builder

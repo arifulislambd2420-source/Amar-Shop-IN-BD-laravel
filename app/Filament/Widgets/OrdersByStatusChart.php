@@ -4,18 +4,20 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Concerns\HasAdminAreaWidget;
 use App\Filament\Resources\Orders\OrderResource;
-use App\Models\Order;
+use App\Support\DashboardReport;
 use App\Support\AdminAccess;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 /** Dashboard: orders grouped by status (doughnut). */
 class OrdersByStatusChart extends ChartWidget
 {
     use HasAdminAreaWidget;
+    use InteractsWithPageFilters;
 
     protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 1;
 
@@ -48,10 +50,8 @@ class OrdersByStatusChart extends ChartWidget
 
     protected function getData(): array
     {
-        $counts = Order::query()
-            ->selectRaw('status, COUNT(*) as c')
-            ->groupBy('status')
-            ->pluck('c', 'status');
+        // The chosen dates; statuses with no orders are left out.
+        $counts = collect(DashboardReport::make($this->pageFilters)->statusCounts())->filter(fn ($c) => $c > 0);
 
         $statuses = $counts->keys()->all();
 

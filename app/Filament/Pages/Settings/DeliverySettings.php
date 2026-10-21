@@ -20,7 +20,7 @@ class DeliverySettings extends SettingsPage
 
     protected function keys(): array
     {
-        return ['delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min', 'order_cooldown_minutes', 'low_stock_threshold'];
+        return ['delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min', 'delivery_cost_per_order', 'order_cooldown_minutes', 'low_stock_threshold'];
     }
 
     protected function sections(): array
@@ -42,6 +42,11 @@ class DeliverySettings extends SettingsPage
                         ->label(__('ফ্রি ডেলিভারির ন্যূনতম অর্ডার (৳)'))
                         ->numeric()->minValue(0)->maxValue(10000000)
                         ->helperText(__('খালি = ফ্রি ডেলিভারি বন্ধ। কুপন ছাড়ের আগের সাবটোটাল ধরা হয়।')),
+                    TextInput::make('delivery_cost_per_order')
+                        ->label(__('আমার ডেলিভারি খরচ — প্রতি অর্ডারে (৳)'))
+                        ->numeric()->minValue(0)->maxValue(100000)
+                        ->placeholder('0')
+                        ->helperText(__('কুরিয়ারকে আপনি যা দেন (গড়)। ড্যাশবোর্ডের লাভের হিসাবে খরচ হিসেবে বাদ যায়। কাস্টমারের দেওয়া ডেলিভারি চার্জের সাথে এর কোনো সম্পর্ক নেই।')),
                 ]),
             Section::make(__('অর্ডার ও স্টক'))
                 ->columns(['default' => 1, 'md' => 2])

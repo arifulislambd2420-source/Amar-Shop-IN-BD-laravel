@@ -222,12 +222,12 @@ class AdminPagesTest extends TestCase
 
         // Widgets load lazily after the page, so check them directly.
         Livewire::test(StatsOverview::class)
-            ->assertSee('আজকের অর্ডার')
-            ->assertSee('আজকের বিক্রি')
-            ->assertSee('পেন্ডিং অর্ডার')
+            ->assertSee('মোট অর্ডার (বাতিলসহ)')
+            ->assertSee('প্রকৃত বিক্রি (কনফার্মড)')
+            ->assertSee('কনফার্ম করা বাকি')
             ->assertSee('কম স্টকের প্রোডাক্ট')
             ->assertSee(Money::taka($order->total));
-        Livewire::test(SalesChart::class)->assertSee('বিক্রির চার্ট')->set('filter', '7')->assertOk();
+        Livewire::test(SalesChart::class)->assertSee('বিক্রির চার্ট')->assertOk();
         Livewire::test(LatestOrders::class)->assertSee($order->invoice_no);
         Livewire::test(LowStockProducts::class)->assertOk();
     }

@@ -20,7 +20,7 @@ class LatestOrders extends TableWidget
 
     protected static string $adminArea = AdminAccess::AREA_ORDERS;
 
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 10;
 
     protected int|string|array $columnSpan = 'full';
 
@@ -31,7 +31,7 @@ class LatestOrders extends TableWidget
             ->query(
                 fn (): Builder => Order::query()->latest('created_at')
             )
-            ->defaultPaginationPageOption(5)
+            ->defaultPaginationPageOption(10)->paginationPageOptions([5, 10, 25])
             ->columns([
                 TextColumn::make('invoice_no')
                     ->label(__('ইনভয়েস'))
@@ -51,6 +51,7 @@ class LatestOrders extends TableWidget
                     ->dateTime()
                     ->sortable(),
             ])
+            ->recordActions(OrderResource::quickStatusActions())
             ->recordUrl(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]));
     }
 }

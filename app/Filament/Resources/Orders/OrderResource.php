@@ -365,6 +365,7 @@ class OrderResource extends Resource
                     ->modalDescription(fn (Order $record): string => (string) $record->flag_reason)
                     ->requiresConfirmation()
                     ->action(fn (Order $record) => $record->update(['is_flagged' => false])),
+                ...self::quickStatusActions(),
                 ViewAction::make()->iconButton(),
                 EditAction::make()->iconButton(),
                 // Any order, super admins only; the popup spells out what deleting does.
@@ -404,6 +405,61 @@ class OrderResource extends Resource
     public static function canDeleteAny(): bool
     {
         return (bool) auth('admin')->user()?->isSuperAdmin();
+    }
+
+    // ── Quick status buttons (orders list and dashboard) ─────────────────
+
+    /**
+     * Confirm / Cancel / Delivered in one click (with a confirmation). They change the status like the edit form
+     * does, so everything that follows a status — stock back on cancel, customer SMS, and the server-side Purchase
+     * on Confirmed — happens exactly the same.
+     *
+     * @return array<int, Action>
+     */
+    public static function quickStatusActions(): array
+    {
+        $move = function (Order $record, string $status, string $done): void {
+            $record->update(['status' => $status]);
+
+            Notification::make()->title(__($done, ['invoice' => $record->invoice_no]))->success()->send();
+        };
+
+        return [
+            Action::make('quickConfirm')
+                ->label(__('কনফার্ম করুন'))
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
+                ->iconButton()
+                ->tooltip(__('কনফার্ম করুন'))
+                ->visible(fn (Order $record): bool => $record->status === 'pending')
+                ->requiresConfirmation()
+                ->modalHeading(fn (Order $record): string => __(':invoice কনফার্ম করবেন?', ['invoice' => $record->invoice_no]))
+                ->modalDescription(__('কনফার্ম হলে এটি প্রকৃত বিক্রি হিসেবে গোনা হবে, কাস্টমারকে এসএমএস যাবে এবং (সেট করা থাকলে) Meta ও GA4-তে Purchase যাবে।'))
+                ->action(fn (Order $record) => $move($record, 'processing', ':invoice কনফার্ম হয়েছে।')),
+
+            Action::make('quickDelivered')
+                ->label(__('ডেলিভারড'))
+                ->icon(Heroicon::OutlinedTruck)
+                ->color('info')
+                ->iconButton()
+                ->tooltip(__('ডেলিভারড করুন'))
+                ->visible(fn (Order $record): bool => in_array($record->status, ['processing', 'shipped', 'out_for_delivery'], true))
+                ->requiresConfirmation()
+                ->modalHeading(fn (Order $record): string => __(':invoice ডেলিভারড করবেন?', ['invoice' => $record->invoice_no]))
+                ->action(fn (Order $record) => $move($record, 'delivered', ':invoice ডেলিভারড হয়েছে।')),
+
+            Action::make('quickCancel')
+                ->label(__('বাতিল করুন'))
+                ->icon(Heroicon::OutlinedXCircle)
+                ->color('danger')
+                ->iconButton()
+                ->tooltip(__('বাতিল করুন'))
+                ->visible(fn (Order $record): bool => ! in_array($record->status, ['cancelled', 'delivered', 'completed'], true))
+                ->requiresConfirmation()
+                ->modalHeading(fn (Order $record): string => __(':invoice বাতিল করবেন?', ['invoice' => $record->invoice_no]))
+                ->modalDescription(__('বাতিল হলে অর্ডারের স্টক ফেরত আসবে এবং এটি প্রকৃত বিক্রির হিসাবে থাকবে না।'))
+                ->action(fn (Order $record) => $move($record, 'cancelled', ':invoice বাতিল হয়েছে।')),
+        ];
     }
 
     // ── Server-side Purchase (Meta Conversions API / GA4) ────────────────

@@ -215,6 +215,8 @@ class OrderService
                     'variant_id' => $li['variant_id'],
                     'product_name' => $li['product_name'],
                     'unit_price' => $li['unit_price'],
+                    // What a unit cost the shop right now — kept so the dashboard's profit stays true when cost prices change.
+                    'unit_cost' => $li['product']->cost_price,
                     'quantity' => $li['quantity'],
                     'discount' => 0,
                     'line_total' => $li['line_total'],

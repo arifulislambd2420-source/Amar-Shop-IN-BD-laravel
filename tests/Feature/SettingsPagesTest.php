@@ -30,7 +30,7 @@ class SettingsPagesTest extends TestCase
         'side_card_1_title', 'side_card_1_text', 'side_card_2_title', 'side_card_2_text',
         'seo_title', 'seo_description', 'og_image',
         'order_cooldown_minutes', 'low_stock_threshold',
-        'delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min',
+        'delivery_fee_dhaka', 'delivery_fee_outside', 'delivery_free_min', 'delivery_cost_per_order',
         'color_brand', 'color_secondary', 'color_accent', 'color_background', 'color_text', 'color_success', 'color_error',
         'contact_phone', 'contact_whatsapp', 'contact_email', 'contact_address', 'contact_hours',
         'social_facebook', 'social_youtube', 'social_instagram', 'social_tiktok', 'social_twitter', 'social_linkedin', 'social_telegram',

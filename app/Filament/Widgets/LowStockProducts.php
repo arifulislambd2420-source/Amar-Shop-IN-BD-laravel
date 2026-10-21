@@ -15,7 +15,7 @@ class LowStockProducts extends TableWidget
 {
     use HasAdminAreaWidget;
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 6;
 
     protected int|string|array $columnSpan = 1;
 
@@ -43,6 +43,7 @@ class LowStockProducts extends TableWidget
                     ->formatStateUsing(fn (int $state): string => $state <= 0 ? __('শেষ') : (string) $state)
                     ->sortable(),
             ])
+            ->recordActions([ProductResource::quickStockAction()])
             ->recordUrl(fn (Product $record): string => ProductResource::getUrl('edit', ['record' => $record]));
     }
 }
